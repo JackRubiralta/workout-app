@@ -68,11 +68,7 @@ export function CircularTimer({ secondsLeft, totalSeconds = REST_SECONDS, size =
       </Svg>
 
       {/* Text overlay */}
-<<<<<<< HEAD
-      <View style={StyleSheet.absoluteFill} pointerEvents="none" alignItems="center" justifyContent="center">
-=======
       <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]} pointerEvents="none">
->>>>>>> 1f5a396 (s)
         <Text
           style={{ fontSize: timeFontSize, fontWeight: '400', color: colors.text, letterSpacing: -1, includeFontPadding: false, fontFamily: fonts.serif }}
           numberOfLines={1}

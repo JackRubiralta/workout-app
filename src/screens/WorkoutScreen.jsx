@@ -1,49 +1,26 @@
-<<<<<<< HEAD
-import React, { useCallback, useMemo } from 'react';
-=======
 import React, { useCallback, useMemo, useRef, useState } from 'react';
->>>>>>> 1f5a396 (s)
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Pressable,
-<<<<<<< HEAD
-=======
   Animated,
->>>>>>> 1f5a396 (s)
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
-<<<<<<< HEAD
-import { DAYS, SETS_PER_EXERCISE, SET_LABELS, SET_REPS } from '../constants/workout';
-=======
->>>>>>> 1f5a396 (s)
 import { colors, spacing, radius, shadow, fontSize, fonts } from '../constants/theme';
 import { useRestTimer } from '../hooks/useRestTimer';
 import { CircularTimer } from '../components/CircularTimer';
 import { ExerciseList } from '../components/ExerciseList';
-<<<<<<< HEAD
-
-// ─── Layout budget ───────────────────────────────────────────────────────────
-// Header ≈ 48  Pills ≈ 52  Divider = 1  Bottom ≈ 100  → main flex: 1 fills rest
-// Timer size and name font scale from screen height so every iPhone fits.
-
-function useLayout() {
-  const { height } = useWindowDimensions();
-  // iPhone SE 2 logical height = 667, iPhone 16 Pro Max = 956
-  // Exercise list is taller than old pills row — reduce timer a touch
-=======
 import { exerciseTotalSets, getSetLabel, getRepsGuide } from '../utils/exercise';
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 function useLayout() {
   const { height } = useWindowDimensions();
->>>>>>> 1f5a396 (s)
   const timerSize = Math.round(Math.min(175, height * 0.21));
   const nameFontSize = Math.round(Math.min(34, height * 0.046));
   const isSmall = height < 700;
@@ -54,14 +31,9 @@ function useLayout() {
 
 function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
   const exercise = day.exercises[exIndex];
-<<<<<<< HEAD
-  const setLabel = SET_LABELS[setIndex] ?? `Set ${setIndex + 1}`;
-  const repsGuide = SET_REPS[setIndex] ?? '6–10 reps';
-=======
   const isWarmupSet = exercise.warmup && setIndex === 0;
   const setLabel = getSetLabel(exercise, setIndex);
   const repsGuide = getRepsGuide(exercise, setIndex);
->>>>>>> 1f5a396 (s)
 
   return (
     <View style={styles.exerciseView}>
@@ -69,11 +41,7 @@ function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
         {exIndex + 1} of {day.exercises.length}
       </Text>
 
-<<<<<<< HEAD
-      <Text style={[styles.setLabel, { color: day.color }]}>
-=======
       <Text style={[styles.setLabel, { color: isWarmupSet ? colors.textSecondary : day.color }]}>
->>>>>>> 1f5a396 (s)
         {setLabel.toUpperCase()}
       </Text>
 
@@ -83,11 +51,7 @@ function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
         minimumFontScale={0.7}
         numberOfLines={2}
       >
-<<<<<<< HEAD
-        {exercise}
-=======
         {exercise.name}
->>>>>>> 1f5a396 (s)
       </Text>
 
       <Text style={[styles.repsGuide, isSmall && { fontSize: fontSize.footnote }]}>
@@ -97,16 +61,6 @@ function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
   );
 }
 
-<<<<<<< HEAD
-function RestView({ secondsLeft, nextPos, day, timerSize, isSmall }) {
-  const hasNext = nextPos !== null;
-  const nextExercise = hasNext ? day.exercises[nextPos.e] : null;
-  const nextSetLabel = hasNext ? (SET_LABELS[nextPos.s] ?? `Set ${nextPos.s + 1}`) : null;
-
-  return (
-    <View style={[styles.restView, { gap: isSmall ? spacing.lg : spacing.xl }]}>
-      <CircularTimer secondsLeft={secondsLeft} size={timerSize} />
-=======
 function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall }) {
   const hasNext = nextPos !== null;
   const nextExercise = hasNext ? day.exercises[nextPos.e] : null;
@@ -115,24 +69,16 @@ function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall 
   return (
     <View style={[styles.restView, { gap: isSmall ? spacing.lg : spacing.xl }]}>
       <CircularTimer secondsLeft={secondsLeft} totalSeconds={totalSeconds} size={timerSize} />
->>>>>>> 1f5a396 (s)
 
       <View style={styles.nextUpContainer}>
         {hasNext ? (
           <>
             <Text style={styles.nextUpLabel}>Up next</Text>
             <Text style={styles.nextUpExercise} numberOfLines={1}>
-<<<<<<< HEAD
-              {nextExercise}
-            </Text>
-            <Text style={[styles.nextUpSet, { color: day.color }]}>
-              {nextSetLabel}
-=======
               {nextExercise.name}
             </Text>
             <Text style={[styles.nextUpSet, { color: day.color }]}>
               {nextSetLabel.toUpperCase()}
->>>>>>> 1f5a396 (s)
             </Text>
           </>
         ) : (
@@ -144,10 +90,7 @@ function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall 
 }
 
 function CompletionView({ day, doneSets }) {
-<<<<<<< HEAD
-=======
   const totalSets = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
->>>>>>> 1f5a396 (s)
   return (
     <View style={styles.completionView}>
       <View style={[styles.completionBadge, { borderColor: colors.success }]}>
@@ -178,11 +121,7 @@ function WorkoutProgressBar({ done, total, color }) {
   );
 }
 
-<<<<<<< HEAD
-// ─── Action Button ────────────────────────────────────────────────────────────
-=======
 // ─── Plain Action Button (tap) ────────────────────────────────────────────────
->>>>>>> 1f5a396 (s)
 
 function ActionButton({ label, onPress, color, variant = 'filled' }) {
   const isFilled = variant === 'filled';
@@ -204,19 +143,6 @@ function ActionButton({ label, onPress, color, variant = 'filled' }) {
   );
 }
 
-<<<<<<< HEAD
-// ─── Screen ──────────────────────────────────────────────────────────────────
-
-export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDone, getNextSet }) {
-  useKeepAwake();
-
-  const { timerSize, nameFontSize, isSmall } = useLayout();
-  const day = DAYS[dayIndex];
-  const { isResting, secondsLeft, startRest, skipRest } = useRestTimer();
-
-  const isDayDone = doneDays[dayIndex];
-  const currentPos = getNextSet(dayIndex); // { e, s } or null
-=======
 // ─── Hold Button (press-and-hold to confirm) ──────────────────────────────────
 
 function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDuration = 650 }) {
@@ -310,25 +236,10 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
 
   // Tracks the last action so the user can undo it
   const [lastAction, setLastAction] = useState(null);
->>>>>>> 1f5a396 (s)
 
   const { doneSets, totalSets } = useMemo(() => {
     if (!progress) return { doneSets: 0, totalSets: 0 };
     let done = 0, total = 0;
-<<<<<<< HEAD
-    progress[dayIndex].sets.forEach(exSets =>
-      exSets.forEach(v => { total++; if (v) done++; })
-    );
-    return { doneSets: done, totalSets: total };
-  }, [progress, dayIndex]);
-
-  const handleDone = useCallback(() => {
-    if (!currentPos) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    markSetDone(dayIndex, currentPos.e, currentPos.s);
-    startRest();
-  }, [currentPos, dayIndex, markSetDone, startRest]);
-=======
     progress[dayIndex].sets.forEach((exSets, ei) => {
       const exTotal = exerciseTotalSets(day.exercises[ei]);
       exSets.slice(0, exTotal).forEach(v => { total++; if (v) done++; });
@@ -363,7 +274,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
     }
     setLastAction(null);
   }, [lastAction, dayIndex, unmarkSetDone, skipRest, startRest]);
->>>>>>> 1f5a396 (s)
 
   const handleBack = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -387,12 +297,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
           </Text>
           {day.focus ? <Text style={styles.headerFocus}>{day.focus}</Text> : null}
         </View>
-<<<<<<< HEAD
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* ── Exercise List ── */}
-=======
         {/* Undo button lives in the header's right slot */}
         {lastAction !== null ? (
           <TouchableOpacity onPress={handleUndo} style={styles.undoButton} hitSlop={16}>
@@ -405,7 +309,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
       </View>
 
       {/* ── Exercise list ── */}
->>>>>>> 1f5a396 (s)
       <ExerciseList
         day={day}
         dayProgress={progress[dayIndex]}
@@ -414,21 +317,14 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
 
       <View style={styles.divider} />
 
-<<<<<<< HEAD
-      {/* ── Main Content — fills all remaining vertical space ── */}
-=======
       {/* ── Main content ── */}
->>>>>>> 1f5a396 (s)
       <View style={styles.mainContent}>
         {isDayDone ? (
           <CompletionView day={day} doneSets={doneSets} />
         ) : isResting ? (
           <RestView
             secondsLeft={secondsLeft}
-<<<<<<< HEAD
-=======
             totalSeconds={totalSeconds}
->>>>>>> 1f5a396 (s)
             nextPos={currentPos}
             day={day}
             timerSize={timerSize}
@@ -448,15 +344,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
       {/* ── Bottom ── */}
       <View style={styles.bottomArea}>
         <WorkoutProgressBar done={doneSets} total={totalSets} color={day.color} />
-<<<<<<< HEAD
-
-        {isDayDone ? (
-          <ActionButton label="Back to Home" onPress={handleBack} color={day.color} />
-        ) : isResting ? (
-          <ActionButton label="Skip Rest" onPress={skipRest} color={day.color} variant="outline" />
-        ) : (
-          <ActionButton label="Done" onPress={handleDone} color={day.color} />
-=======
         {isDayDone ? (
           <ActionButton label="Back to Home" onPress={handleBack} color={day.color} />
         ) : isResting ? (
@@ -474,7 +361,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
             color={day.color}
             holdDuration={650}
           />
->>>>>>> 1f5a396 (s)
         )}
       </View>
 
@@ -490,11 +376,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-<<<<<<< HEAD
-  // ── Header ──
-=======
   // Header
->>>>>>> 1f5a396 (s)
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -519,8 +401,6 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   headerSpacer: { width: 36 },
-<<<<<<< HEAD
-=======
   undoButton: {
     width: 36,
     height: 36,
@@ -544,7 +424,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     lineHeight: 10,
   },
->>>>>>> 1f5a396 (s)
   headerCenter: {
     flex: 1,
     alignItems: 'center',
@@ -571,11 +450,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-<<<<<<< HEAD
-  // ── Main ──
-=======
   // Main
->>>>>>> 1f5a396 (s)
   mainContent: {
     flex: 1,
     alignItems: 'center',
@@ -583,11 +458,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
 
-<<<<<<< HEAD
-  // ── Exercise card ──
-=======
   // Exercise view
->>>>>>> 1f5a396 (s)
   exerciseView: {
     width: '100%',
     alignItems: 'center',
@@ -621,11 +492,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
   },
 
-<<<<<<< HEAD
-  // ── Rest ──
-=======
   // Rest view
->>>>>>> 1f5a396 (s)
   restView: {
     alignItems: 'center',
   },
@@ -656,11 +523,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
   },
 
-<<<<<<< HEAD
-  // ── Completion ──
-=======
   // Completion view
->>>>>>> 1f5a396 (s)
   completionView: {
     alignItems: 'center',
     gap: spacing.sm,
@@ -697,11 +560,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
   },
 
-<<<<<<< HEAD
-  // ── Bottom ──
-=======
   // Bottom
->>>>>>> 1f5a396 (s)
   bottomArea: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,

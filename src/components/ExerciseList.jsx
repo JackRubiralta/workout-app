@@ -1,19 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, radius, spacing, fontSize, fonts } from '../constants/theme';
-<<<<<<< HEAD
-import { SETS_PER_EXERCISE } from '../constants/workout';
-
-// ─── Single Row ───────────────────────────────────────────────────────────────
-
-function ExerciseRow({ name, index, sets, isCurrent, isDone, dayColor }) {
-=======
 import { exerciseTotalSets } from '../utils/exercise';
 
 // ─── Single Row ───────────────────────────────────────────────────────────────
 
 function ExerciseRow({ name, index, sets, hasWarmup, isCurrent, isDone, dayColor }) {
->>>>>>> 1f5a396 (s)
   return (
     <View
       style={[
@@ -35,15 +27,7 @@ function ExerciseRow({ name, index, sets, hasWarmup, isCurrent, isDone, dayColor
         <Text
           style={[
             styles.badgeText,
-<<<<<<< HEAD
-            isDone
-              ? { color: '#fff' }
-              : isCurrent
-              ? { color: dayColor }
-              : { color: colors.textTertiary },
-=======
             isDone ? { color: '#fff' } : isCurrent ? { color: dayColor } : { color: colors.textTertiary },
->>>>>>> 1f5a396 (s)
           ]}
         >
           {isDone ? '✓' : index + 1}
@@ -68,11 +52,8 @@ function ExerciseRow({ name, index, sets, hasWarmup, isCurrent, isDone, dayColor
             key={s}
             style={[
               styles.dot,
-<<<<<<< HEAD
-=======
               // Warm-up dot is slightly smaller and diamond-ish via borderRadius
               s === 0 && hasWarmup && styles.dotWarmup,
->>>>>>> 1f5a396 (s)
               done
                 ? { backgroundColor: dayColor }
                 : isCurrent
@@ -91,18 +72,6 @@ function ExerciseRow({ name, index, sets, hasWarmup, isCurrent, isDone, dayColor
 export function ExerciseList({ day, dayProgress, currentExIndex }) {
   return (
     <View style={styles.container}>
-<<<<<<< HEAD
-      {day.exercises.map((name, index) => {
-        const sets = dayProgress.sets[index] ?? Array(SETS_PER_EXERCISE).fill(false);
-        return (
-          <ExerciseRow
-            key={index}
-            name={name}
-            index={index}
-            sets={sets}
-            isCurrent={index === currentExIndex}
-            isDone={sets.every(Boolean)}
-=======
       {day.exercises.map((ex, index) => {
         const total = exerciseTotalSets(ex);
         const sets = (dayProgress.sets[index] ?? []).slice(0, total);
@@ -118,7 +87,6 @@ export function ExerciseList({ day, dayProgress, currentExIndex }) {
             hasWarmup={ex.warmup}
             isCurrent={index === currentExIndex}
             isDone={paddedSets.every(Boolean)}
->>>>>>> 1f5a396 (s)
             dayColor={day.color}
           />
         );
@@ -151,10 +119,6 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: radius.full,
     borderWidth: 1,
-<<<<<<< HEAD
-    borderColor: colors.border,
-=======
->>>>>>> 1f5a396 (s)
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -195,8 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.border,
   },
-<<<<<<< HEAD
-=======
   // Warm-up dot: slightly smaller square-ish shape to visually distinguish
   dotWarmup: {
     width: 5,
@@ -204,5 +166,4 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     marginTop: 1,
   },
->>>>>>> 1f5a396 (s)
 });

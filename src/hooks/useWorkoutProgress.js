@@ -1,28 +1,3 @@
-<<<<<<< HEAD
-import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DAYS, SETS_PER_EXERCISE } from '../constants/workout';
-
-const STORAGE_KEY = '@workout_progress_v1';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function buildFreshProgress() {
-  return DAYS.map(day => ({
-    sets: day.exercises.map(() => Array(SETS_PER_EXERCISE).fill(false)),
-  }));
-}
-
-function isDayComplete(dayProgress) {
-  return dayProgress.sets.every(exSets => exSets.every(Boolean));
-}
-
-// Returns { e, s } of the first undone set in the given day, or null if done.
-function findNextSet(dayProgress, dayIndex) {
-  const day = DAYS[dayIndex];
-  for (let e = 0; e < day.exercises.length; e++) {
-    for (let s = 0; s < SETS_PER_EXERCISE; s++) {
-=======
 import { useState, useEffect, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DAYS } from '../constants/workout';
@@ -69,7 +44,6 @@ function findNextSet(dayProgress, day) {
   for (let e = 0; e < day.exercises.length; e++) {
     const total = exerciseTotalSets(day.exercises[e]);
     for (let s = 0; s < total; s++) {
->>>>>>> 1f5a396 (s)
       if (!dayProgress.sets[e]?.[s]) return { e, s };
     }
   }
@@ -78,39 +52,15 @@ function findNextSet(dayProgress, day) {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-export function useWorkoutProgress() {
-  const [progress, setProgress] = useState(null); // null while loading
-  const [loaded, setLoaded] = useState(false);
-
-  // Load from AsyncStorage on mount
-=======
 export function useWorkoutProgress(days = DEFAULT_DAYS) {
   const [progress, setProgress] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
   // Load once on mount and normalize to current config
->>>>>>> 1f5a396 (s)
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then(raw => {
         if (raw) {
-<<<<<<< HEAD
-          try {
-            setProgress(JSON.parse(raw));
-          } catch {
-            setProgress(buildFreshProgress());
-          }
-        } else {
-          setProgress(buildFreshProgress());
-        }
-      })
-      .catch(() => setProgress(buildFreshProgress()))
-      .finally(() => setLoaded(true));
-  }, []);
-
-  // Persist whenever progress changes (skip initial null → fresh build transition)
-=======
           try { setProgress(normalizeProgress(JSON.parse(raw), days)); }
           catch { setProgress(buildFreshProgress(days)); }
         } else {
@@ -131,7 +81,6 @@ export function useWorkoutProgress(days = DEFAULT_DAYS) {
   }, [days, loaded]);
 
   // Persist every change
->>>>>>> 1f5a396 (s)
   useEffect(() => {
     if (progress !== null) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress)).catch(console.error);
@@ -146,9 +95,6 @@ export function useWorkoutProgress(days = DEFAULT_DAYS) {
         return {
           sets: day.sets.map((exSets, ei) => {
             if (ei !== exIndex) return exSets;
-<<<<<<< HEAD
-            return exSets.map((done, si) => (si === setIndex ? true : done));
-=======
             // Grow array if needed (handles edge cases during config changes)
             const len = Math.max(exSets.length, setIndex + 1);
             return Array.from({ length: len }, (_, si) =>
@@ -169,7 +115,6 @@ export function useWorkoutProgress(days = DEFAULT_DAYS) {
           sets: day.sets.map((exSets, ei) => {
             if (ei !== exIndex) return exSets;
             return exSets.map((v, si) => (si === setIndex ? false : v));
->>>>>>> 1f5a396 (s)
           }),
         };
       });
@@ -177,33 +122,6 @@ export function useWorkoutProgress(days = DEFAULT_DAYS) {
   }, []);
 
   const resetAll = useCallback(() => {
-<<<<<<< HEAD
-    setProgress(buildFreshProgress());
-  }, []);
-
-  // Returns { e, s } for the next undone set on a given day, or null.
-  const getNextSet = useCallback(
-    (dayIndex) => {
-      if (!progress) return null;
-      return findNextSet(progress[dayIndex], dayIndex);
-    },
-    [progress],
-  );
-
-  // Derived values
-  const doneDays = progress ? progress.map(isDayComplete) : DAYS.map(() => false);
-  const allDone = doneDays.every(Boolean);
-
-  return {
-    progress,
-    loaded,
-    doneDays,
-    allDone,
-    markSetDone,
-    resetAll,
-    getNextSet,
-  };
-=======
     setProgress(buildFreshProgress(days));
   }, [days]);
 
@@ -235,5 +153,4 @@ export function useWorkoutProgress(days = DEFAULT_DAYS) {
   const allDone = doneDays.every(Boolean);
 
   return { progress, loaded, doneDays, allDone, markSetDone, unmarkSetDone, resetAll, removeDayProgress, reorderDayProgress, getNextSet };
->>>>>>> 1f5a396 (s)
 }

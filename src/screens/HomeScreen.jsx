@@ -1,62 +1,10 @@
-<<<<<<< HEAD
-import React, { useCallback } from 'react';
-=======
 import React, { useCallback, useState, useEffect, useRef } from 'react';
->>>>>>> 1f5a396 (s)
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-<<<<<<< HEAD
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { DAYS, SETS_PER_EXERCISE } from '../constants/workout';
-import { colors, spacing, radius, shadow, fontSize } from '../constants/theme';
-
-// ─── Day Card ─────────────────────────────────────────────────────────────────
-
-function DayCard({ day, dayProgress, isDone, onPress }) {
-  const totalSets = day.exercises.length * SETS_PER_EXERCISE;
-  const doneSets = dayProgress
-    ? dayProgress.sets.reduce((acc, exSets) => acc + exSets.filter(Boolean).length, 0)
-    : 0;
-  const progressFraction = totalSets > 0 ? doneSets / totalSets : 0;
-
-  const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onPress();
-  }, [onPress]);
-
-  return (
-    <TouchableOpacity
-      style={[styles.card, isDone && styles.cardDone]}
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
-      {/* Left color accent */}
-      <View style={[styles.colorBar, { backgroundColor: isDone ? colors.success : day.color }]} />
-
-      {/* Day number bubble */}
-      <View style={[styles.dayBubble, { backgroundColor: (isDone ? colors.success : day.color) + '1A' }]}>
-        <Text style={[styles.dayNumber, { color: isDone ? colors.success : day.color }]}>
-          {day.day}
-        </Text>
-      </View>
-
-      {/* Content */}
-      <View style={styles.cardContent}>
-        <View style={styles.cardTop}>
-          <View>
-            <Text style={[styles.cardTitle, isDone && styles.cardTitleDone]}>
-              {day.title}
-            </Text>
-            {day.focus ? (
-              <Text style={styles.cardFocus}>{day.focus}</Text>
-=======
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -528,34 +476,10 @@ function DayCard({ day, dayProgress, isDone, onPress, isEditing,
             </Text>
             {day.focus ? (
               <Text style={styles.cardFocus} numberOfLines={1}>{day.focus}</Text>
->>>>>>> 1f5a396 (s)
             ) : null}
           </View>
 
           <View style={styles.cardRight}>
-<<<<<<< HEAD
-            {isDone ? (
-              <View style={styles.checkBadge}>
-                <Text style={styles.checkMark}>✓</Text>
-              </View>
-            ) : (
-              <Text style={[styles.progressText, doneSets > 0 && { color: day.color }]}>
-                {doneSets}/{totalSets}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* Progress bar (only when in progress) */}
-        {!isDone && doneSets > 0 && (
-          <View style={styles.progressBarTrack}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${progressFraction * 100}%`, backgroundColor: day.color },
-              ]}
-            />
-=======
             {isDone && !isEditing ? (
               <View style={styles.checkBadge}>
                 <Text style={styles.checkMark}>✓</Text>
@@ -571,17 +495,10 @@ function DayCard({ day, dayProgress, isDone, onPress, isEditing,
         {!isDone && !isEditing && doneSets > 0 && (
           <View style={styles.progressBarTrack}>
             <View style={[styles.progressBarFill, { width: `${pct * 100}%`, backgroundColor: day.color }]} />
->>>>>>> 1f5a396 (s)
           </View>
         )}
       </View>
 
-<<<<<<< HEAD
-      {/* Exercises count label */}
-      <Text style={styles.exerciseCount}>
-        {day.exercises.length} exercises
-      </Text>
-=======
       {/* Drag handle — only in edit mode, not on the overlay (overlay is pointer-events none) */}
       {isEditing && !isDragOverlay && (
         <DragHandle
@@ -617,19 +534,12 @@ function AddDayButton({ onPress }) {
     >
       <Text style={styles.addDayPlus}>+</Text>
       <Text style={styles.addDayText}>Add Day</Text>
->>>>>>> 1f5a396 (s)
     </TouchableOpacity>
   );
 }
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay }) {
-  const handleReset = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-    resetAll();
-=======
 export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay, days, updateDay, addDay, deleteDay, moveDay }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingDayIndex, setEditingDayIndex] = useState(null);
@@ -754,50 +664,10 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
         },
       ],
     );
->>>>>>> 1f5a396 (s)
   }, [resetAll]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-<<<<<<< HEAD
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Workout</Text>
-        <Text style={styles.headerSubtitle}>Push / Pull / Legs</Text>
-      </View>
-
-      {/* Day cards */}
-      <ScrollView
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      >
-        {DAYS.map((day, index) => (
-          <DayCard
-            key={day.day}
-            day={day}
-            dayProgress={progress?.[index]}
-            isDone={doneDays[index]}
-            onPress={() => onSelectDay(index)}
-          />
-        ))}
-
-        {/* Reset button — only when all days complete */}
-        {allDone && (
-          <View style={styles.resetContainer}>
-            <View style={styles.allDoneBanner}>
-              <Text style={styles.allDoneEmoji}>🎉</Text>
-              <Text style={styles.allDoneText}>Week complete!</Text>
-              <Text style={styles.allDoneSubtext}>Great work. Start the next cycle whenever you're ready.</Text>
-            </View>
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset} activeOpacity={0.7}>
-              <Text style={styles.resetButtonText}>Reset Week</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View style={{ height: spacing.xxl }} />
-      </ScrollView>
-=======
 
       {/* Header */}
       <View style={styles.header}>
@@ -904,62 +774,39 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
         onDelete={deleteDay}
         daysCount={days.length}
       />
->>>>>>> 1f5a396 (s)
     </SafeAreaView>
   );
 }
 
-<<<<<<< HEAD
-// ─── Styles ──────────────────────────────────────────────────────────────────
-=======
 // ─── Main Styles ──────────────────────────────────────────────────────────────
->>>>>>> 1f5a396 (s)
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-<<<<<<< HEAD
-=======
 
   // Header
->>>>>>> 1f5a396 (s)
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
-<<<<<<< HEAD
-=======
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
->>>>>>> 1f5a396 (s)
   },
   headerTitle: {
     fontSize: fontSize.largeTitle,
     fontWeight: '700',
     color: colors.text,
     letterSpacing: 0.37,
-<<<<<<< HEAD
-=======
     fontFamily: fonts.serif,
->>>>>>> 1f5a396 (s)
   },
   headerSubtitle: {
     fontSize: fontSize.subhead,
     color: colors.textSecondary,
     marginTop: 2,
     letterSpacing: 0.5,
-<<<<<<< HEAD
-  },
-  list: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-
-  // Card
-=======
     fontFamily: fonts.mono,
   },
   editToggle: {
@@ -1014,7 +861,6 @@ const styles = StyleSheet.create({
   },
 
   // Day card
->>>>>>> 1f5a396 (s)
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -1024,17 +870,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-<<<<<<< HEAD
-    minHeight: 88,
-    ...shadow.sm,
-  },
-  cardDone: {
-    opacity: 0.6,
-  },
-  colorBar: {
-    width: 4,
-    height: 44,
-=======
     minHeight: 80,
     ...shadow.sm,
   },
@@ -1046,7 +881,6 @@ const styles = StyleSheet.create({
   colorBar: {
     width: 4,
     height: 40,
->>>>>>> 1f5a396 (s)
     borderRadius: radius.full,
   },
   dayBubble: {
@@ -1059,17 +893,9 @@ const styles = StyleSheet.create({
   dayNumber: {
     fontSize: fontSize.headline,
     fontWeight: '700',
-<<<<<<< HEAD
-  },
-  cardContent: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-=======
     fontFamily: fonts.mono,
   },
   cardContent: { flex: 1, gap: spacing.xs },
->>>>>>> 1f5a396 (s)
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1080,25 +906,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     letterSpacing: 0.5,
-<<<<<<< HEAD
-  },
-  cardTitleDone: {
-    color: colors.textSecondary,
-  },
-=======
     fontFamily: fonts.mono,
   },
   cardTitleDone: { color: colors.textSecondary },
->>>>>>> 1f5a396 (s)
   cardFocus: {
     fontSize: fontSize.subhead,
     color: colors.textSecondary,
     marginTop: 1,
-<<<<<<< HEAD
-  },
-  cardRight: {
-    alignItems: 'flex-end',
-=======
     fontFamily: fonts.mono,
   },
   cardRight: { alignItems: 'flex-end', justifyContent: 'center' },
@@ -1125,16 +939,12 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
     transform: [{ scale: 1.03 }],
->>>>>>> 1f5a396 (s)
   },
   progressText: {
     fontSize: fontSize.footnote,
     fontWeight: '600',
     color: colors.textTertiary,
-<<<<<<< HEAD
-=======
     fontFamily: fonts.mono,
->>>>>>> 1f5a396 (s)
   },
   checkBadge: {
     width: 24,
@@ -1146,15 +956,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.success,
   },
-<<<<<<< HEAD
-  checkMark: {
-    fontSize: 12,
-    color: colors.success,
-    fontWeight: '700',
-  },
-=======
   checkMark: { fontSize: 12, color: colors.success, fontWeight: '700' },
->>>>>>> 1f5a396 (s)
   progressBarTrack: {
     height: 3,
     backgroundColor: colors.border,
@@ -1162,26 +964,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     overflow: 'hidden',
   },
-<<<<<<< HEAD
-  progressBarFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  exerciseCount: {
-    fontSize: fontSize.caption,
-    color: colors.textTertiary,
-    position: 'absolute',
-    bottom: spacing.sm,
-    right: spacing.md,
-  },
-
-  // Reset section
-  resetContainer: {
-    marginTop: spacing.xl,
-    gap: spacing.md,
-  },
-  allDoneBanner: {
-=======
   progressBarFill: { height: '100%', borderRadius: radius.full },
 
   // Add day button
@@ -1214,7 +996,6 @@ const styles = StyleSheet.create({
   // Week complete
   allDoneBanner: {
     marginTop: spacing.xl,
->>>>>>> 1f5a396 (s)
     backgroundColor: colors.successBg,
     borderRadius: radius.xl,
     padding: spacing.lg,
@@ -1223,31 +1004,19 @@ const styles = StyleSheet.create({
     borderColor: colors.success + '40',
     gap: spacing.xs,
   },
-<<<<<<< HEAD
-  allDoneEmoji: {
-    fontSize: 40,
-  },
-=======
   allDoneEmoji: { fontSize: 40 },
->>>>>>> 1f5a396 (s)
   allDoneText: {
     fontSize: fontSize.title3,
     fontWeight: '700',
     color: colors.success,
-<<<<<<< HEAD
-=======
     fontFamily: fonts.serif,
->>>>>>> 1f5a396 (s)
   },
   allDoneSubtext: {
     fontSize: fontSize.subhead,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-<<<<<<< HEAD
-=======
     fontFamily: fonts.mono,
->>>>>>> 1f5a396 (s)
   },
   resetButton: {
     height: 56,
@@ -1261,8 +1030,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     fontWeight: '600',
     color: colors.textSecondary,
-<<<<<<< HEAD
-=======
     fontFamily: fonts.mono,
   },
 
@@ -1496,6 +1263,5 @@ const sheet = StyleSheet.create({
     color: '#FF453A',
     fontFamily: fonts.mono,
     letterSpacing: 0.3,
->>>>>>> 1f5a396 (s)
   },
 });
