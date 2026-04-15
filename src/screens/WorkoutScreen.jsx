@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Animated,
   useWindowDimensions,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius, shadow, fontSize, fonts } from '../constants/theme';
@@ -291,8 +293,22 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
   const isDayDone = doneDays[dayIndex];
   const currentPos = getNextSet(dayIndex);
 
-  // Tracks the last action so the user can undo it
-  const [lastAction, setLastAction] = useState(null);
+  // Stack of reversible actions — allows undoing all the way back to set 1
+  const [actionHistory, setActionHistory] = useState([]);
+  const undoKey = `@workout_undo_v1_day${dayIndex}`;
+
+  // Load persisted undo history when the screen opens
+  useEffect(() => {
+    AsyncStorage.getItem(undoKey)
+      .then(raw => { if (raw) try { setActionHistory(JSON.parse(raw)); } catch {} })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // dayIndex never changes within a mounted WorkoutScreen
+
+  // Persist every change so undo survives app restarts
+  useEffect(() => {
+    AsyncStorage.setItem(undoKey, JSON.stringify(actionHistory)).catch(() => {});
+  }, [actionHistory, undoKey]);
 
   const { doneSets, totalSets } = useMemo(() => {
     if (!progress) return { doneSets: 0, totalSets: 0 };
@@ -310,26 +326,27 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
     const ex = day.exercises[currentPos.e];
     markSetDone(dayIndex, currentPos.e, currentPos.s);
     startRest(ex.restSeconds);
-    setLastAction({ type: 'done', exIndex: currentPos.e, setIndex: currentPos.s, restSeconds: ex.restSeconds });
+    setActionHistory(prev => [...prev, { type: 'done', exIndex: currentPos.e, setIndex: currentPos.s, restSeconds: ex.restSeconds }]);
   }, [currentPos, day, dayIndex, markSetDone, startRest]);
 
   // Fires when the user holds Skip Rest long enough
   const handleSkipRest = useCallback(() => {
-    setLastAction({ type: 'skip', restSeconds: totalSeconds });
+    setActionHistory(prev => [...prev, { type: 'skip', restSeconds: totalSeconds }]);
     skipRest();
   }, [totalSeconds, skipRest]);
 
-  // Undo: reverses the last done or skip action
+  // Undo: pops and reverses the most recent action — can be pressed repeatedly
   const handleUndo = useCallback(() => {
-    if (!lastAction) return;
-    if (lastAction.type === 'done') {
-      unmarkSetDone(dayIndex, lastAction.exIndex, lastAction.setIndex);
-      skipRest(); // cancel rest timer
-    } else if (lastAction.type === 'skip') {
-      startRest(lastAction.restSeconds); // restart the timer
+    if (actionHistory.length === 0) return;
+    const action = actionHistory[actionHistory.length - 1];
+    if (action.type === 'done') {
+      unmarkSetDone(dayIndex, action.exIndex, action.setIndex);
+      skipRest(); // cancel rest timer if running
+    } else if (action.type === 'skip') {
+      startRest(action.restSeconds); // restart the skipped rest
     }
-    setLastAction(null);
-  }, [lastAction, dayIndex, unmarkSetDone, skipRest, startRest]);
+    setActionHistory(prev => prev.slice(0, -1));
+  }, [actionHistory, dayIndex, unmarkSetDone, skipRest, startRest]);
 
   const handleBack = useCallback(() => {
     onBack();
@@ -353,9 +370,14 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
           {day.focus ? <Text style={styles.headerFocus}>{day.focus}</Text> : null}
         </View>
         {/* Undo button lives in the header's right slot */}
-        {lastAction !== null ? (
+        {actionHistory.length > 0 ? (
           <HoldCircleButton onHoldComplete={handleUndo} buttonStyle={styles.undoButton}>
-            <Text style={styles.undoLabel}>Undo</Text>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                fill={colors.textSecondary}
+              />
+            </Svg>
           </HoldCircleButton>
         ) : (
           <View style={styles.headerSpacer} />
@@ -464,18 +486,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  undoArrow: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 17,
-    marginBottom: -2,
-  },
-  undoLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontFamily: fonts.mono,
-    letterSpacing: 0.5,
   },
   headerCenter: {
     flex: 1,
