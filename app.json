@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "requireFullScreen": true
+      "requireFullScreen": true,
+      "bundleIdentifier": "com.jackrubiralta.workouttracker",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +29,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0A0A0A"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "72f050b5-abec-495d-b46f-7c0b986c2313"
+      }
     }
   }
 }

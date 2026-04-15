@@ -1,12 +1,25 @@
-import React, { useState, useCallback } from 'react';
-import { View, ActivityIndicator, StyleSheet, unstable_batchedUpdates } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet, Platform, unstable_batchedUpdates } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { useWorkoutConfig } from './src/hooks/useWorkoutConfig';
 import { useWorkoutProgress } from './src/hooks/useWorkoutProgress';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { WorkoutScreen } from './src/screens/WorkoutScreen';
 import { colors } from './src/constants/theme';
+
+// When a notification arrives while the app is OPEN, suppress the banner —
+// the in-app timer handles the alert visually and via haptics.
+// (This handler is NOT called when the app is in the background — the OS handles
+// delivery natively, which is what gives us the sound + vibration when backgrounded.)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: false,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 function LoadingScreen() {
   return (
@@ -22,6 +35,20 @@ export default function App() {
   const workoutState = useWorkoutProgress(config.days);
   const { removeDayProgress, reorderDayProgress } = workoutState;
   const isLoaded = configLoaded && workoutState.loaded;
+
+  // Request notification permission and create Android vibration channel
+  useEffect(() => {
+    Notifications.requestPermissionsAsync().catch(() => {});
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('workout-timer', {
+        name: 'Workout Timer',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 450, 120, 450, 120, 450],
+        sound: null,
+      }).catch(() => {});
+    }
+  }, []);
 
   const handleDeleteDay = useCallback((dayIndex) => {
     unstable_batchedUpdates(() => {
