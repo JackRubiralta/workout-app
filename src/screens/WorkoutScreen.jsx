@@ -143,6 +143,63 @@ function ActionButton({ label, onPress, color, variant = 'filled' }) {
   );
 }
 
+// ─── Hold Circle Button (press-and-hold for small circular icon buttons) ─────
+
+function HoldCircleButton({ children, onHoldComplete, holdDuration = 550, buttonStyle }) {
+  const progress = useRef(new Animated.Value(0)).current;
+  const animRef = useRef(null);
+  const midTimer = useRef(null);
+  const holdTimer = useRef(null);
+  const fired = useRef(false);
+
+  const fire = useCallback(() => {
+    fired.current = true;
+    progress.setValue(0);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    onHoldComplete();
+  }, [onHoldComplete, progress]);
+
+  const onPressIn = useCallback(() => {
+    fired.current = false;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    midTimer.current = setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    }, holdDuration * 0.55);
+    holdTimer.current = setTimeout(fire, holdDuration);
+    animRef.current = Animated.timing(progress, {
+      toValue: 1,
+      duration: holdDuration,
+      useNativeDriver: true,
+    });
+    animRef.current.start();
+  }, [progress, holdDuration, fire]);
+
+  const onPressOut = useCallback(() => {
+    if (fired.current) return;
+    clearTimeout(midTimer.current);
+    clearTimeout(holdTimer.current);
+    animRef.current?.stop();
+    Animated.timing(progress, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  }, [progress]);
+
+  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.86] });
+  const overlayOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] });
+
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} hitSlop={16}>
+      <Animated.View style={[buttonStyle, { transform: [{ scale }], overflow: 'hidden' }]}>
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: colors.text, opacity: overlayOpacity, borderRadius: radius.full },
+          ]}
+        />
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 // ─── Hold Button (press-and-hold to confirm) ──────────────────────────────────
 
 function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDuration = 650 }) {
@@ -265,7 +322,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
   // Undo: reverses the last done or skip action
   const handleUndo = useCallback(() => {
     if (!lastAction) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     if (lastAction.type === 'done') {
       unmarkSetDone(dayIndex, lastAction.exIndex, lastAction.setIndex);
       skipRest(); // cancel rest timer
@@ -276,7 +332,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
   }, [lastAction, dayIndex, unmarkSetDone, skipRest, startRest]);
 
   const handleBack = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onBack();
   }, [onBack]);
 
@@ -287,9 +342,9 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Pressable onPress={handleBack} style={styles.backButton} hitSlop={16}>
+        <HoldCircleButton onHoldComplete={handleBack} buttonStyle={styles.backButton}>
           <Text style={styles.backArrow}>‹</Text>
-        </Pressable>
+        </HoldCircleButton>
         <View style={styles.headerCenter}>
           <Text style={styles.headerDayLabel} numberOfLines={1}>
             Day {day.day}{'  '}
@@ -299,10 +354,9 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
         </View>
         {/* Undo button lives in the header's right slot */}
         {lastAction !== null ? (
-          <TouchableOpacity onPress={handleUndo} style={styles.undoButton} hitSlop={16}>
-            <Text style={styles.undoArrow}>↩</Text>
+          <HoldCircleButton onHoldComplete={handleUndo} buttonStyle={styles.undoButton}>
             <Text style={styles.undoLabel}>Undo</Text>
-          </TouchableOpacity>
+          </HoldCircleButton>
         ) : (
           <View style={styles.headerSpacer} />
         )}
@@ -345,7 +399,7 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
       <View style={styles.bottomArea}>
         <WorkoutProgressBar done={doneSets} total={totalSets} color={day.color} />
         {isDayDone ? (
-          <ActionButton label="Back to Home" onPress={handleBack} color={day.color} />
+          <HoldButton label="Back to Home" onHoldComplete={handleBack} color={day.color} holdDuration={550} />
         ) : isResting ? (
           <HoldButton
             label="Skip Rest"
@@ -418,11 +472,10 @@ const styles = StyleSheet.create({
     marginBottom: -2,
   },
   undoLabel: {
-    fontSize: 8,
-    color: colors.textTertiary,
+    fontSize: 10,
+    color: colors.textSecondary,
     fontFamily: fonts.mono,
-    letterSpacing: 0.3,
-    lineHeight: 10,
+    letterSpacing: 0.5,
   },
   headerCenter: {
     flex: 1,
