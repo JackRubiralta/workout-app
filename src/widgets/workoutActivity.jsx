@@ -139,41 +139,15 @@ export default function WorkoutActivity(props, _env) {
     </Text>
   );
 
-  // ── Dynamic Island: expanded ──────────────────────────────────────────
+  // ── Dynamic Island: expanded (minimal — matches compact feel) ─────────
 
   var expandedLeading = (
-    <VStack>
-      <Text modifiers={[font({ size: 13, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
-        {dayTitle}
-      </Text>
-      <Text modifiers={[font({ size: 12, weight: "medium" }), foregroundStyle("#EBEBF5")]}>
-        {exerciseName}
-      </Text>
-      <Text modifiers={[font({ size: 10, weight: "semibold", design: "monospaced" }), foregroundStyle("#EBEBF560")]}>
-        {"SET " + exSetNum + "/" + exSetTotal + "  ·  " + totalText + " total"}
-      </Text>
-    </VStack>
-  );
-
-  var expandedTrailing = timerDone ? (
-    <Text modifiers={[font({ size: 14, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
-      {"GO"}
-    </Text>
-  ) : hasTimer ? (
-    <Text
-      timerInterval={{ lower: timerLower, upper: timerUpper }}
-      countsDown={true}
-      modifiers={[font({ size: 22, weight: "bold", design: "rounded" }), foregroundStyle("#FFFFFF")]}
-    />
-  ) : (
-    <Text modifiers={[font({ size: 14, weight: "bold", design: "rounded" }), foregroundStyle("#32D74B")]}>
-      {"READY"}
+    <Text modifiers={[font({ size: 13, weight: "semibold" }), foregroundStyle("#EBEBF5")]}>
+      {exerciseName}
     </Text>
   );
 
-  var expandedBottom = (
-    <ProgressView value={progress} modifiers={[padding({ top: 2 })]} />
-  );
+  var expandedTrailing = compactLeading;
 
   // ── Dynamic Island: minimal ───────────────────────────────────────────
 
@@ -199,7 +173,6 @@ export default function WorkoutActivity(props, _env) {
     compactTrailing: compactTrailing,
     expandedLeading: expandedLeading,
     expandedTrailing: expandedTrailing,
-    expandedBottom: expandedBottom,
     minimal: minimal,
   };
 }

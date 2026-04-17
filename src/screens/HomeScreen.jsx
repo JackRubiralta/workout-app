@@ -8,7 +8,6 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
-  Platform,
   Alert,
   Animated,
   PanResponder,
@@ -309,7 +308,7 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheet.overlay}>
+      <KeyboardAvoidingView behavior="height" style={sheet.overlay}>
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleRequestClose} />
         <View style={sheet.sheetPanel}>
             <View style={sheet.handle} />
@@ -949,8 +948,7 @@ const sheet = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xxl,
     borderTopRightRadius: radius.xxl,
-    maxHeight: '94%',
-    minHeight: '72%',
+    maxHeight: '90%',
     borderTopWidth: 1,
     borderColor: colors.border,
   },
