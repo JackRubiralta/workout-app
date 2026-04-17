@@ -360,14 +360,15 @@ function ActiveWorkoutView({
       sessionStarted.current = true;
       startSession(day, dayIndex);
 
-      const firstExercise = day.exercises[0];
+      const firstEx = day.exercises[0];
       const total = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
       startLiveActivity({
         dayTitle: day.title,
-        dayColor: day.color,
-        exerciseName: firstExercise?.name ?? '',
-        setLabel: firstExercise ? getSetLabel(firstExercise, 0) : '',
+        exerciseName: firstEx?.name ?? '',
+        setLabel: firstEx ? getSetLabel(firstEx, 0) : '',
         totalSets: total,
+        exSetNum: 1,
+        exSetTotal: firstEx ? exerciseTotalSets(firstEx) : 1,
       });
     }
   }, [day, dayIndex, startSession]);
@@ -379,6 +380,42 @@ function ActiveWorkoutView({
       endLiveActivity();
     }
   }, [isDayDone, completeSession]);
+
+  // When rest ends → show "LOG SET" state on Live Activity, then transition to READY
+  const prevIsResting = useRef(false);
+  useEffect(() => {
+    if (prevIsResting.current && !isResting && !isDayDone && currentPos) {
+      const nextEx = day.exercises[currentPos.e];
+      // First show "timer done / log set" state
+      updateLiveActivity({
+        dayTitle: day.title,
+        exerciseName: nextEx?.name ?? '',
+        secondsRemaining: 0,
+        setsCompleted: doneSets,
+        totalSets,
+        isResting: true,
+        timerDone: true,
+        exSetNum: currentPos.s + 1,
+        exSetTotal: nextEx ? exerciseTotalSets(nextEx) : 1,
+      });
+      // After 5 seconds, transition to READY state
+      const t = setTimeout(() => {
+        updateLiveActivity({
+          dayTitle: day.title,
+          exerciseName: nextEx?.name ?? '',
+          secondsRemaining: 0,
+          setsCompleted: doneSets,
+          totalSets,
+          isResting: false,
+          timerDone: false,
+          exSetNum: currentPos.s + 1,
+          exSetTotal: nextEx ? exerciseTotalSets(nextEx) : 1,
+        });
+      }, 5000);
+      return () => clearTimeout(t);
+    }
+    prevIsResting.current = isResting;
+  }, [isResting, isDayDone, currentPos, day, doneSets, totalSets]);
 
   // Load persisted undo history
   useEffect(() => {
@@ -423,9 +460,15 @@ function ActiveWorkoutView({
     const setLbl = getSetLabel(ex, currentPos.s);
     const restDuration = getRestDuration(ex, currentPos.e, currentPos.s);
 
+    // Figure out what's next (for the notification message)
+    const isLastSetOfEx = currentPos.s === exerciseTotalSets(ex) - 1;
+    const nextExName = isLastSetOfEx && currentPos.e + 1 < day.exercises.length
+      ? day.exercises[currentPos.e + 1].name
+      : ex.name;
+
     // Mark set done and start rest
     markSetDone(dayIndex, currentPos.e, currentPos.s);
-    startRest(restDuration);
+    startRest(restDuration, nextExName);
 
     // Record undo action
     setActionHistory(prev => [...prev, {
@@ -451,13 +494,15 @@ function ActiveWorkoutView({
 
     // Update live activity — pass restEndTime so the native timer counts down
     updateLiveActivity({
+      dayTitle: day.title,
       exerciseName: ex.name,
       setLabel: setLbl,
       secondsRemaining: restDuration,
-      totalSeconds: restDuration,
       setsCompleted: doneSets + 1,
       totalSets,
       isResting: true,
+      exSetNum: currentPos.s + 1,
+      exSetTotal: exerciseTotalSets(ex),
     });
   }, [currentPos, day, dayIndex, markSetDone, startRest, getRestDuration, getLastWeight, getLastReps, doneSets, totalSets]);
 
@@ -488,14 +533,17 @@ function ActiveWorkoutView({
   const handleSkipRest = useCallback(() => {
     setActionHistory(prev => [...prev, { type: 'skip', restSeconds: totalSeconds }]);
     skipRest();
+    const nextEx = currentPos ? day.exercises[currentPos.e] : null;
     updateLiveActivity({
-      exerciseName: currentPos ? day.exercises[currentPos.e].name : '',
-      setLabel: currentPos ? getSetLabel(day.exercises[currentPos.e], currentPos.s) : '',
+      dayTitle: day.title,
+      exerciseName: nextEx?.name ?? '',
+      setLabel: nextEx ? getSetLabel(nextEx, currentPos.s) : '',
       secondsRemaining: 0,
-      totalSeconds: 0,
       setsCompleted: doneSets,
       totalSets,
       isResting: false,
+      exSetNum: currentPos ? currentPos.s + 1 : 1,
+      exSetTotal: nextEx ? exerciseTotalSets(nextEx) : 1,
     });
   }, [totalSeconds, skipRest, currentPos, day, doneSets, totalSets]);
 

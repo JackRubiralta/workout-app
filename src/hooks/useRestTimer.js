@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Vibration, AppState } from 'react-native';
+import { AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
-
-const VIBRATION_PATTERN = [0, 450, 120, 450, 120, 450];
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
@@ -72,14 +70,10 @@ export function useRestTimer() {
     setIsResting(false);
     endTimeRef.current = null;
 
-    // Cancel the scheduled notification — we're in-app and will vibrate directly
-    if (notifIdRef.current) {
-      Notifications.cancelScheduledNotificationAsync(notifIdRef.current).catch(() => {});
-      notifIdRef.current = null;
-    }
+    // Let the scheduled notification fire (shows banner via live activity + notification)
+    notifIdRef.current = null;
 
-    Vibration.vibrate(VIBRATION_PATTERN);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
   }, [isResting, secondsLeft, clearTimer]);
 
   // Cleanup on unmount
@@ -87,8 +81,7 @@ export function useRestTimer() {
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
-  const startRest = useCallback((duration) => {
-    Vibration.cancel();
+  const startRest = useCallback((duration, exerciseName) => {
     clearTimer();
 
     // Cancel any leftover notification from previous rest
@@ -105,26 +98,25 @@ export function useRestTimer() {
     setIsResting(true);
 
     // Schedule background notification — fires even if you switch apps or lock screen
+    const body = exerciseName ? `Time for ${exerciseName}` : 'Time to get back to it';
     Notifications.scheduleNotificationAsync({
       content: {
         title: 'Rest Complete',
-        body: 'Time to get back to it',
-        sound: true,                                        // enables sound + vibration on iOS
-        vibrate: VIBRATION_PATTERN,                        // Android vibration pattern
+        body,
+        sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: new Date(endTime),
-        channelId: 'workout-timer',                        // Android: use channel with vibration
+        channelId: 'workout-timer',
       },
     })
       .then((id) => { notifIdRef.current = id; })
-      .catch(() => {}); // gracefully degrade if permission not granted
+      .catch(() => {});
   }, [clearTimer]);
 
   const skipRest = useCallback(() => {
-    Vibration.cancel();
     clearTimer();
 
     if (notifIdRef.current) {

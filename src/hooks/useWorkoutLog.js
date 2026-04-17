@@ -104,30 +104,39 @@ export function useWorkoutLog() {
     activeSessionRef.current = null;
   }, []);
 
-  // Get the last weight used for an exercise (from any session)
+  // Get the average weight from the last 3 entries for an exercise
   const getLastWeight = useCallback((exerciseName) => {
+    const weights = [];
     for (const session of sessions) {
       for (let i = session.entries.length - 1; i >= 0; i--) {
         const entry = session.entries[i];
         if (entry.exerciseName === exerciseName && !entry.isWarmup && entry.weight > 0) {
-          return { weight: entry.weight, unit: entry.unit };
+          weights.push({ weight: entry.weight, unit: entry.unit });
+          if (weights.length >= 3) break;
         }
       }
+      if (weights.length >= 3) break;
     }
-    return null;
+    if (weights.length === 0) return null;
+    const avg = weights.reduce((sum, w) => sum + w.weight, 0) / weights.length;
+    return { weight: Math.round(avg / 2.5) * 2.5, unit: weights[0].unit };
   }, [sessions]);
 
-  // Get the last reps for an exercise
+  // Get the average reps from the last 3 entries for an exercise
   const getLastReps = useCallback((exerciseName) => {
+    const reps = [];
     for (const session of sessions) {
       for (let i = session.entries.length - 1; i >= 0; i--) {
         const entry = session.entries[i];
         if (entry.exerciseName === exerciseName && !entry.isWarmup && entry.reps > 0) {
-          return entry.reps;
+          reps.push(entry.reps);
+          if (reps.length >= 3) break;
         }
       }
+      if (reps.length >= 3) break;
     }
-    return null;
+    if (reps.length === 0) return null;
+    return Math.round(reps.reduce((sum, r) => sum + r, 0) / reps.length);
   }, [sessions]);
 
   // Delete a session

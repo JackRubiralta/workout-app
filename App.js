@@ -12,11 +12,11 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/constants/theme';
 
-// Suppress in-app notification banners — the timer handles the alert visually
+// Show notification banner + sound when rest timer completes (even in foreground)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: false,
-    shouldPlaySound: false,
+    shouldShowAlert: true,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -46,7 +46,6 @@ export default function App() {
       Notifications.setNotificationChannelAsync('workout-timer', {
         name: 'Workout Timer',
         importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 450, 120, 450, 120, 450],
         sound: null,
       }).catch(() => {});
     }

@@ -9,7 +9,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   Alert,
   Animated,
   PanResponder,
@@ -310,9 +309,9 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose} statusBarTranslucent>
-      <Pressable style={sheet.overlay} onPress={handleRequestClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheet.kav}>
-          <Pressable style={sheet.sheetPanel} onPress={() => {}}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheet.overlay}>
+        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleRequestClose} />
+        <View style={sheet.sheetPanel}>
             <View style={sheet.handle} />
 
             {showingExercise ? (
@@ -340,9 +339,8 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
                 daysCount={daysCount}
               />
             )}
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -947,7 +945,6 @@ const sheet = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
-  kav: { justifyContent: 'flex-end' },
   sheetPanel: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xxl,

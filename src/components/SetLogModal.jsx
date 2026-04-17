@@ -6,7 +6,6 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
-  Pressable,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius, fontSize, fonts } from '../constants/theme';
@@ -122,7 +121,6 @@ const pk = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    zIndex: 1,
   },
   item: {
     height: ITEM_H,
@@ -140,7 +138,6 @@ const pk = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: colors.surfaceElevated,
-    zIndex: 2,
   },
 });
 
@@ -157,8 +154,8 @@ export function SetLogModal({
 
   useEffect(() => {
     if (visible) {
-      setWeight(defaultWeight > 0 ? WEIGHT_VALUES[nearestIndex(WEIGHT_VALUES, defaultWeight)] : 0);
-      setReps(defaultReps > 0 ? Math.min(defaultReps, 100) : 0);
+      setWeight(defaultWeight > 0 ? WEIGHT_VALUES[nearestIndex(WEIGHT_VALUES, defaultWeight)] : 2.5);
+      setReps(defaultReps > 0 ? Math.min(defaultReps, 100) : 1);
       setToFailure(false);
       setOpenKey(k => k + 1);
     }
@@ -171,8 +168,9 @@ export function SetLogModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss} statusBarTranslucent>
-      <Pressable style={s.overlay} onPress={onDismiss}>
-        <Pressable style={s.sheet} onPress={() => {}}>
+      <View style={s.overlay}>
+        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onDismiss} />
+        <View style={s.sheet}>
           <View style={s.handle} />
 
           {/* Context header */}
@@ -236,8 +234,8 @@ export function SetLogModal({
           </TouchableOpacity>
 
           <View style={{ height: spacing.lg }} />
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
