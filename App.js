@@ -11,6 +11,7 @@ import { WorkoutScreen } from './src/screens/WorkoutScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/constants/theme';
+import { endLiveActivity } from './src/modules/liveActivity';
 
 // Show notification banner + sound when rest timer completes (even in foreground)
 Notifications.setNotificationHandler({
@@ -40,6 +41,11 @@ export default function App() {
   const isLoaded = configLoaded && workoutState.loaded && workoutLog.loaded;
 
   useEffect(() => {
+    // Clean up stale live activities and notifications from a previous session
+    // (e.g. user killed the app while a rest timer was active)
+    endLiveActivity();
+    Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+
     Notifications.requestPermissionsAsync().catch(() => {});
 
     if (Platform.OS === 'android') {

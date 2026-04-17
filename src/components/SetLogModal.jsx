@@ -6,6 +6,8 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius, fontSize, fonts } from '../constants/theme';
@@ -152,8 +154,32 @@ export function SetLogModal({
   const [toFailure, setToFailure] = useState(false);
   const [openKey, setOpenKey] = useState(0);
 
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => g.dy > 5,
+      onPanResponderMove: (_, g) => {
+        if (g.dy > 0) translateY.setValue(g.dy);
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 80 || g.vy > 0.5) {
+          Animated.timing(translateY, { toValue: 500, duration: 200, useNativeDriver: true }).start(() => {
+            dismissRef.current();
+          });
+        } else {
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true, speed: 20, bounciness: 5 }).start();
+        }
+      },
+    })
+  ).current;
+
   useEffect(() => {
     if (visible) {
+      translateY.setValue(0);
       setWeight(defaultWeight > 0 ? WEIGHT_VALUES[nearestIndex(WEIGHT_VALUES, defaultWeight)] : 2.5);
       setReps(defaultReps > 0 ? Math.min(defaultReps, 100) : 1);
       setToFailure(false);
@@ -167,11 +193,13 @@ export function SetLogModal({
   }, [weight, reps, toFailure, onSave]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss} statusBarTranslucent>
       <View style={s.overlay}>
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onDismiss} />
-        <View style={s.sheet}>
-          <View style={s.handle} />
+        <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
+          <View {...panResponder.panHandlers} style={s.handleArea}>
+            <View style={s.handle} />
+          </View>
 
           {/* Context header */}
           <View style={s.ctx}>
@@ -234,7 +262,7 @@ export function SetLogModal({
           </TouchableOpacity>
 
           <View style={{ height: spacing.lg }} />
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -250,10 +278,13 @@ const s = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: spacing.lg,
   },
+  handleArea: {
+    paddingTop: spacing.sm, paddingBottom: spacing.md,
+    alignItems: 'center',
+  },
   handle: {
     width: 36, height: 4, backgroundColor: colors.border,
-    borderRadius: radius.full, alignSelf: 'center',
-    marginTop: spacing.sm, marginBottom: spacing.sm,
+    borderRadius: radius.full,
   },
 
   // Context

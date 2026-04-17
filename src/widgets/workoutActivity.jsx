@@ -20,102 +20,77 @@ export default function WorkoutActivity(props, _env) {
   var timerUpper = new Date(Math.max(restEndTime, now));
   var progress = totalSets > 0 ? setsCompleted / totalSets : 0;
   var totalText = setsCompleted + "/" + totalSets;
-  var setsLeft = exSetTotal - exSetNum;
-  var setsLeftText = setsLeft + " left";
+  var setText = "SET " + exSetNum + "/" + exSetTotal;
+
+  // ── Status element (reused across layouts) ────────────────────────────
+
+  var statusSmall = timerDone ? (
+    <Text modifiers={[font({ size: 13, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"GO"}
+    </Text>
+  ) : hasTimer ? (
+    <Text
+      timerInterval={{ lower: timerLower, upper: timerUpper }}
+      countsDown={true}
+      modifiers={[font({ size: 13, weight: "bold", design: "rounded" }), foregroundStyle("#FFFFFF")]}
+    />
+  ) : (
+    <Text modifiers={[font({ size: 13, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"READY"}
+    </Text>
+  );
 
   // ── Banner (Lock Screen) ──────────────────────────────────────────────
 
-  var banner = timerDone ? (
-    // TIMER JUST FINISHED — ready for next set
-    <VStack modifiers={[padding({ top: 14, bottom: 14, leading: 20, trailing: 20 })]}>
-      <HStack>
-        <Text modifiers={[font({ size: 13, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
-          {dayTitle}
-        </Text>
-        <Spacer />
-        <Text modifiers={[font({ size: 12, weight: "semibold", design: "monospaced" }), foregroundStyle("#636366")]}>
-          {totalText}
-        </Text>
-      </HStack>
-      <HStack modifiers={[padding({ top: 8 })]}>
-        <VStack>
-          <Text modifiers={[font({ size: 15, weight: "semibold" }), foregroundStyle("#EBEBF5")]}>
-            {exerciseName}
-          </Text>
-          <Text modifiers={[font({ size: 11, weight: "bold", design: "monospaced" }), foregroundStyle("#636366")]}>
-            {setsLeft > 0 ? setsLeftText : "LAST SET"}
-          </Text>
-        </VStack>
-        <Spacer />
-        <Text modifiers={[font({ size: 14, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
-          {"GO"}
-        </Text>
-      </HStack>
-      <ProgressView value={progress} modifiers={[padding({ top: 10 })]} />
-    </VStack>
+  var bannerStatus = timerDone ? (
+    <Text modifiers={[font({ size: 22, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"GO"}
+    </Text>
   ) : hasTimer ? (
-    // RESTING — countdown timer
-    <VStack modifiers={[padding({ top: 14, bottom: 14, leading: 20, trailing: 20 })]}>
-      <HStack>
-        <Text modifiers={[font({ size: 13, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
-          {dayTitle}
-        </Text>
-        <Spacer />
-        <Text modifiers={[font({ size: 12, weight: "semibold", design: "monospaced" }), foregroundStyle("#636366")]}>
-          {totalText}
-        </Text>
-      </HStack>
-      <HStack modifiers={[padding({ top: 8 })]}>
-        <VStack>
-          <Text modifiers={[font({ size: 15, weight: "semibold" }), foregroundStyle("#EBEBF5")]}>
-            {exerciseName}
-          </Text>
-          <Text modifiers={[font({ size: 11, weight: "bold", design: "monospaced" }), foregroundStyle("#636366")]}>
-            {setsLeft > 0 ? setsLeftText : "LAST SET"}
-          </Text>
-        </VStack>
-        <Spacer />
-        <Text
-          timerInterval={{ lower: timerLower, upper: timerUpper }}
-          countsDown={true}
-          modifiers={[font({ size: 28, weight: "bold", design: "rounded" }), foregroundStyle("#FFFFFF")]}
-        />
-      </HStack>
-      <ProgressView value={progress} modifiers={[padding({ top: 10 })]} />
-    </VStack>
+    <Text
+      timerInterval={{ lower: timerLower, upper: timerUpper }}
+      countsDown={true}
+      modifiers={[font({ size: 32, weight: "bold", design: "rounded" }), foregroundStyle("#FFFFFF")]}
+    />
   ) : (
-    // READY — waiting for user to do the set
-    <VStack modifiers={[padding({ top: 14, bottom: 14, leading: 20, trailing: 20 })]}>
-      <HStack>
-        <Text modifiers={[font({ size: 13, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
-          {dayTitle}
-        </Text>
-        <Spacer />
-        <Text modifiers={[font({ size: 12, weight: "semibold", design: "monospaced" }), foregroundStyle("#636366")]}>
-          {totalText}
-        </Text>
-      </HStack>
-      <HStack modifiers={[padding({ top: 8 })]}>
-        <VStack>
-          <Text modifiers={[font({ size: 15, weight: "semibold" }), foregroundStyle("#EBEBF5")]}>
+    <Text modifiers={[font({ size: 18, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"READY"}
+    </Text>
+  );
+
+  var banner = (
+    <VStack modifiers={[padding({ top: 16, bottom: 16, leading: 20, trailing: 20 })]}>
+      <HStack modifiers={[padding({ bottom: 12 })]}>
+        <VStack modifiers={[frame({ alignment: "leading" })]}>
+          <Text modifiers={[font({ size: 17, weight: "bold" }), foregroundStyle("#EBEBF5")]}>
             {exerciseName}
           </Text>
-          <Text modifiers={[font({ size: 11, weight: "bold", design: "monospaced" }), foregroundStyle("#EBEBF560")]}>
-            {"SET " + exSetNum + "/" + exSetTotal}
-          </Text>
+          <HStack>
+            <Text modifiers={[font({ size: 12, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
+              {dayTitle}
+            </Text>
+            <Text modifiers={[font({ size: 12, weight: "semibold" }), foregroundStyle("#48484A")]}>
+              {"  ·  "}
+            </Text>
+            <Text modifiers={[font({ size: 12, weight: "semibold", design: "monospaced" }), foregroundStyle("#8E8E93")]}>
+              {setText}
+            </Text>
+          </HStack>
         </VStack>
         <Spacer />
-        <Text modifiers={[font({ size: 13, weight: "bold", design: "rounded" }), foregroundStyle("#32D74B")]}>
-          {"READY"}
-        </Text>
+        {bannerStatus}
       </HStack>
-      <ProgressView value={progress} modifiers={[padding({ top: 10 })]} />
+      <ProgressView value={progress} />
+      <HStack modifiers={[padding({ top: 6 })]}>
+        <Text modifiers={[font({ size: 11, weight: "semibold", design: "monospaced" }), foregroundStyle("#636366")]}>
+          {totalText + " sets"}
+        </Text>
+        <Spacer />
+      </HStack>
     </VStack>
   );
 
   // ── Dynamic Island: compact ───────────────────────────────────────────
-  // Only use compactLeading with short content. Leave trailing very small
-  // so the pill doesn't expand across the full status bar.
 
   var compactLeading = timerDone ? (
     <Text modifiers={[font({ size: 11, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
@@ -125,7 +100,7 @@ export default function WorkoutActivity(props, _env) {
     <Text
       timerInterval={{ lower: timerLower, upper: timerUpper }}
       countsDown={true}
-      modifiers={[font({ size: 11, weight: "bold", design: "rounded" })]}
+      modifiers={[font({ size: 11, weight: "bold", design: "rounded" }), monospacedDigit(), frame({ maxWidth: 44 }), clipped()]}
     />
   ) : (
     <Text modifiers={[font({ size: 11, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
@@ -139,20 +114,59 @@ export default function WorkoutActivity(props, _env) {
     </Text>
   );
 
-  // ── Dynamic Island: expanded (minimal — matches compact feel) ─────────
+  // ── Dynamic Island: expanded ──────────────────────────────────────────
 
   var expandedLeading = (
-    <Text modifiers={[font({ size: 13, weight: "semibold" }), foregroundStyle("#EBEBF5")]}>
-      {exerciseName}
+    <VStack modifiers={[frame({ alignment: "leading" })]}>
+      <Text modifiers={[font({ size: 16, weight: "bold" }), foregroundStyle("#EBEBF5")]}>
+        {exerciseName}
+      </Text>
+      <HStack>
+        <Text modifiers={[font({ size: 11, weight: "heavy", design: "monospaced" }), foregroundStyle("#FF6B6B")]}>
+          {dayTitle}
+        </Text>
+        <Text modifiers={[font({ size: 11, weight: "semibold" }), foregroundStyle("#48484A")]}>
+          {"  ·  "}
+        </Text>
+        <Text modifiers={[font({ size: 11, weight: "semibold", design: "monospaced" }), foregroundStyle("#8E8E93")]}>
+          {setText}
+        </Text>
+      </HStack>
+    </VStack>
+  );
+
+  var expandedTrailing = timerDone ? (
+    <Text modifiers={[font({ size: 18, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"GO"}
+    </Text>
+  ) : hasTimer ? (
+    <Text
+      timerInterval={{ lower: timerLower, upper: timerUpper }}
+      countsDown={true}
+      modifiers={[font({ size: 24, weight: "bold", design: "rounded" }), foregroundStyle("#FFFFFF")]}
+    />
+  ) : (
+    <Text modifiers={[font({ size: 16, weight: "heavy", design: "rounded" }), foregroundStyle("#32D74B")]}>
+      {"READY"}
     </Text>
   );
 
-  var expandedTrailing = compactLeading;
+  var expandedBottom = (
+    <VStack>
+      <ProgressView value={progress} />
+      <HStack modifiers={[padding({ top: 4 })]}>
+        <Text modifiers={[font({ size: 10, weight: "semibold", design: "monospaced" }), foregroundStyle("#636366")]}>
+          {totalText + " sets"}
+        </Text>
+        <Spacer />
+      </HStack>
+    </VStack>
+  );
 
   // ── Dynamic Island: minimal ───────────────────────────────────────────
 
   var minimal = timerDone ? (
-    <Text modifiers={[font({ size: 9, weight: "heavy" }), foregroundStyle("#FF9F0A")]}>
+    <Text modifiers={[font({ size: 9, weight: "heavy" }), foregroundStyle("#32D74B")]}>
       {"!"}
     </Text>
   ) : hasTimer ? (
@@ -173,6 +187,7 @@ export default function WorkoutActivity(props, _env) {
     compactTrailing: compactTrailing,
     expandedLeading: expandedLeading,
     expandedTrailing: expandedTrailing,
+    expandedBottom: expandedBottom,
     minimal: minimal,
   };
 }

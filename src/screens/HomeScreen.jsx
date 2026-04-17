@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
+  Keyboard,
   Alert,
   Animated,
   PanResponder,
@@ -87,6 +88,13 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
   const [restSecs, setRestSecs] = useState('90');
   const [reps, setReps] = useState('');
   const [warmupReps, setWarmupReps] = useState('');
+  const [kbVisible, setKbVisible] = useState(false);
+
+  useEffect(() => {
+    const s1 = Keyboard.addListener('keyboardWillShow', () => setKbVisible(true));
+    const s2 = Keyboard.addListener('keyboardWillHide', () => setKbVisible(false));
+    return () => { s1.remove(); s2.remove(); };
+  }, []);
 
   useEffect(() => {
     if (exercise) {
@@ -161,11 +169,13 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
         <View style={{ height: 16 }} />
       </ScrollView>
 
-      <View style={sheet.footer}>
-        <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: dayColor }]} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={sheet.saveBtnText}>Save Exercise</Text>
-        </TouchableOpacity>
-      </View>
+      {!kbVisible && (
+        <View style={sheet.footer}>
+          <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: dayColor }]} onPress={handleSave} activeOpacity={0.8}>
+            <Text style={sheet.saveBtnText}>Save Exercise</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </>
   );
 }
@@ -173,6 +183,14 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
 // ─── Day Edit Panel ─────────────────────────────────────────────────────────
 
 function DayEditPanel({ day, title, setTitle, focus, setFocus, exerciseRestSecs, setExerciseRestSecs, exercises, onExerciseTap, onSave, onClose, onDelete, daysCount }) {
+  const [kbVisible, setKbVisible] = useState(false);
+
+  useEffect(() => {
+    const s1 = Keyboard.addListener('keyboardWillShow', () => setKbVisible(true));
+    const s2 = Keyboard.addListener('keyboardWillHide', () => setKbVisible(false));
+    return () => { s1.remove(); s2.remove(); };
+  }, []);
+
   const handleDeletePress = useCallback(() => {
     Alert.alert(
       `Delete Day ${day.day}?`,
@@ -244,16 +262,18 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exerciseRestSecs,
         <View style={{ height: 16 }} />
       </ScrollView>
 
-      <View style={sheet.footer}>
-        <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: day.color }]} onPress={onSave} activeOpacity={0.8}>
-          <Text style={sheet.saveBtnText}>Save Day</Text>
-        </TouchableOpacity>
-        {daysCount > 1 && (
-          <TouchableOpacity style={sheet.deleteBtn} onPress={handleDeletePress} hitSlop={8}>
-            <Text style={sheet.deleteBtnText}>Delete Day</Text>
+      {!kbVisible && (
+        <View style={sheet.footer}>
+          <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: day.color }]} onPress={onSave} activeOpacity={0.8}>
+            <Text style={sheet.saveBtnText}>Save Day</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          {daysCount > 1 && (
+            <TouchableOpacity style={sheet.deleteBtn} onPress={handleDeletePress} hitSlop={8}>
+              <Text style={sheet.deleteBtnText}>Delete Day</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </>
   );
 }
@@ -267,8 +287,40 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
   const [exercises, setExercises] = useState([]);
   const [editingExIndex, setEditingExIndex] = useState(null);
 
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const editingRef = useRef(null);
+  editingRef.current = editingExIndex;
+  const setEditingRef = useRef(setEditingExIndex);
+  setEditingRef.current = setEditingExIndex;
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+
+  const sheetPan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => g.dy > 5,
+      onPanResponderMove: (_, g) => {
+        if (g.dy > 0) sheetTranslateY.setValue(g.dy);
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 80 || g.vy > 0.5) {
+          Animated.timing(sheetTranslateY, { toValue: 600, duration: 200, useNativeDriver: true }).start(() => {
+            if (editingRef.current !== null) {
+              setEditingRef.current(null);
+            } else {
+              closeRef.current();
+            }
+          });
+        } else {
+          Animated.spring(sheetTranslateY, { toValue: 0, useNativeDriver: true, speed: 20, bounciness: 5 }).start();
+        }
+      },
+    })
+  ).current;
+
   useEffect(() => {
     if (day && visible) {
+      sheetTranslateY.setValue(0);
       setTitle(day.title);
       setFocus(day.focus ?? '');
       setExerciseRestSecs(String(day.exerciseRestSeconds ?? 180));
@@ -307,11 +359,13 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
   const showingExercise = editingExIndex !== null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose} statusBarTranslucent>
       <KeyboardAvoidingView behavior="height" style={sheet.overlay}>
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleRequestClose} />
-        <View style={sheet.sheetPanel}>
-            <View style={sheet.handle} />
+        <Animated.View style={[sheet.sheetPanel, { transform: [{ translateY: sheetTranslateY }] }]}>
+            <View {...sheetPan.panHandlers} style={sheet.handleArea}>
+              <View style={sheet.handle} />
+            </View>
 
             {showingExercise ? (
               <ExerciseEditPanel
@@ -338,7 +392,7 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
                 daysCount={daysCount}
               />
             )}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -952,14 +1006,16 @@ const sheet = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: colors.border,
   },
+  handleArea: {
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    alignItems: 'center',
+  },
   handle: {
     width: 36,
     height: 4,
     backgroundColor: colors.border,
     borderRadius: radius.full,
-    alignSelf: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
   },
   header: {
     flexDirection: 'row',
