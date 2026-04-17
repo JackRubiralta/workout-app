@@ -19,7 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, fonts, spacing, radius, shadow, fontSize } from '../constants/theme';
 import { exerciseTotalSets } from '../utils/exercise';
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
+// ─── Primitives ─────────────────────────────────────────────────────────────
 
 function FieldLabel({ children, style }) {
   return <Text style={[sheet.fieldLabel, style]}>{children}</Text>;
@@ -80,8 +80,7 @@ function Stepper({ value, min = 1, max = 6, onChange, accent }) {
   );
 }
 
-// ─── Exercise Edit Panel ──────────────────────────────────────────────────────
-// Rendered inside the single Modal when editingExIndex !== null.
+// ─── Exercise Edit Panel ────────────────────────────────────────────────────
 
 function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
   const [name, setName] = useState('');
@@ -91,7 +90,6 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
   const [reps, setReps] = useState('');
   const [warmupReps, setWarmupReps] = useState('');
 
-  // Sync local state when exercise changes
   useEffect(() => {
     if (exercise) {
       setName(exercise.name);
@@ -120,7 +118,6 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
 
   return (
     <>
-      {/* Header with back button */}
       <View style={sheet.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={12}>
           <Text style={[styles.backBtnText, { color: dayColor }]}>‹</Text>
@@ -134,72 +131,40 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Name */}
         <FieldLabel>NAME</FieldLabel>
-        <SheetInput
-          value={name}
-          onChangeText={setName}
-          placeholder="Exercise name"
-          selectionColor={dayColor}
-        />
+        <SheetInput value={name} onChangeText={setName} placeholder="Exercise name" selectionColor={dayColor} />
 
-        {/* Working sets */}
         <FieldLabel style={{ marginTop: spacing.md }}>WORKING SETS</FieldLabel>
         <Stepper value={sets} min={1} max={6} onChange={setSets} accent={dayColor} />
 
-        {/* Reps */}
         <FieldLabel style={{ marginTop: spacing.md }}>REPS / GUIDE</FieldLabel>
-        <SheetInput
-          value={reps}
-          onChangeText={setReps}
-          placeholder="e.g. 6–10 reps"
-          selectionColor={dayColor}
-        />
+        <SheetInput value={reps} onChangeText={setReps} placeholder="e.g. 6–10 reps" selectionColor={dayColor} />
 
-        {/* Rest */}
         <FieldLabel style={{ marginTop: spacing.md }}>REST BETWEEN SETS</FieldLabel>
         <View style={styles.inlineRow}>
-          <SheetInput
-            style={{ flex: 1 }}
-            value={restSecs}
-            onChangeText={setRestSecs}
-            keyboardType="number-pad"
-            selectionColor={dayColor}
-          />
+          <SheetInput style={{ flex: 1 }} value={restSecs} onChangeText={setRestSecs} keyboardType="number-pad" selectionColor={dayColor} />
           <Text style={styles.unitLabel}>sec</Text>
         </View>
         <Text style={styles.hint}>10 – 600 seconds</Text>
 
-        {/* Warm-up toggle */}
         <FieldLabel style={{ marginTop: spacing.md }}>WARM-UP SET</FieldLabel>
         <View style={styles.toggleRow}>
           <Text style={styles.toggleDesc}>Add a warm-up set before working sets</Text>
           <Toggle value={warmup} onChange={setWarmup} accent={dayColor} />
         </View>
 
-        {/* Warm-up reps — only when toggled on */}
         {warmup && (
           <>
             <FieldLabel style={{ marginTop: spacing.md }}>WARM-UP REPS / GUIDE</FieldLabel>
-            <SheetInput
-              value={warmupReps}
-              onChangeText={setWarmupReps}
-              placeholder="e.g. Light weight, 12–15 reps"
-              selectionColor={dayColor}
-            />
+            <SheetInput value={warmupReps} onChangeText={setWarmupReps} placeholder="e.g. Light weight, 12–15 reps" selectionColor={dayColor} />
           </>
         )}
 
         <View style={{ height: 16 }} />
       </ScrollView>
 
-      {/* Save */}
       <View style={sheet.footer}>
-        <TouchableOpacity
-          style={[sheet.saveBtn, { backgroundColor: dayColor }]}
-          onPress={handleSave}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: dayColor }]} onPress={handleSave} activeOpacity={0.8}>
           <Text style={sheet.saveBtnText}>Save Exercise</Text>
         </TouchableOpacity>
       </View>
@@ -207,10 +172,9 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
   );
 }
 
-// ─── Day Edit Panel ───────────────────────────────────────────────────────────
-// Rendered inside the single Modal when editingExIndex === null.
+// ─── Day Edit Panel ─────────────────────────────────────────────────────────
 
-function DayEditPanel({ day, title, setTitle, focus, setFocus, exercises, onExerciseTap, onSave, onClose, onDelete, daysCount }) {
+function DayEditPanel({ day, title, setTitle, focus, setFocus, exerciseRestSecs, setExerciseRestSecs, exercises, onExerciseTap, onSave, onClose, onDelete, daysCount }) {
   const handleDeletePress = useCallback(() => {
     Alert.alert(
       `Delete Day ${day.day}?`,
@@ -224,7 +188,6 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exercises, onExer
 
   return (
     <>
-      {/* Header */}
       <View style={sheet.header}>
         <View style={[sheet.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
           <Text style={[sheet.dayDotText, { color: day.color }]}>{day.day}</Text>
@@ -240,37 +203,31 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exercises, onExer
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Day title */}
         <FieldLabel>DAY TITLE</FieldLabel>
-        <SheetInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g. PUSH"
-          autoCapitalize="characters"
-          selectionColor={day.color}
-        />
+        <SheetInput value={title} onChangeText={setTitle} placeholder="e.g. PUSH" autoCapitalize="characters" selectionColor={day.color} />
 
-        {/* Focus */}
         <FieldLabel style={{ marginTop: spacing.md }}>FOCUS</FieldLabel>
-        <SheetInput
-          value={focus}
-          onChangeText={setFocus}
-          placeholder="e.g. Chest Focus"
-          selectionColor={day.color}
-        />
+        <SheetInput value={focus} onChangeText={setFocus} placeholder="e.g. Chest Focus" selectionColor={day.color} />
 
-        {/* Exercise list */}
+        <FieldLabel style={{ marginTop: spacing.md }}>REST BETWEEN EXERCISES</FieldLabel>
+        <View style={styles.inlineRow}>
+          <SheetInput
+            style={{ flex: 1 }}
+            value={exerciseRestSecs}
+            onChangeText={setExerciseRestSecs}
+            keyboardType="number-pad"
+            selectionColor={day.color}
+          />
+          <Text style={styles.unitLabel}>sec</Text>
+        </View>
+        <Text style={styles.hint}>Rest after finishing all sets of an exercise (30 – 600 sec)</Text>
+
         <FieldLabel style={{ marginTop: spacing.md }}>EXERCISES</FieldLabel>
         <View style={styles.exListContainer}>
           {exercises.map((ex, i) => {
             const warmupLabel = ex.warmup ? '1 warm-up + ' : '';
             return (
-              <TouchableOpacity
-                key={i}
-                style={styles.exRow}
-                onPress={() => onExerciseTap(i)}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity key={i} style={styles.exRow} onPress={() => onExerciseTap(i)} activeOpacity={0.7}>
                 <View style={[styles.exBadge, { backgroundColor: day.color + '18' }]}>
                   <Text style={[styles.exBadgeText, { color: day.color }]}>{i + 1}</Text>
                 </View>
@@ -289,13 +246,8 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exercises, onExer
         <View style={{ height: 16 }} />
       </ScrollView>
 
-      {/* Save day + optional delete */}
       <View style={sheet.footer}>
-        <TouchableOpacity
-          style={[sheet.saveBtn, { backgroundColor: day.color }]}
-          onPress={onSave}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={[sheet.saveBtn, { backgroundColor: day.color }]} onPress={onSave} activeOpacity={0.8}>
           <Text style={sheet.saveBtnText}>Save Day</Text>
         </TouchableOpacity>
         {daysCount > 1 && (
@@ -308,42 +260,42 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exercises, onExer
   );
 }
 
-// ─── Edit Modal (single Modal, navigates between day and exercise panels) ─────
+// ─── Edit Modal ─────────────────────────────────────────────────────────────
 
 function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCount }) {
   const [title, setTitle] = useState('');
   const [focus, setFocus] = useState('');
+  const [exerciseRestSecs, setExerciseRestSecs] = useState('180');
   const [exercises, setExercises] = useState([]);
-  // null = day panel, number = exercise panel
   const [editingExIndex, setEditingExIndex] = useState(null);
 
-  // Reset every time the modal opens (or day changes)
   useEffect(() => {
     if (day && visible) {
       setTitle(day.title);
       setFocus(day.focus ?? '');
+      setExerciseRestSecs(String(day.exerciseRestSeconds ?? 180));
       setExercises(day.exercises.map(ex => ({ ...ex })));
       setEditingExIndex(null);
     }
   }, [day, visible]);
 
   const handleSaveDay = useCallback(() => {
+    const rest = parseInt(exerciseRestSecs, 10);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onSave(dayIndex, {
       title: title.trim() || day.title,
       focus: focus.trim(),
+      exerciseRestSeconds: !isNaN(rest) && rest >= 30 ? Math.min(rest, 600) : (day.exerciseRestSeconds ?? 180),
       exercises,
     });
     onClose();
-  }, [dayIndex, title, focus, exercises, day, onSave, onClose]);
+  }, [dayIndex, title, focus, exerciseRestSecs, exercises, day, onSave, onClose]);
 
-  // Called by ExerciseEditPanel — updates local draft and goes back to day panel
   const handleSaveExercise = useCallback((exIndex, updates) => {
     setExercises(prev => prev.map((ex, i) => (i === exIndex ? { ...ex, ...updates } : ex)));
     setEditingExIndex(null);
   }, []);
 
-  // Back / close logic depends on which panel is showing
   const handleRequestClose = useCallback(() => {
     if (editingExIndex !== null) {
       setEditingExIndex(null);
@@ -357,20 +309,9 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
   const showingExercise = editingExIndex !== null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleRequestClose}
-      statusBarTranslucent
-    >
-      {/* Tapping the dim overlay dismisses / navigates back */}
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose} statusBarTranslucent>
       <Pressable style={sheet.overlay} onPress={handleRequestClose}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={sheet.kav}
-        >
-          {/* The sheet panel — swallows touches so overlay doesn't fire */}
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheet.kav}>
           <Pressable style={sheet.sheetPanel} onPress={() => {}}>
             <View style={sheet.handle} />
 
@@ -389,6 +330,8 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
                 setTitle={setTitle}
                 focus={focus}
                 setFocus={setFocus}
+                exerciseRestSecs={exerciseRestSecs}
+                setExerciseRestSecs={setExerciseRestSecs}
                 exercises={exercises}
                 onExerciseTap={setEditingExIndex}
                 onSave={handleSaveDay}
@@ -404,10 +347,9 @@ function EditModal({ day, dayIndex, visible, onClose, onSave, onDelete, daysCoun
   );
 }
 
-// ─── Drag Handle ─────────────────────────────────────────────────────────────
+// ─── Drag Handle ────────────────────────────────────────────────────────────
 
 function DragHandle({ cardIndex, onGrant, onMove, onRelease }) {
-  // Ref pattern keeps PanResponder closures always fresh
   const cb = useRef({ onGrant, onMove, onRelease, cardIndex });
   cb.current = { onGrant, onMove, onRelease, cardIndex };
 
@@ -415,8 +357,7 @@ function DragHandle({ cardIndex, onGrant, onMove, onRelease }) {
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) =>
-        cb.current.onGrant(cb.current.cardIndex, e.nativeEvent.pageY),
+      onPanResponderGrant: (e) => cb.current.onGrant(cb.current.cardIndex, e.nativeEvent.pageY),
       onPanResponderMove: (e) => cb.current.onMove(e.nativeEvent.pageY),
       onPanResponderRelease: (e) => cb.current.onRelease(e.nativeEvent.pageY),
       onPanResponderTerminate: () => cb.current.onRelease(null),
@@ -432,10 +373,9 @@ function DragHandle({ cardIndex, onGrant, onMove, onRelease }) {
   );
 }
 
-// ─── Day Card ─────────────────────────────────────────────────────────────────
+// ─── Day Card ───────────────────────────────────────────────────────────────
 
-function DayCard({ day, dayProgress, isDone, onPress, isEditing,
-                   onDragGrant, onDragMove, onDragRelease, cardIndex, isDragOverlay }) {
+function DayCard({ day, dayProgress, isDone, onPress, onDragGrant, onDragMove, onDragRelease, cardIndex, isDragOverlay }) {
   const totalSets = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
   const doneSets = dayProgress
     ? dayProgress.sets.reduce((acc, exSets, ei) => {
@@ -447,60 +387,35 @@ function DayCard({ day, dayProgress, isDone, onPress, isEditing,
 
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        isDone && !isEditing && styles.cardDone,
-        isEditing && styles.cardEditing,
-        isDragOverlay && styles.cardDragOverlay,
-      ]}
+      style={[styles.card, styles.cardEditing, isDragOverlay && styles.cardDragOverlay]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         onPress();
       }}
-      activeOpacity={isEditing ? 1 : 0.7}
+      activeOpacity={1}
     >
       <View style={[styles.colorBar, { backgroundColor: isDone ? colors.success : day.color }]} />
-
-      <View style={[styles.dayBubble, { backgroundColor: (isDone ? colors.success : day.color) + '1A' }]}>
-        <Text style={[styles.dayNumber, { color: isDone ? colors.success : day.color }]}>{day.day}</Text>
+      <View style={[styles.cardDayBubble, { backgroundColor: (isDone ? colors.success : day.color) + '1A' }]}>
+        <Text style={[styles.cardDayNumber, { color: isDone ? colors.success : day.color }]}>{day.day}</Text>
       </View>
 
       <View style={styles.cardContent}>
         <View style={styles.cardTop}>
           <View style={{ flex: 1, marginRight: spacing.sm }}>
-            <Text
-              style={[styles.cardTitle, isDone && !isEditing && styles.cardTitleDone]}
-              numberOfLines={1}
-            >
-              {day.title}
-            </Text>
-            {day.focus ? (
-              <Text style={styles.cardFocus} numberOfLines={1}>{day.focus}</Text>
-            ) : null}
+            <Text style={styles.cardTitle} numberOfLines={1}>{day.title}</Text>
+            {day.focus ? <Text style={styles.cardFocus} numberOfLines={1}>{day.focus}</Text> : null}
           </View>
-
-          <View style={styles.cardRight}>
-            {isDone && !isEditing ? (
-              <View style={styles.checkBadge}>
-                <Text style={styles.checkMark}>✓</Text>
-              </View>
-            ) : !isEditing ? (
-              <Text style={[styles.progressText, doneSets > 0 && { color: day.color }]}>
-                {doneSets}/{totalSets}
-              </Text>
-            ) : null}
-          </View>
+          <Text style={styles.cardExCount}>{day.exercises.length} ex</Text>
         </View>
 
-        {!isDone && !isEditing && doneSets > 0 && (
+        {!isDone && doneSets > 0 && (
           <View style={styles.progressBarTrack}>
             <View style={[styles.progressBarFill, { width: `${pct * 100}%`, backgroundColor: day.color }]} />
           </View>
         )}
       </View>
 
-      {/* Drag handle — only in edit mode, not on the overlay (overlay is pointer-events none) */}
-      {isEditing && !isDragOverlay && (
+      {!isDragOverlay && (
         <DragHandle
           cardIndex={cardIndex}
           onGrant={onDragGrant}
@@ -508,7 +423,6 @@ function DayCard({ day, dayProgress, isDone, onPress, isEditing,
           onRelease={onDragRelease}
         />
       )}
-      {/* Overlay gets a static handle icon so it looks identical */}
       {isDragOverlay && (
         <View style={styles.dragHandle} pointerEvents="none">
           <View style={styles.dragLine} />
@@ -520,7 +434,7 @@ function DayCard({ day, dayProgress, isDone, onPress, isEditing,
   );
 }
 
-// ─── Add Day Button ───────────────────────────────────────────────────────────
+// ─── Add Day Button ─────────────────────────────────────────────────────────
 
 function AddDayButton({ onPress }) {
   return (
@@ -538,35 +452,30 @@ function AddDayButton({ onPress }) {
   );
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
+// ─── Screen ─────────────────────────────────────────────────────────────────
 
-export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay, days, updateDay, addDay, deleteDay, moveDay }) {
-  const [isEditing, setIsEditing] = useState(false);
+export function HomeScreen({ progress, doneDays, allDone, resetAll, days, updateDay, addDay, deleteDay, moveDay }) {
   const [editingDayIndex, setEditingDayIndex] = useState(null);
 
-  // ── Drag state ───────────────────────────────────────────────────────────
+  // ── Drag state ──────────────────────────────────────────────────────────
   const [activeIndex, setActiveIndex] = useState(null);
   const [dropIndex, setDropIndex] = useState(null);
   const activeIndexRef = useRef(null);
   const dragY = useRef(new Animated.Value(0)).current;
   const listAreaRef = useRef(null);
   const listAreaPageY = useRef(0);
-  const itemLayouts = useRef([]); // { y, height } relative to listArea
-  // One Animated.Value per day for real-time shift animation
+  const itemLayouts = useRef([]);
   const itemTranslates = useRef(days.map(() => new Animated.Value(0)));
 
-  // Keep the translate array in sync when days are added
   useEffect(() => {
     while (itemTranslates.current.length < days.length) {
       itemTranslates.current.push(new Animated.Value(0));
     }
-    // Reset all when days reference changes (after any reorder/add/delete)
     if (activeIndexRef.current === null) {
       itemTranslates.current.forEach(av => av.setValue(0));
     }
   }, [days]);
 
-  // Animate other cards to show the drop target in real-time
   const applyShifts = useCallback((ai, di) => {
     const h = (itemLayouts.current[ai]?.height ?? 80) + spacing.sm;
     itemTranslates.current.forEach((av, i) => {
@@ -574,12 +483,7 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
       let target = 0;
       if (ai < di && i > ai && i <= di) target = -h;
       else if (ai > di && i < ai && i >= di) target = h;
-      Animated.spring(av, {
-        toValue: target,
-        useNativeDriver: true,
-        speed: 28,
-        bounciness: 0,
-      }).start();
+      Animated.spring(av, { toValue: target, useNativeDriver: true, speed: 28, bounciness: 0 }).start();
     });
   }, []);
 
@@ -637,15 +541,8 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
     }
   }, [resetShifts, findDropIndex, moveDay]);
 
-  // ── Regular handlers ─────────────────────────────────────────────────────
   const handleCardPress = useCallback((index) => {
-    if (isEditing) setEditingDayIndex(index);
-    else onSelectDay(index);
-  }, [isEditing, onSelectDay]);
-
-  const handleEditToggle = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setIsEditing(prev => !prev);
+    setEditingDayIndex(index);
   }, []);
 
   const handleReset = useCallback(() => {
@@ -668,36 +565,25 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Workout</Text>
-          <Text style={styles.headerSubtitle}>Push / Pull / Legs</Text>
+          <Text style={styles.headerTitle}>Program</Text>
+          <Text style={styles.headerSubtitle}>{days.length} day{days.length !== 1 ? 's' : ''}</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={handleReset} hitSlop={10} activeOpacity={0.6}>
             <Text style={styles.resetBtnText}>Reset</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.editToggle, isEditing && styles.editToggleActive]}
-            onPress={handleEditToggle}
-            activeOpacity={0.7}
-            hitSlop={8}
-          >
-            <Text style={[styles.editToggleText, isEditing && styles.editToggleTextActive]}>
-              {isEditing ? 'Done' : 'Edit'}
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
 
-      {/* List area — drag overlay is absolutely positioned here */}
+      {/* List */}
       <View style={styles.listArea} ref={listAreaRef}>
         <ScrollView
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          scrollEnabled={!isEditing}
+          scrollEnabled={activeIndex === null}
         >
           {days.map((day, index) => {
             const isDragging = index === activeIndex;
@@ -721,7 +607,6 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
                   dayProgress={progress?.[index]}
                   isDone={doneDays[index]}
                   onPress={() => handleCardPress(index)}
-                  isEditing={isEditing}
                   onDragGrant={handleDragGrant}
                   onDragMove={handleDragMove}
                   onDragRelease={handleDragRelease}
@@ -731,40 +616,26 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
             );
           })}
 
-          {isEditing && <AddDayButton onPress={addDay} />}
-
-          {allDone && !isEditing && (
-            <View style={styles.allDoneBanner}>
-              <Text style={styles.allDoneEmoji}>🎉</Text>
-              <Text style={styles.allDoneText}>Week complete!</Text>
-              <Text style={styles.allDoneSubtext}>
-                Great work. Start the next cycle whenever you're ready.
-              </Text>
-            </View>
-          )}
+          <AddDayButton onPress={addDay} />
 
           <View style={{ height: spacing.xxl }} />
         </ScrollView>
 
-        {/* Drag overlay — floats above the list, follows the finger */}
+        {/* Drag overlay */}
         {activeIndex !== null && (
-          <Animated.View
-            style={[styles.dragOverlay, { top: dragY }]}
-            pointerEvents="none"
-          >
+          <Animated.View style={[styles.dragOverlay, { top: dragY }]} pointerEvents="none">
             <DayCard
               day={days[activeIndex]}
               dayProgress={progress?.[activeIndex]}
               isDone={doneDays[activeIndex]}
               onPress={() => {}}
-              isEditing
               isDragOverlay
             />
           </Animated.View>
         )}
       </View>
 
-      {/* Single edit modal */}
+      {/* Edit modal */}
       <EditModal
         day={editingDayIndex !== null ? days[editingDayIndex] : null}
         dayIndex={editingDayIndex}
@@ -778,15 +649,13 @@ export function HomeScreen({ progress, doneDays, allDone, resetAll, onSelectDay,
   );
 }
 
-// ─── Main Styles ──────────────────────────────────────────────────────────────
+// ─── Main Styles ────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-
-  // Header
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -809,28 +678,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     fontFamily: fonts.mono,
   },
-  editToggle: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 2,
-  },
-  editToggleActive: {
-    backgroundColor: colors.surfaceElevated,
-    borderColor: colors.textSecondary + '60',
-  },
-  editToggleText: {
-    fontSize: fontSize.subhead,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    fontFamily: fonts.mono,
-    letterSpacing: 0.3,
-  },
-  editToggleTextActive: { color: colors.text },
-
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -845,10 +692,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     paddingHorizontal: spacing.xs,
   },
-
-  listArea: {
-    flex: 1,
-  },
+  listArea: { flex: 1 },
   list: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
@@ -860,7 +704,7 @@ const styles = StyleSheet.create({
     right: spacing.md,
   },
 
-  // Day card
+  // Card
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -873,7 +717,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
     ...shadow.sm,
   },
-  cardDone: { opacity: 0.6 },
   cardEditing: {
     borderColor: colors.textTertiary + '70',
     borderStyle: 'dashed',
@@ -883,14 +726,14 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: radius.full,
   },
-  dayBubble: {
+  cardDayBubble: {
     width: 40,
     height: 40,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayNumber: {
+  cardDayNumber: {
     fontSize: fontSize.headline,
     fontWeight: '700',
     fontFamily: fonts.mono,
@@ -908,16 +751,36 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     fontFamily: fonts.mono,
   },
-  cardTitleDone: { color: colors.textSecondary },
   cardFocus: {
     fontSize: fontSize.subhead,
     color: colors.textSecondary,
     marginTop: 1,
     fontFamily: fonts.mono,
   },
-  cardRight: { alignItems: 'flex-end', justifyContent: 'center' },
+  cardExCount: {
+    fontSize: fontSize.footnote,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    fontFamily: fonts.mono,
+  },
+  cardDragOverlay: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
+    transform: [{ scale: 1.03 }],
+  },
+  progressBarTrack: {
+    height: 3,
+    backgroundColor: colors.border,
+    borderRadius: radius.full,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  progressBarFill: { height: '100%', borderRadius: radius.full },
 
-  // Drag handle (≡ three lines)
+  // Drag handle
   dragHandle: {
     width: 36,
     height: 44,
@@ -932,41 +795,8 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: colors.textTertiary,
   },
-  cardDragOverlay: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
-    transform: [{ scale: 1.03 }],
-  },
-  progressText: {
-    fontSize: fontSize.footnote,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    fontFamily: fonts.mono,
-  },
-  checkBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.full,
-    backgroundColor: colors.successBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.success,
-  },
-  checkMark: { fontSize: 12, color: colors.success, fontWeight: '700' },
-  progressBarTrack: {
-    height: 3,
-    backgroundColor: colors.border,
-    borderRadius: radius.full,
-    marginTop: spacing.xs,
-    overflow: 'hidden',
-  },
-  progressBarFill: { height: '100%', borderRadius: radius.full },
 
-  // Add day button
+  // Add day
   addDayBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -991,46 +821,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontFamily: fonts.mono,
     letterSpacing: 0.5,
-  },
-
-  // Week complete
-  allDoneBanner: {
-    marginTop: spacing.xl,
-    backgroundColor: colors.successBg,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.success + '40',
-    gap: spacing.xs,
-  },
-  allDoneEmoji: { fontSize: 40 },
-  allDoneText: {
-    fontSize: fontSize.title3,
-    fontWeight: '700',
-    color: colors.success,
-    fontFamily: fonts.serif,
-  },
-  allDoneSubtext: {
-    fontSize: fontSize.subhead,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontFamily: fonts.mono,
-  },
-  resetButton: {
-    height: 56,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetButtonText: {
-    fontSize: fontSize.body,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    fontFamily: fonts.mono,
   },
 
   // Exercise rows inside DayEditPanel
@@ -1060,7 +850,7 @@ const styles = StyleSheet.create({
   exMeta: { fontSize: fontSize.caption, color: colors.textSecondary, fontFamily: fonts.mono, letterSpacing: 0.2 },
   exChevron: { fontSize: 20, fontWeight: '300' },
 
-  // ExerciseEditPanel controls
+  // Controls
   backBtn: {
     width: 28,
     height: 28,
@@ -1107,7 +897,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontFamily: fonts.mono,
   },
-
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1133,7 +922,6 @@ const styles = StyleSheet.create({
     height: 44,
     lineHeight: 44,
   },
-
   inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   unitLabel: {
     fontSize: fontSize.subhead,
@@ -1151,7 +939,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// ─── Sheet Styles (shared by the modal) ───────────────────────────────────────
+// ─── Sheet Styles ───────────────────────────────────────────────────────────
 
 const sheet = StyleSheet.create({
   overlay: {

@@ -10,12 +10,15 @@ export const SET_LABELS = ['Warm-up', 'Set 1', 'Set 2'];
 export const SET_REPS = ['Light weight, 12–15 reps', '6–10 reps', '6–10 reps'];
 
 // ─── Day Definitions ────────────────────────────────────────────────────────
+export const EXERCISE_REST_SECONDS = 180;
+
 export const DAYS = [
   {
     day: 1,
     title: 'PUSH',
     focus: 'Chest Focus',
     color: '#FF4757',
+    exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
       'Incline DB Bench',
       'Chest Fly',
@@ -30,6 +33,7 @@ export const DAYS = [
     title: 'PULL',
     focus: 'Lat Focus',
     color: '#3742FA',
+    exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
       'Lat Pulldown',
       'Single Arm DB Row',
@@ -44,6 +48,7 @@ export const DAYS = [
     title: 'LEGS',
     focus: '',
     color: '#2ED573',
+    exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
       'DB Squat',
       'Leg Extension',
@@ -57,6 +62,7 @@ export const DAYS = [
     title: 'PUSH',
     focus: 'Shoulder Focus',
     color: '#FFA502',
+    exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
       'Shoulder Press',
       'Lateral Raise',
@@ -71,6 +77,7 @@ export const DAYS = [
     title: 'PULL',
     focus: 'Upper Back Focus',
     color: '#A55EEA',
+    exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
       'Bent Over BB Row',
       'Cable Row',

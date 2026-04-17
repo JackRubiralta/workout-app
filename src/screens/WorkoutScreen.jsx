@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
   Pressable,
   Animated,
   useWindowDimensions,
@@ -17,7 +18,9 @@ import { colors, spacing, radius, shadow, fontSize, fonts } from '../constants/t
 import { useRestTimer } from '../hooks/useRestTimer';
 import { CircularTimer } from '../components/CircularTimer';
 import { ExerciseList } from '../components/ExerciseList';
+import { SetLogModal } from '../components/SetLogModal';
 import { exerciseTotalSets, getSetLabel, getRepsGuide } from '../utils/exercise';
+import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../modules/liveActivity';
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
@@ -29,12 +32,106 @@ function useLayout() {
   return { timerSize, nameFontSize, isSmall };
 }
 
-// ─── Sub-views ────────────────────────────────────────────────────────────────
+// ─── Day Selection Card ──────────────────────────────────────────────────────
+
+function DaySelectCard({ day, dayProgress, isDone, onPress }) {
+  const totalSets = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
+  const doneSets = dayProgress
+    ? dayProgress.sets.reduce((acc, exSets, ei) => {
+        const exTotal = exerciseTotalSets(day.exercises[ei] ?? { sets: 1, warmup: false });
+        return acc + exSets.slice(0, exTotal).filter(Boolean).length;
+      }, 0)
+    : 0;
+  const pct = totalSets > 0 ? doneSets / totalSets : 0;
+
+  return (
+    <TouchableOpacity
+      style={[styles.dayCard, isDone && styles.dayCardDone]}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        onPress();
+      }}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.dayColorBar, { backgroundColor: isDone ? colors.success : day.color }]} />
+      <View style={[styles.dayBubble, { backgroundColor: (isDone ? colors.success : day.color) + '1A' }]}>
+        <Text style={[styles.dayNumber, { color: isDone ? colors.success : day.color }]}>{day.day}</Text>
+      </View>
+      <View style={styles.dayCardContent}>
+        <View style={styles.dayCardTop}>
+          <View style={{ flex: 1, marginRight: spacing.sm }}>
+            <Text style={[styles.dayCardTitle, isDone && styles.dayCardTitleDone]} numberOfLines={1}>
+              {day.title}
+            </Text>
+            {day.focus ? <Text style={styles.dayCardFocus} numberOfLines={1}>{day.focus}</Text> : null}
+          </View>
+          {isDone ? (
+            <View style={styles.checkBadge}>
+              <Text style={styles.checkMark}>✓</Text>
+            </View>
+          ) : (
+            <Text style={[styles.dayProgressText, doneSets > 0 && { color: day.color }]}>
+              {doneSets}/{totalSets}
+            </Text>
+          )}
+        </View>
+        {!isDone && doneSets > 0 && (
+          <View style={styles.dayProgressTrack}>
+            <View style={[styles.dayProgressFill, { width: `${pct * 100}%`, backgroundColor: day.color }]} />
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Day Selection View ──────────────────────────────────────────────────────
+
+function DaySelectionView({ days, progress, doneDays, allDone, onSelectDay, onResetAll }) {
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.selectionHeader}>
+        <View>
+          <Text style={styles.selectionTitle}>Workout</Text>
+          <Text style={styles.selectionSubtitle}>Choose a day</Text>
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.selectionList}
+        showsVerticalScrollIndicator={false}
+      >
+        {days.map((day, index) => (
+          <DaySelectCard
+            key={`${day.day}-${index}`}
+            day={day}
+            dayProgress={progress?.[index]}
+            isDone={doneDays[index]}
+            onPress={() => onSelectDay(index)}
+          />
+        ))}
+
+        {allDone && (
+          <View style={styles.allDoneBanner}>
+            <Text style={styles.allDoneText}>Week complete!</Text>
+            <Text style={styles.allDoneSubtext}>
+              Great work. Start the next cycle whenever you're ready.
+            </Text>
+          </View>
+        )}
+
+        <View style={{ height: spacing.xxl }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Exercise View ───────────────────────────────────────────────────────────
 
 function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
   const exercise = day.exercises[exIndex];
   const isWarmupSet = exercise.warmup && setIndex === 0;
-  const setLabel = getSetLabel(exercise, setIndex);
+  const setLbl = getSetLabel(exercise, setIndex);
   const repsGuide = getRepsGuide(exercise, setIndex);
 
   return (
@@ -42,11 +139,9 @@ function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
       <Text style={styles.exerciseCounter}>
         {exIndex + 1} of {day.exercises.length}
       </Text>
-
       <Text style={[styles.setLabel, { color: isWarmupSet ? colors.textSecondary : day.color }]}>
-        {setLabel.toUpperCase()}
+        {setLbl.toUpperCase()}
       </Text>
-
       <Text
         style={[styles.exerciseName, { fontSize: nameFontSize, lineHeight: nameFontSize * 1.2 }]}
         adjustsFontSizeToFit
@@ -55,13 +150,14 @@ function ExerciseView({ day, exIndex, setIndex, nameFontSize, isSmall }) {
       >
         {exercise.name}
       </Text>
-
       <Text style={[styles.repsGuide, isSmall && { fontSize: fontSize.footnote }]}>
         {repsGuide}
       </Text>
     </View>
   );
 }
+
+// ─── Rest View ───────────────────────────────────────────────────────────────
 
 function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall }) {
   const hasNext = nextPos !== null;
@@ -71,17 +167,12 @@ function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall 
   return (
     <View style={[styles.restView, { gap: isSmall ? spacing.lg : spacing.xl }]}>
       <CircularTimer secondsLeft={secondsLeft} totalSeconds={totalSeconds} size={timerSize} />
-
       <View style={styles.nextUpContainer}>
         {hasNext ? (
           <>
             <Text style={styles.nextUpLabel}>Up next</Text>
-            <Text style={styles.nextUpExercise} numberOfLines={1}>
-              {nextExercise.name}
-            </Text>
-            <Text style={[styles.nextUpSet, { color: day.color }]}>
-              {nextSetLabel.toUpperCase()}
-            </Text>
+            <Text style={styles.nextUpExercise} numberOfLines={1}>{nextExercise.name}</Text>
+            <Text style={[styles.nextUpSet, { color: day.color }]}>{nextSetLabel.toUpperCase()}</Text>
           </>
         ) : (
           <Text style={styles.nextUpLabel}>Last set — almost there!</Text>
@@ -90,6 +181,8 @@ function RestView({ secondsLeft, totalSeconds, nextPos, day, timerSize, isSmall 
     </View>
   );
 }
+
+// ─── Completion View ─────────────────────────────────────────────────────────
 
 function CompletionView({ day, doneSets }) {
   const totalSets = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
@@ -102,14 +195,12 @@ function CompletionView({ day, doneSets }) {
       <Text style={styles.completionSubtitle}>
         {day.title}{day.focus ? ` · ${day.focus}` : ''}
       </Text>
-      <Text style={styles.completionStats}>
-        {doneSets} sets · {day.exercises.length} exercises
-      </Text>
+      <Text style={styles.completionStats}>{doneSets} sets · {day.exercises.length} exercises</Text>
     </View>
   );
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// ─── Progress Bar ────────────────────────────────────────────────────────────
 
 function WorkoutProgressBar({ done, total, color }) {
   const pct = total > 0 ? done / total : 0;
@@ -123,29 +214,7 @@ function WorkoutProgressBar({ done, total, color }) {
   );
 }
 
-// ─── Plain Action Button (tap) ────────────────────────────────────────────────
-
-function ActionButton({ label, onPress, color, variant = 'filled' }) {
-  const isFilled = variant === 'filled';
-  return (
-    <TouchableOpacity
-      style={[
-        styles.actionButton,
-        isFilled
-          ? { backgroundColor: color }
-          : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.border },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <Text style={[styles.actionButtonText, { color: isFilled ? '#fff' : colors.textSecondary }]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Hold Circle Button (press-and-hold for small circular icon buttons) ─────
+// ─── Hold Circle Button ──────────────────────────────────────────────────────
 
 function HoldCircleButton({ children, onHoldComplete, holdDuration = 550, buttonStyle }) {
   const progress = useRef(new Animated.Value(0)).current;
@@ -168,11 +237,7 @@ function HoldCircleButton({ children, onHoldComplete, holdDuration = 550, button
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }, holdDuration * 0.55);
     holdTimer.current = setTimeout(fire, holdDuration);
-    animRef.current = Animated.timing(progress, {
-      toValue: 1,
-      duration: holdDuration,
-      useNativeDriver: true,
-    });
+    animRef.current = Animated.timing(progress, { toValue: 1, duration: holdDuration, useNativeDriver: true });
     animRef.current.start();
   }, [progress, holdDuration, fire]);
 
@@ -191,10 +256,7 @@ function HoldCircleButton({ children, onHoldComplete, holdDuration = 550, button
     <Pressable onPressIn={onPressIn} onPressOut={onPressOut} hitSlop={16}>
       <Animated.View style={[buttonStyle, { transform: [{ scale }], overflow: 'hidden' }]}>
         <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: colors.text, opacity: overlayOpacity, borderRadius: radius.full },
-          ]}
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.text, opacity: overlayOpacity, borderRadius: radius.full }]}
         />
         {children}
       </Animated.View>
@@ -202,7 +264,7 @@ function HoldCircleButton({ children, onHoldComplete, holdDuration = 550, button
   );
 }
 
-// ─── Hold Button (press-and-hold to confirm) ──────────────────────────────────
+// ─── Hold Button ─────────────────────────────────────────────────────────────
 
 function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDuration = 650 }) {
   const progress = useRef(new Animated.Value(0)).current;
@@ -221,24 +283,16 @@ function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDura
   const onPressIn = useCallback(() => {
     fired.current = false;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    // Mid-hold haptic escalation
     midTimer.current = setTimeout(() => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }, holdDuration * 0.55);
-    // Action is driven by a plain timer — no dependency on animation's finished flag,
-    // which races with onPressOut's stop() call when useNativeDriver: true.
     holdTimer.current = setTimeout(fire, holdDuration);
-    // Animation is purely visual from here on.
-    animRef.current = Animated.timing(progress, {
-      toValue: 1,
-      duration: holdDuration,
-      useNativeDriver: true,
-    });
+    animRef.current = Animated.timing(progress, { toValue: 1, duration: holdDuration, useNativeDriver: true });
     animRef.current.start();
   }, [progress, holdDuration, fire]);
 
   const onPressOut = useCallback(() => {
-    if (fired.current) return; // already completed — don't reverse
+    if (fired.current) return;
     clearTimeout(midTimer.current);
     clearTimeout(holdTimer.current);
     animRef.current?.stop();
@@ -258,17 +312,13 @@ function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDura
           { overflow: 'hidden' },
         ]}
       >
-        {/* Fill sweep from left to right while holding */}
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
             {
               backgroundColor: isFilled ? 'rgba(255,255,255,0.22)' : color + '28',
               transform: [{
-                translateX: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-420, 0],
-                }),
+                translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [-420, 0] }),
               }],
             },
           ]}
@@ -281,31 +331,63 @@ function HoldButton({ label, onHoldComplete, color, variant = 'filled', holdDura
   );
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
+// ─── Active Workout View ─────────────────────────────────────────────────────
 
-export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDone, unmarkSetDone, getNextSet, days }) {
+function ActiveWorkoutView({
+  dayIndex, day, progress, doneDays, markSetDone, unmarkSetDone, getNextSet,
+  onBack, logSet, getLastWeight, getLastReps, startSession, completeSession,
+}) {
   useKeepAwake();
 
   const { timerSize, nameFontSize, isSmall } = useLayout();
-  const day = days[dayIndex];
   const { isResting, secondsLeft, totalSeconds, startRest, skipRest } = useRestTimer();
 
   const isDayDone = doneDays[dayIndex];
   const currentPos = getNextSet(dayIndex);
 
-  // Stack of reversible actions — allows undoing all the way back to set 1
+  // Undo history
   const [actionHistory, setActionHistory] = useState([]);
   const undoKey = `@workout_undo_v1_day${dayIndex}`;
 
-  // Load persisted undo history when the screen opens
+  // Set log modal state
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [logModalData, setLogModalData] = useState(null);
+
+  // Start a session and Live Activity when the workout begins
+  const sessionStarted = useRef(false);
+  useEffect(() => {
+    if (!sessionStarted.current) {
+      sessionStarted.current = true;
+      startSession(day, dayIndex);
+
+      const firstExercise = day.exercises[0];
+      const total = day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
+      startLiveActivity({
+        dayTitle: day.title,
+        dayColor: day.color,
+        exerciseName: firstExercise?.name ?? '',
+        setLabel: firstExercise ? getSetLabel(firstExercise, 0) : '',
+        totalSets: total,
+      });
+    }
+  }, [day, dayIndex, startSession]);
+
+  // Complete session when day is done
+  useEffect(() => {
+    if (isDayDone && sessionStarted.current) {
+      completeSession();
+      endLiveActivity();
+    }
+  }, [isDayDone, completeSession]);
+
+  // Load persisted undo history
   useEffect(() => {
     AsyncStorage.getItem(undoKey)
       .then(raw => { if (raw) try { setActionHistory(JSON.parse(raw)); } catch {} })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // dayIndex never changes within a mounted WorkoutScreen
+  }, [undoKey]);
 
-  // Persist every change so undo survives app restarts
+  // Persist undo history
   useEffect(() => {
     AsyncStorage.setItem(undoKey, JSON.stringify(actionHistory)).catch(() => {});
   }, [actionHistory, undoKey]);
@@ -320,35 +402,118 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
     return { doneSets: done, totalSets: total };
   }, [progress, dayIndex, day]);
 
-  // Fires when the user holds the Done button long enough
+  // Determine rest duration based on whether we're moving between exercises
+  const getRestDuration = useCallback((exercise, exIndex, setIndex) => {
+    const isLastSetOfExercise = setIndex === exerciseTotalSets(exercise) - 1;
+    const isLastExercise = exIndex === day.exercises.length - 1;
+
+    if (isLastSetOfExercise && !isLastExercise) {
+      // Moving to next exercise — use exercise rest time
+      return day.exerciseRestSeconds ?? 180;
+    }
+    // Same exercise, between sets
+    return exercise.restSeconds;
+  }, [day]);
+
+  // Done button handler
   const handleDone = useCallback(() => {
     if (!currentPos) return;
     const ex = day.exercises[currentPos.e];
-    markSetDone(dayIndex, currentPos.e, currentPos.s);
-    startRest(ex.restSeconds);
-    setActionHistory(prev => [...prev, { type: 'done', exIndex: currentPos.e, setIndex: currentPos.s, restSeconds: ex.restSeconds }]);
-  }, [currentPos, day, dayIndex, markSetDone, startRest]);
+    const isWarmup = ex.warmup && currentPos.s === 0;
+    const setLbl = getSetLabel(ex, currentPos.s);
+    const restDuration = getRestDuration(ex, currentPos.e, currentPos.s);
 
-  // Fires when the user holds Skip Rest long enough
+    // Mark set done and start rest
+    markSetDone(dayIndex, currentPos.e, currentPos.s);
+    startRest(restDuration);
+
+    // Record undo action
+    setActionHistory(prev => [...prev, {
+      type: 'done',
+      exIndex: currentPos.e,
+      setIndex: currentPos.s,
+      restSeconds: restDuration,
+    }]);
+
+    // Show set log modal
+    const lastWeight = getLastWeight(ex.name);
+    const lastReps = getLastReps(ex.name);
+    setLogModalData({
+      exerciseName: ex.name,
+      exerciseIndex: currentPos.e,
+      setIndex: currentPos.s,
+      setLabel: setLbl,
+      isWarmup,
+      defaultWeight: lastWeight?.weight ?? 0,
+      defaultReps: lastReps ?? 0,
+    });
+    setLogModalVisible(true);
+
+    // Update live activity — pass restEndTime so the native timer counts down
+    updateLiveActivity({
+      exerciseName: ex.name,
+      setLabel: setLbl,
+      secondsRemaining: restDuration,
+      totalSeconds: restDuration,
+      setsCompleted: doneSets + 1,
+      totalSets,
+      isResting: true,
+    });
+  }, [currentPos, day, dayIndex, markSetDone, startRest, getRestDuration, getLastWeight, getLastReps, doneSets, totalSets]);
+
+  // Save set log
+  const handleSaveLog = useCallback(({ weight, reps, toFailure }) => {
+    if (!logModalData) return;
+    logSet({
+      exerciseName: logModalData.exerciseName,
+      exerciseIndex: logModalData.exerciseIndex,
+      setIndex: logModalData.setIndex,
+      setLabel: logModalData.setLabel,
+      isWarmup: logModalData.isWarmup,
+      weight,
+      unit: 'lb',
+      reps,
+      toFailure,
+    });
+    setLogModalVisible(false);
+    setLogModalData(null);
+  }, [logModalData, logSet]);
+
+  const handleDismissLog = useCallback(() => {
+    setLogModalVisible(false);
+    setLogModalData(null);
+  }, []);
+
+  // Skip rest
   const handleSkipRest = useCallback(() => {
     setActionHistory(prev => [...prev, { type: 'skip', restSeconds: totalSeconds }]);
     skipRest();
-  }, [totalSeconds, skipRest]);
+    updateLiveActivity({
+      exerciseName: currentPos ? day.exercises[currentPos.e].name : '',
+      setLabel: currentPos ? getSetLabel(day.exercises[currentPos.e], currentPos.s) : '',
+      secondsRemaining: 0,
+      totalSeconds: 0,
+      setsCompleted: doneSets,
+      totalSets,
+      isResting: false,
+    });
+  }, [totalSeconds, skipRest, currentPos, day, doneSets, totalSets]);
 
-  // Undo: pops and reverses the most recent action — can be pressed repeatedly
+  // Undo
   const handleUndo = useCallback(() => {
     if (actionHistory.length === 0) return;
     const action = actionHistory[actionHistory.length - 1];
     if (action.type === 'done') {
       unmarkSetDone(dayIndex, action.exIndex, action.setIndex);
-      skipRest(); // cancel rest timer if running
+      skipRest();
     } else if (action.type === 'skip') {
-      startRest(action.restSeconds); // restart the skipped rest
+      startRest(action.restSeconds);
     }
     setActionHistory(prev => prev.slice(0, -1));
   }, [actionHistory, dayIndex, unmarkSetDone, skipRest, startRest]);
 
   const handleBack = useCallback(() => {
+    endLiveActivity();
     onBack();
   }, [onBack]);
 
@@ -356,8 +521,7 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-
-      {/* ── Header ── */}
+      {/* Header */}
       <View style={styles.header}>
         <HoldCircleButton onHoldComplete={handleBack} buttonStyle={styles.backButton}>
           <Text style={styles.backArrow}>‹</Text>
@@ -369,7 +533,6 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
           </Text>
           {day.focus ? <Text style={styles.headerFocus}>{day.focus}</Text> : null}
         </View>
-        {/* Undo button lives in the header's right slot */}
         {actionHistory.length > 0 ? (
           <HoldCircleButton onHoldComplete={handleUndo} buttonStyle={styles.undoButton}>
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -384,7 +547,7 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
         )}
       </View>
 
-      {/* ── Exercise list ── */}
+      {/* Exercise list */}
       <ExerciseList
         day={day}
         dayProgress={progress[dayIndex]}
@@ -393,7 +556,7 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
 
       <View style={styles.divider} />
 
-      {/* ── Main content ── */}
+      {/* Main content */}
       <View style={styles.mainContent}>
         {isDayDone ? (
           <CompletionView day={day} doneSets={doneSets} />
@@ -417,30 +580,80 @@ export function WorkoutScreen({ dayIndex, onBack, progress, doneDays, markSetDon
         ) : null}
       </View>
 
-      {/* ── Bottom ── */}
+      {/* Bottom */}
       <View style={styles.bottomArea}>
         <WorkoutProgressBar done={doneSets} total={totalSets} color={day.color} />
         {isDayDone ? (
-          <HoldButton label="Back to Home" onHoldComplete={handleBack} color={day.color} holdDuration={550} />
+          <HoldButton label="Back to Days" onHoldComplete={handleBack} color={day.color} holdDuration={550} />
         ) : isResting ? (
-          <HoldButton
-            label="Skip Rest"
-            onHoldComplete={handleSkipRest}
-            color={day.color}
-            variant="outline"
-            holdDuration={450}
-          />
+          <HoldButton label="Skip Rest" onHoldComplete={handleSkipRest} color={day.color} variant="outline" holdDuration={450} />
         ) : (
-          <HoldButton
-            label="Done"
-            onHoldComplete={handleDone}
-            color={day.color}
-            holdDuration={650}
-          />
+          <HoldButton label="Done" onHoldComplete={handleDone} color={day.color} holdDuration={650} />
         )}
       </View>
 
+      {/* Set Log Modal */}
+      <SetLogModal
+        visible={logModalVisible}
+        exerciseName={logModalData?.exerciseName ?? ''}
+        setLabel={logModalData?.setLabel ?? ''}
+        isWarmup={logModalData?.isWarmup ?? false}
+        dayColor={day.color}
+        defaultWeight={logModalData?.defaultWeight ?? 0}
+        defaultReps={logModalData?.defaultReps ?? 0}
+        onSave={handleSaveLog}
+        onDismiss={handleDismissLog}
+      />
     </SafeAreaView>
+  );
+}
+
+// ─── Screen (handles day selection vs active workout) ────────────────────────
+
+export function WorkoutScreen({
+  days, progress, doneDays, allDone, resetAll, markSetDone, unmarkSetDone, getNextSet,
+  logSet, getLastWeight, getLastReps, startSession, completeSession,
+}) {
+  const [activeDayIndex, setActiveDayIndex] = useState(null);
+
+  const handleSelectDay = useCallback((index) => {
+    setActiveDayIndex(index);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setActiveDayIndex(null);
+  }, []);
+
+  if (activeDayIndex !== null && days[activeDayIndex]) {
+    return (
+      <ActiveWorkoutView
+        key={activeDayIndex}
+        dayIndex={activeDayIndex}
+        day={days[activeDayIndex]}
+        progress={progress}
+        doneDays={doneDays}
+        markSetDone={markSetDone}
+        unmarkSetDone={unmarkSetDone}
+        getNextSet={getNextSet}
+        onBack={handleBack}
+        logSet={logSet}
+        getLastWeight={getLastWeight}
+        getLastReps={getLastReps}
+        startSession={startSession}
+        completeSession={completeSession}
+      />
+    );
+  }
+
+  return (
+    <DaySelectionView
+      days={days}
+      progress={progress}
+      doneDays={doneDays}
+      allDone={allDone}
+      onSelectDay={handleSelectDay}
+      onResetAll={resetAll}
+    />
   );
 }
 
@@ -452,7 +665,137 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  // Header
+  // Day selection
+  selectionHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  selectionTitle: {
+    fontSize: fontSize.largeTitle,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: 0.37,
+    fontFamily: fonts.serif,
+  },
+  selectionSubtitle: {
+    fontSize: fontSize.subhead,
+    color: colors.textSecondary,
+    marginTop: 2,
+    letterSpacing: 0.5,
+    fontFamily: fonts.mono,
+  },
+  selectionList: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    gap: spacing.sm,
+  },
+
+  // Day cards
+  dayCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 80,
+    ...shadow.sm,
+  },
+  dayCardDone: { opacity: 0.6 },
+  dayColorBar: {
+    width: 4,
+    height: 40,
+    borderRadius: radius.full,
+  },
+  dayBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNumber: {
+    fontSize: fontSize.headline,
+    fontWeight: '700',
+    fontFamily: fonts.mono,
+  },
+  dayCardContent: { flex: 1, gap: spacing.xs },
+  dayCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dayCardTitle: {
+    fontSize: fontSize.title3,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: 0.5,
+    fontFamily: fonts.mono,
+  },
+  dayCardTitleDone: { color: colors.textSecondary },
+  dayCardFocus: {
+    fontSize: fontSize.subhead,
+    color: colors.textSecondary,
+    marginTop: 1,
+    fontFamily: fonts.mono,
+  },
+  dayProgressText: {
+    fontSize: fontSize.footnote,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    fontFamily: fonts.mono,
+  },
+  checkBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
+    backgroundColor: colors.successBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.success,
+  },
+  checkMark: { fontSize: 12, color: colors.success, fontWeight: '700' },
+  dayProgressTrack: {
+    height: 3,
+    backgroundColor: colors.border,
+    borderRadius: radius.full,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  dayProgressFill: { height: '100%', borderRadius: radius.full },
+
+  allDoneBanner: {
+    marginTop: spacing.xl,
+    backgroundColor: colors.successBg,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.success + '40',
+    gap: spacing.xs,
+  },
+  allDoneText: {
+    fontSize: fontSize.title3,
+    fontWeight: '700',
+    color: colors.success,
+    fontFamily: fonts.serif,
+  },
+  allDoneSubtext: {
+    fontSize: fontSize.subhead,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    fontFamily: fonts.mono,
+  },
+
+  // Active workout header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -513,7 +856,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Main
   mainContent: {
     flex: 1,
     alignItems: 'center',
@@ -556,9 +898,7 @@ const styles = StyleSheet.create({
   },
 
   // Rest view
-  restView: {
-    alignItems: 'center',
-  },
+  restView: { alignItems: 'center' },
   nextUpContainer: {
     alignItems: 'center',
     gap: 4,
@@ -587,10 +927,7 @@ const styles = StyleSheet.create({
   },
 
   // Completion view
-  completionView: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  completionView: { alignItems: 'center', gap: spacing.sm },
   completionBadge: {
     width: 72,
     height: 72,
@@ -601,11 +938,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  completionCheck: {
-    fontSize: 32,
-    color: colors.success,
-    fontWeight: '700',
-  },
+  completionCheck: { fontSize: 32, color: colors.success, fontWeight: '700' },
   completionTitle: {
     fontSize: fontSize.title2,
     fontWeight: '700',
@@ -642,10 +975,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
+  progressFill: { height: '100%', borderRadius: radius.full },
   progressLabel: {
     fontSize: 11,
     fontWeight: '600',

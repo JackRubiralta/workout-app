@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DAYS } from '../constants/workout';
+import { DAYS, EXERCISE_REST_SECONDS } from '../constants/workout';
 import { defaultExercise, migrateExercise } from '../utils/exercise';
 
 const STORAGE_KEY = '@workout_config_v1';
@@ -8,14 +8,23 @@ const STORAGE_KEY = '@workout_config_v1';
 // Colors cycled for new days
 const PALETTE = ['#FF4757', '#3742FA', '#2ED573', '#FFA502', '#A55EEA', '#00B894', '#FF7675', '#74B9FF'];
 
+function migrateDay(d) {
+  return {
+    ...d,
+    exerciseRestSeconds: d.exerciseRestSeconds ?? EXERCISE_REST_SECONDS,
+    exercises: (d.exercises ?? []).map(migrateExercise),
+  };
+}
+
 function buildDefaultConfig() {
   return {
-    days: DAYS.map(d => ({
+    days: DAYS.map(d => migrateDay({
       day: d.day,
       title: d.title,
       focus: d.focus,
       color: d.color,
-      exercises: d.exercises.map(migrateExercise),
+      exerciseRestSeconds: d.exerciseRestSeconds,
+      exercises: d.exercises,
     })),
   };
 }
@@ -24,10 +33,7 @@ function migrateConfig(raw) {
   const parsed = JSON.parse(raw);
   return {
     ...parsed,
-    days: (parsed.days ?? []).map(d => ({
-      ...d,
-      exercises: (d.exercises ?? []).map(migrateExercise),
-    })),
+    days: (parsed.days ?? []).map(migrateDay),
   };
 }
 
@@ -75,6 +81,7 @@ export function useWorkoutConfig() {
             title: 'DAY',
             focus: '',
             color,
+            exerciseRestSeconds: EXERCISE_REST_SECONDS,
             exercises: [
               defaultExercise('Exercise 1'),
               defaultExercise('Exercise 2'),

@@ -17,7 +17,8 @@
       "requireFullScreen": true,
       "bundleIdentifier": "com.jackrubiralta.workouttracker",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSupportsLiveActivities": true
       }
     },
     "android": {
@@ -36,6 +37,13 @@
         {
           "icon": "./assets/icon.png",
           "color": "#0A0A0A"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.jackrubiralta.workouttracker.widget",
+          "groupIdentifier": "group.com.jackrubiralta.workouttracker"
         }
       ]
     ],
