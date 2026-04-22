@@ -6,8 +6,11 @@ export function defaultExercise(name = '') {
     sets: 3,
     warmup: false,
     restSeconds: 120,
+    nextRestSeconds: null, // null → fall back to day.exerciseRestSeconds
     reps: '6–10 reps',
     warmupReps: 'Light weight, 12–15 reps',
+    tracksWeight: true,
+    tracksReps: true,
   };
 }
 
@@ -19,8 +22,11 @@ export function migrateExercise(ex) {
     sets: ex.sets ?? 3,
     warmup: ex.warmup ?? false,
     restSeconds: ex.restSeconds ?? 120,
+    nextRestSeconds: ex.nextRestSeconds ?? null,
     reps: ex.reps ?? '6–10 reps',
     warmupReps: ex.warmupReps ?? 'Light weight, 12–15 reps',
+    tracksWeight: ex.tracksWeight ?? true,
+    tracksReps: ex.tracksReps ?? true,
   };
 }
 

@@ -86,8 +86,11 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
   const [sets, setSets] = useState(3);
   const [warmup, setWarmup] = useState(false);
   const [restSecs, setRestSecs] = useState('90');
+  const [nextRestSecs, setNextRestSecs] = useState('');
   const [reps, setReps] = useState('');
   const [warmupReps, setWarmupReps] = useState('');
+  const [tracksWeight, setTracksWeight] = useState(true);
+  const [tracksReps, setTracksReps] = useState(true);
   const [kbVisible, setKbVisible] = useState(false);
 
   useEffect(() => {
@@ -102,23 +105,36 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
       setSets(exercise.sets);
       setWarmup(exercise.warmup);
       setRestSecs(String(exercise.restSeconds));
+      setNextRestSecs(exercise.nextRestSeconds == null ? '' : String(exercise.nextRestSeconds));
       setReps(exercise.reps);
       setWarmupReps(exercise.warmupReps);
+      setTracksWeight(exercise.tracksWeight !== false);
+      setTracksReps(exercise.tracksReps !== false);
     }
   }, [exercise]);
 
   const handleSave = useCallback(() => {
     const rest = parseInt(restSecs, 10);
+    const nextRestTrimmed = nextRestSecs.trim();
+    let nextRest = null;
+    if (nextRestTrimmed !== '') {
+      const parsed = parseInt(nextRestTrimmed, 10);
+      if (!isNaN(parsed) && parsed >= 0) nextRest = Math.min(parsed, 600);
+      else nextRest = exercise.nextRestSeconds ?? null;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onSave(exIndex, {
       name: name.trim() || exercise.name,
       sets,
       warmup,
       restSeconds: !isNaN(rest) && rest >= 10 ? Math.min(rest, 600) : exercise.restSeconds,
+      nextRestSeconds: nextRest,
       reps: reps.trim() || exercise.reps,
       warmupReps: warmupReps.trim() || exercise.warmupReps,
+      tracksWeight,
+      tracksReps,
     });
-  }, [exIndex, name, sets, warmup, restSecs, reps, warmupReps, exercise, onSave]);
+  }, [exIndex, name, sets, warmup, restSecs, nextRestSecs, reps, warmupReps, tracksWeight, tracksReps, exercise, onSave]);
 
   if (!exercise) return null;
 
@@ -152,6 +168,31 @@ function ExerciseEditPanel({ exercise, exIndex, dayColor, onSave, onBack }) {
           <Text style={styles.unitLabel}>sec</Text>
         </View>
         <Text style={styles.hint}>10 – 600 seconds</Text>
+
+        <FieldLabel style={{ marginTop: spacing.md }}>REST BEFORE NEXT EXERCISE</FieldLabel>
+        <View style={styles.inlineRow}>
+          <SheetInput
+            style={{ flex: 1 }}
+            value={nextRestSecs}
+            onChangeText={setNextRestSecs}
+            keyboardType="number-pad"
+            placeholder="Use day default"
+            selectionColor={dayColor}
+          />
+          <Text style={styles.unitLabel}>sec</Text>
+        </View>
+        <Text style={styles.hint}>Leave blank to use the day's default</Text>
+
+        <FieldLabel style={{ marginTop: spacing.md }}>TRACKING</FieldLabel>
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleDesc}>Track weight (off for body-weight moves)</Text>
+          <Toggle value={tracksWeight} onChange={setTracksWeight} accent={dayColor} />
+        </View>
+        <View style={{ height: spacing.xs }} />
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleDesc}>Track reps (off for timed holds / warm-ups)</Text>
+          <Toggle value={tracksReps} onChange={setTracksReps} accent={dayColor} />
+        </View>
 
         <FieldLabel style={{ marginTop: spacing.md }}>WARM-UP SET</FieldLabel>
         <View style={styles.toggleRow}>
@@ -242,6 +283,13 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exerciseRestSecs,
         <View style={styles.exListContainer}>
           {exercises.map((ex, i) => {
             const warmupLabel = ex.warmup ? '1 warm-up + ' : '';
+            const tracksWeight = ex.tracksWeight !== false;
+            const tracksReps = ex.tracksReps !== false;
+            const trackTag = !tracksWeight && !tracksReps
+              ? 'timed'
+              : !tracksWeight
+                ? 'bodyweight'
+                : null;
             return (
               <TouchableOpacity key={i} style={styles.exRow} onPress={() => onExerciseTap(i)} activeOpacity={0.7}>
                 <View style={[styles.exBadge, { backgroundColor: day.color + '18' }]}>
@@ -249,8 +297,8 @@ function DayEditPanel({ day, title, setTitle, focus, setFocus, exerciseRestSecs,
                 </View>
                 <View style={styles.exInfo}>
                   <Text style={styles.exName} numberOfLines={1}>{ex.name}</Text>
-                  <Text style={styles.exMeta}>
-                    {warmupLabel}{ex.sets} sets · {ex.reps} · {ex.restSeconds}s rest
+                  <Text style={styles.exMeta} numberOfLines={1}>
+                    {warmupLabel}{ex.sets} sets · {ex.reps} · {ex.restSeconds}s rest{trackTag ? ` · ${trackTag}` : ''}
                   </Text>
                 </View>
                 <Text style={[styles.exChevron, { color: day.color }]}>›</Text>

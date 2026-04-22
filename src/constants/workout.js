@@ -10,7 +10,44 @@ export const SET_LABELS = ['Warm-up', 'Set 1', 'Set 2'];
 export const SET_REPS = ['Light weight, 12–15 reps', '6–10 reps', '6–10 reps'];
 
 // ─── Day Definitions ────────────────────────────────────────────────────────
-export const EXERCISE_REST_SECONDS = 180;
+export const EXERCISE_REST_SECONDS = 150;
+
+// Small helper so each exercise row stays readable. Any field not passed
+// falls back to the defaults defined in src/utils/exercise.js.
+function ex({
+  name,
+  sets = 3,
+  warmup = false,
+  restSeconds = 120,
+  nextRestSeconds = null,
+  reps = '6–10 reps',
+  warmupReps = 'Light weight, 12–15 reps',
+  tracksWeight = true,
+  tracksReps = true,
+}) {
+  return {
+    name,
+    sets,
+    warmup,
+    restSeconds,
+    nextRestSeconds,
+    reps,
+    warmupReps,
+    tracksWeight,
+    tracksReps,
+  };
+}
+
+// Standard 5 min bike warmup — present on every training day
+const bikeWarmup = ex({
+  name: 'Bike Warmup',
+  sets: 1,
+  restSeconds: 30,
+  nextRestSeconds: 30,
+  reps: '5 min (easy pace)',
+  tracksWeight: false,
+  tracksReps: false,
+});
 
 export const DAYS = [
   {
@@ -20,12 +57,50 @@ export const DAYS = [
     color: '#FF4757',
     exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
-      'Incline DB Bench',
-      'Chest Fly',
-      'Tricep Extension',
-      'Shoulder Press',
-      'Lateral Raise',
-      'Overhead Tricep',
+      bikeWarmup,
+      ex({
+        name: 'Flat DB Bench Press',
+        sets: 2, warmup: true,
+        restSeconds: 150, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Incline DB Bench Press',
+        sets: 3,
+        restSeconds: 120, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Chest Dips (lean forward)',
+        sets: 2,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: '8–12 reps',
+        tracksWeight: false,
+      }),
+      ex({
+        name: 'Dumbbell Flyes',
+        sets: 2,
+        restSeconds: 90, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Lateral Raises',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Rope Pushdowns',
+        sets: 3,
+        restSeconds: 75, nextRestSeconds: 120,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Bar Pushdowns',
+        sets: 2,
+        restSeconds: 60,
+        reps: '12–15 reps',
+      }),
     ],
   },
   {
@@ -35,26 +110,145 @@ export const DAYS = [
     color: '#3742FA',
     exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
-      'Lat Pulldown',
-      'Single Arm DB Row',
-      'DB Bicep Curl',
-      'Chest Supported Row',
-      'Cable Face Pull',
-      'Hammer Curl',
+      bikeWarmup,
+      ex({
+        name: 'Pull-Ups (overhand, wide)',
+        sets: 3,
+        restSeconds: 150, nextRestSeconds: 180,
+        reps: 'AMRAP (5–10)',
+        tracksWeight: false,
+      }),
+      ex({
+        name: 'Lat Pulldowns',
+        sets: 3,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Pull-Ups (neutral grip)',
+        sets: 2,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: 'AMRAP',
+        tracksWeight: false,
+      }),
+      ex({
+        name: 'Cable Rows (wide, lat-focused)',
+        sets: 3,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Preacher Curls',
+        sets: 3,
+        restSeconds: 90, nextRestSeconds: 120,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Hammer Curls',
+        sets: 2,
+        restSeconds: 75,
+        reps: '10–12 reps',
+      }),
     ],
   },
   {
     day: 3,
-    title: 'LEGS',
-    focus: '',
+    title: 'CORE + MOBILITY',
+    focus: 'Recovery',
     color: '#2ED573',
-    exerciseRestSeconds: EXERCISE_REST_SECONDS,
+    exerciseRestSeconds: 60,
     exercises: [
-      'DB Squat',
-      'Leg Extension',
-      'Hamstring Curl',
-      'Calf Raise',
-      'DB Lunges',
+      bikeWarmup,
+      ex({
+        name: 'Hanging Leg Raises',
+        sets: 2,
+        restSeconds: 90, nextRestSeconds: 60,
+        reps: '8–12 reps',
+        tracksWeight: false,
+      }),
+      ex({
+        name: 'Plank',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 60,
+        reps: '45–60 sec hold',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Dead Bug',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 60,
+        reps: '10 per side',
+        tracksWeight: false,
+      }),
+      ex({
+        name: 'Russian Twists (weighted)',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 60,
+        reps: '20 total',
+      }),
+      ex({
+        name: 'Hollow Body Hold',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 90,
+        reps: '20–30 sec hold',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Cat-Cow',
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '10 slow reps',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Thoracic Spine Rotations',
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '8 per side',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Band Shoulder Dislocations',
+        sets: 2,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '10 reps',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Downward Dog to Cobra',
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '6 flow reps',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: "Child's Pose",
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '45 sec hold',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Pigeon Pose',
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '45 sec per side',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Doorway Chest Stretch',
+        sets: 1,
+        restSeconds: 30, nextRestSeconds: 30,
+        reps: '45 sec per side',
+        tracksWeight: false, tracksReps: false,
+      }),
+      ex({
+        name: 'Standing Hamstring + Hip Flexor',
+        sets: 1,
+        restSeconds: 30,
+        reps: '45 sec per side',
+        tracksWeight: false, tracksReps: false,
+      }),
     ],
   },
   {
@@ -64,12 +258,50 @@ export const DAYS = [
     color: '#FFA502',
     exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
-      'Shoulder Press',
-      'Lateral Raise',
-      'Overhead Tricep',
-      'Incline DB Bench',
-      'Chest Fly',
-      'Tricep Extension',
+      bikeWarmup,
+      ex({
+        name: 'Seated DB Shoulder Press',
+        sets: 2, warmup: true,
+        restSeconds: 150, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Incline DB Bench Press',
+        sets: 2,
+        restSeconds: 120, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Lateral Raises',
+        sets: 3,
+        restSeconds: 75, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Cable Lateral Raises',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Rear Delt Flyes',
+        sets: 3,
+        restSeconds: 75, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Front Raises',
+        sets: 2,
+        restSeconds: 60, nextRestSeconds: 120,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Close-Grip Push-Ups',
+        sets: 2,
+        restSeconds: 60,
+        reps: 'AMRAP',
+        tracksWeight: false,
+      }),
     ],
   },
   {
@@ -79,12 +311,49 @@ export const DAYS = [
     color: '#A55EEA',
     exerciseRestSeconds: EXERCISE_REST_SECONDS,
     exercises: [
-      'Bent Over BB Row',
-      'Cable Row',
-      'Hammer Curl',
-      'Pull Ups',
-      'Cable Lat Row',
-      'Bayesian Curls',
+      bikeWarmup,
+      ex({
+        name: 'Chest-Supported Rows',
+        sets: 2, warmup: true,
+        restSeconds: 150, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Cable Rows (close neutral)',
+        sets: 3,
+        restSeconds: 120, nextRestSeconds: 180,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Preacher Rows',
+        sets: 2,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Lat Pulldowns',
+        sets: 2,
+        restSeconds: 120, nextRestSeconds: 150,
+        reps: '10–12 reps',
+      }),
+      ex({
+        name: 'Rear Delt Flyes',
+        sets: 2,
+        restSeconds: 75, nextRestSeconds: 120,
+        reps: '12–15 reps',
+      }),
+      ex({
+        name: 'Bar Curls',
+        sets: 3,
+        restSeconds: 90, nextRestSeconds: 120,
+        reps: '8–10 reps',
+      }),
+      ex({
+        name: 'Hammer Curls',
+        sets: 2,
+        restSeconds: 75,
+        reps: '10–12 reps',
+      }),
     ],
   },
 ];

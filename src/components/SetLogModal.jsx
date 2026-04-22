@@ -147,7 +147,8 @@ const pk = StyleSheet.create({
 
 export function SetLogModal({
   visible, exerciseName, setLabel, isWarmup, dayColor,
-  defaultWeight, defaultReps, onSave, onDismiss,
+  defaultWeight, defaultReps, tracksWeight = true, tracksReps = true,
+  onSave, onDismiss,
 }) {
   const [weight, setWeight] = useState(0);
   const [reps, setReps] = useState(0);
@@ -189,8 +190,12 @@ export function SetLogModal({
 
   const handleSave = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onSave({ weight, reps, toFailure });
-  }, [weight, reps, toFailure, onSave]);
+    onSave({
+      weight: tracksWeight ? weight : 0,
+      reps: tracksReps ? reps : 0,
+      toFailure,
+    });
+  }, [weight, reps, toFailure, tracksWeight, tracksReps, onSave]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss} statusBarTranslucent>
@@ -216,30 +221,40 @@ export function SetLogModal({
           </View>
 
           {/* Pickers */}
-          <View style={s.pickRow}>
-            <View style={s.pickCol}>
-              <Text style={s.pickLabel}>WEIGHT (lb)</Text>
-              <ScrollPicker
-                key={`w${openKey}`}
-                values={WEIGHT_VALUES}
-                initialValue={weight}
-                onValueChange={setWeight}
-                formatFn={formatWeight}
-                accentColor={dayColor}
-              />
+          {(tracksWeight || tracksReps) ? (
+            <View style={s.pickRow}>
+              {tracksWeight && (
+                <View style={s.pickCol}>
+                  <Text style={s.pickLabel}>WEIGHT (lb)</Text>
+                  <ScrollPicker
+                    key={`w${openKey}`}
+                    values={WEIGHT_VALUES}
+                    initialValue={weight}
+                    onValueChange={setWeight}
+                    formatFn={formatWeight}
+                    accentColor={dayColor}
+                  />
+                </View>
+              )}
+              {tracksReps && (
+                <View style={s.pickCol}>
+                  <Text style={s.pickLabel}>REPS</Text>
+                  <ScrollPicker
+                    key={`r${openKey}`}
+                    values={REPS_VALUES}
+                    initialValue={reps}
+                    onValueChange={setReps}
+                    formatFn={String}
+                    accentColor={dayColor}
+                  />
+                </View>
+              )}
             </View>
-            <View style={s.pickCol}>
-              <Text style={s.pickLabel}>REPS</Text>
-              <ScrollPicker
-                key={`r${openKey}`}
-                values={REPS_VALUES}
-                initialValue={reps}
-                onValueChange={setReps}
-                formatFn={String}
-                accentColor={dayColor}
-              />
+          ) : (
+            <View style={s.noTrack}>
+              <Text style={s.noTrackText}>Nothing to log — nice work.</Text>
             </View>
-          </View>
+          )}
 
           {/* To failure */}
           <TouchableOpacity
@@ -309,6 +324,19 @@ const s = StyleSheet.create({
   // Pickers
   pickRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
   pickCol: { flex: 1 },
+  noTrack: {
+    marginBottom: spacing.md,
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceElevated,
+  },
+  noTrackText: {
+    fontSize: fontSize.subhead,
+    color: colors.textSecondary,
+    fontFamily: fonts.mono,
+  },
   pickLabel: {
     fontSize: 11, fontWeight: '600', color: colors.textTertiary,
     letterSpacing: 1, fontFamily: fonts.mono,

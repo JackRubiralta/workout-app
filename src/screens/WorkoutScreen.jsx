@@ -29,7 +29,10 @@ function useLayout() {
   const timerSize = Math.round(Math.min(175, height * 0.21));
   const nameFontSize = Math.round(Math.min(34, height * 0.046));
   const isSmall = height < 700;
-  return { timerSize, nameFontSize, isSmall };
+  // Reserve enough vertical space for the timer + "up next" block so the timer
+  // never bleeds over the exercise list above the divider.
+  const mainContentMinHeight = timerSize + (isSmall ? 72 : 88);
+  return { timerSize, nameFontSize, isSmall, mainContentMinHeight };
 }
 
 // ─── Day Selection Card ──────────────────────────────────────────────────────
@@ -339,7 +342,7 @@ function ActiveWorkoutView({
 }) {
   useKeepAwake();
 
-  const { timerSize, nameFontSize, isSmall } = useLayout();
+  const { timerSize, nameFontSize, isSmall, mainContentMinHeight } = useLayout();
   const { isResting, secondsLeft, totalSeconds, startRest, skipRest } = useRestTimer();
 
   const isDayDone = doneDays[dayIndex];
@@ -445,8 +448,8 @@ function ActiveWorkoutView({
     const isLastExercise = exIndex === day.exercises.length - 1;
 
     if (isLastSetOfExercise && !isLastExercise) {
-      // Moving to next exercise — use exercise rest time
-      return day.exerciseRestSeconds ?? 180;
+      // Moving to next exercise — per-exercise override wins over day default
+      return exercise.nextRestSeconds ?? day.exerciseRestSeconds ?? 180;
     }
     // Same exercise, between sets
     return exercise.restSeconds;
@@ -478,19 +481,38 @@ function ActiveWorkoutView({
       restSeconds: restDuration,
     }]);
 
-    // Show set log modal
-    const lastWeight = getLastWeight(ex.name);
-    const lastReps = getLastReps(ex.name);
-    setLogModalData({
-      exerciseName: ex.name,
-      exerciseIndex: currentPos.e,
-      setIndex: currentPos.s,
-      setLabel: setLbl,
-      isWarmup,
-      defaultWeight: lastWeight?.weight ?? 0,
-      defaultReps: lastReps ?? 0,
-    });
-    setLogModalVisible(true);
+    // Show set log modal — unless the exercise tracks neither weight nor reps
+    const tracksWeight = ex.tracksWeight !== false;
+    const tracksReps = ex.tracksReps !== false;
+    if (tracksWeight || tracksReps) {
+      const lastWeight = tracksWeight ? getLastWeight(ex.name) : null;
+      const lastReps = tracksReps ? getLastReps(ex.name) : null;
+      setLogModalData({
+        exerciseName: ex.name,
+        exerciseIndex: currentPos.e,
+        setIndex: currentPos.s,
+        setLabel: setLbl,
+        isWarmup,
+        defaultWeight: lastWeight?.weight ?? 0,
+        defaultReps: lastReps ?? 0,
+        tracksWeight,
+        tracksReps,
+      });
+      setLogModalVisible(true);
+    } else {
+      // Auto-log a zero-entry so history still reflects the completed set
+      logSet({
+        exerciseName: ex.name,
+        exerciseIndex: currentPos.e,
+        setIndex: currentPos.s,
+        setLabel: setLbl,
+        isWarmup,
+        weight: 0,
+        unit: 'lb',
+        reps: 0,
+        toFailure: false,
+      });
+    }
 
     // Update live activity — pass restEndTime so the native timer counts down
     updateLiveActivity({
@@ -504,7 +526,7 @@ function ActiveWorkoutView({
       exSetNum: currentPos.s + 1,
       exSetTotal: exerciseTotalSets(ex),
     });
-  }, [currentPos, day, dayIndex, markSetDone, startRest, getRestDuration, getLastWeight, getLastReps, doneSets, totalSets]);
+  }, [currentPos, day, dayIndex, markSetDone, startRest, getRestDuration, getLastWeight, getLastReps, logSet, doneSets, totalSets]);
 
   // Save set log
   const handleSaveLog = useCallback(({ weight, reps, toFailure }) => {
@@ -595,17 +617,23 @@ function ActiveWorkoutView({
         )}
       </View>
 
-      {/* Exercise list */}
-      <ExerciseList
-        day={day}
-        dayProgress={progress[dayIndex]}
-        currentExIndex={isDayDone ? -1 : (currentPos?.e ?? -1)}
-      />
+      {/* Exercise list — scrollable so it shrinks instead of pushing the timer down */}
+      <ScrollView
+        style={styles.exerciseListScroll}
+        contentContainerStyle={styles.exerciseListContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ExerciseList
+          day={day}
+          dayProgress={progress[dayIndex]}
+          currentExIndex={isDayDone ? -1 : (currentPos?.e ?? -1)}
+        />
+      </ScrollView>
 
       <View style={styles.divider} />
 
       {/* Main content */}
-      <View style={styles.mainContent}>
+      <View style={[styles.mainContent, { minHeight: mainContentMinHeight }]}>
         {isDayDone ? (
           <CompletionView day={day} doneSets={doneSets} />
         ) : isResting ? (
@@ -649,6 +677,8 @@ function ActiveWorkoutView({
         dayColor={day.color}
         defaultWeight={logModalData?.defaultWeight ?? 0}
         defaultReps={logModalData?.defaultReps ?? 0}
+        tracksWeight={logModalData?.tracksWeight ?? true}
+        tracksReps={logModalData?.tracksReps ?? true}
         onSave={handleSaveLog}
         onDismiss={handleDismissLog}
       />
@@ -904,11 +934,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  exerciseListScroll: {
+    flexShrink: 1,
+    flexGrow: 0,
+  },
+  exerciseListContent: {
+    flexGrow: 0,
+  },
   mainContent: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
   },
 
   // Exercise view
