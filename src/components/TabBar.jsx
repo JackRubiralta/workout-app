@@ -47,11 +47,35 @@ function HistoryIcon({ color }) {
   );
 }
 
+function NutritionIcon({ color }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      {/* Fork */}
+      <Path
+        d="M7 3V9C7 10.1046 7.89543 11 9 11V21M5 3V8M9 3V8"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Knife */}
+      <Path
+        d="M17 3C15.3431 3 14 4.34315 14 6V11C14 12.1046 14.8954 13 16 13H17V21"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // ─── Tab Definitions ────────────────────────────────────────────────────────
 
 const TABS = [
   { key: 'program', label: 'Program', Icon: ProgramIcon },
   { key: 'workout', label: 'Workout', Icon: WorkoutIcon },
+  { key: 'nutrition', label: 'Nutrition', Icon: NutritionIcon },
   { key: 'history', label: 'History', Icon: HistoryIcon },
 ];
 

@@ -45,6 +45,13 @@
           "bundleIdentifier": "com.jackrubiralta.workouttracker.widget",
           "groupIdentifier": "group.com.jackrubiralta.workouttracker"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to log meals from existing pictures.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to photograph meals for nutrition tracking."
+        }
       ]
     ],
     "extra": {

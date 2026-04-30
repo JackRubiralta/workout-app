@@ -6,9 +6,11 @@ import * as Notifications from 'expo-notifications';
 import { useWorkoutConfig } from './src/hooks/useWorkoutConfig';
 import { useWorkoutProgress } from './src/hooks/useWorkoutProgress';
 import { useWorkoutLog } from './src/hooks/useWorkoutLog';
+import { useNutritionLog } from './src/hooks/useNutritionLog';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { WorkoutScreen } from './src/screens/WorkoutScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
+import { NutritionScreen } from './src/screens/NutritionScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/constants/theme';
 import { endLiveActivity } from './src/modules/liveActivity';
@@ -36,9 +38,10 @@ export default function App() {
   const { config, loaded: configLoaded, updateDay, addDay, deleteDay, reorderDay } = useWorkoutConfig();
   const workoutState = useWorkoutProgress(config.days);
   const workoutLog = useWorkoutLog();
+  const nutritionLog = useNutritionLog();
   const { removeDayProgress, reorderDayProgress } = workoutState;
 
-  const isLoaded = configLoaded && workoutState.loaded && workoutLog.loaded;
+  const isLoaded = configLoaded && workoutState.loaded && workoutLog.loaded && nutritionLog.loaded;
 
   useEffect(() => {
     // Clean up stale live activities and notifications from a previous session
@@ -107,6 +110,15 @@ export default function App() {
                 getLastReps={workoutLog.getLastReps}
                 startSession={workoutLog.startSession}
                 completeSession={workoutLog.completeSession}
+              />
+            </View>
+            <View style={[StyleSheet.absoluteFill, activeTab !== 'nutrition' && styles.hiddenTab]}>
+              <NutritionScreen
+                logsByDate={nutritionLog.logsByDate}
+                goals={nutritionLog.goals}
+                addFood={nutritionLog.addFood}
+                removeFood={nutritionLog.removeFood}
+                setGoals={nutritionLog.setGoals}
               />
             </View>
             <View style={[StyleSheet.absoluteFill, activeTab !== 'history' && styles.hiddenTab]}>
