@@ -2,8 +2,7 @@
 // this private/personal build. Anyone with access to the bundle can extract
 // it — replace with a backend proxy before any public release.
 
-const ANTHROPIC_API_KEY = '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';
-
+const ANTHROPIC_API_KEY = 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 
