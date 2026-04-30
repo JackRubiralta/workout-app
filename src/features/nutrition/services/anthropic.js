@@ -3,7 +3,7 @@
 // acceptable for a personal build, replace with a backend proxy before any
 // public release.
 
-const ANTHROPIC_API_KEY = "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"; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
+const ANTHROPIC_API_KEY = ""; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
