@@ -1,16 +1,20 @@
 import { Platform } from 'react-native';
-import { createLiveActivity } from 'expo-widgets';
-import WorkoutActivity from '../widgets/workoutActivity';
 
+// expo-widgets is iOS-only AND requires a custom dev client — it isn't part
+// of Expo Go, isn't available on web/Android, and ITS IMPORT throws a native-
+// module error if the dev client wasn't built with it. We lazy-require so any
+// failure cleanly disables Live Activities without crashing the JS bundle.
 const isSupported = Platform.OS === 'ios';
 
 let factory = null;
-try {
-  if (isSupported) {
+if (isSupported) {
+  try {
+    const { createLiveActivity } = require('expo-widgets');
+    const WorkoutActivity = require('../widgets/workoutActivity').default;
     factory = createLiveActivity('WorkoutActivity', WorkoutActivity);
+  } catch {
+    // expo-widgets native module not present (Expo Go / web / dev without it)
   }
-} catch {
-  // expo-widgets native module not available (e.g. Expo Go)
 }
 
 let current = null;

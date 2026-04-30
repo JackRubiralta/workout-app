@@ -1,0 +1,246 @@
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../theme';
+
+function recomputeTotals(items) {
+  const t = items.reduce((acc, it) => ({
+    calories: acc.calories + (Number(it.calories) || 0),
+    protein: acc.protein + (Number(it.protein) || 0),
+    carbs: acc.carbs + (Number(it.carbs) || 0),
+    fat: acc.fat + (Number(it.fat) || 0),
+    fiber: acc.fiber + (Number(it.fiber) || 0),
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  return {
+    calories: Math.round(t.calories),
+    protein: Math.round(t.protein * 10) / 10,
+    carbs: Math.round(t.carbs * 10) / 10,
+    fat: Math.round(t.fat * 10) / 10,
+    fiber: Math.round(t.fiber * 10) / 10,
+  };
+}
+
+function MacroCell({ v, u, c }) {
+  return (
+    <View style={s.macroCell}>
+      <Text style={[s.macroVal, { color: c }]}>{v}</Text>
+      <Text style={s.macroUnit}>{u}</Text>
+    </View>
+  );
+}
+
+function TotalCell({ label, value, color }) {
+  return (
+    <View style={s.totalCell}>
+      <Text style={[s.totalVal, { color }]}>{value}</Text>
+      <Text style={s.totalLabel}>{label}</Text>
+    </View>
+  );
+}
+
+export function ResultsView({ results, setResults, onLog, onStartOver, photos, source, notes, confidence }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editingQty, setEditingQty] = useState('');
+
+  const beginEdit = useCallback((item) => {
+    setEditingId(item._localId);
+    setEditingQty(String(item.quantity));
+  }, []);
+
+  const commitEdit = useCallback(() => {
+    if (!editingId) return;
+    const newQty = parseFloat(editingQty);
+    if (isNaN(newQty) || newQty <= 0) {
+      setEditingId(null);
+      return;
+    }
+    setResults(prev => {
+      if (!prev) return prev;
+      const items = prev.items.map(it => {
+        if (it._localId !== editingId) return it;
+        const ratio = newQty / (it.quantity || 1);
+        return {
+          ...it,
+          quantity: newQty,
+          calories: Math.round((it.calories || 0) * ratio),
+          protein: Math.round((it.protein || 0) * ratio * 10) / 10,
+          carbs: Math.round((it.carbs || 0) * ratio * 10) / 10,
+          fat: Math.round((it.fat || 0) * ratio * 10) / 10,
+          fiber: Math.round((it.fiber || 0) * ratio * 10) / 10,
+        };
+      });
+      return { ...prev, items, totals: recomputeTotals(items) };
+    });
+    setEditingId(null);
+  }, [editingId, editingQty, setResults]);
+
+  const removeItem = useCallback((id) => {
+    setResults(prev => {
+      if (!prev) return prev;
+      const items = prev.items.filter(it => it._localId !== id);
+      return { ...prev, items, totals: recomputeTotals(items) };
+    });
+  }, [setResults]);
+
+  const handleLog = useCallback(() => {
+    if (!results || !results.items.length) return;
+    const stamped = results.items.map(({ _localId, ...rest }) => ({
+      ...rest,
+      source: source ?? null,
+      notes: notes ?? results.notes ?? null,
+      confidence: confidence ?? results.confidence ?? null,
+    }));
+    onLog(stamped, photos ?? [], { mealName: results.mealName ?? null });
+  }, [results, onLog, photos, source, notes, confidence]);
+
+  const conf = results.confidence;
+  const confColor = conf === 'high' ? colors.success : conf === 'low' ? colors.danger : colors.warning;
+
+  return (
+    <ScrollView contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <View style={[s.confPill, { borderColor: confColor + '50', backgroundColor: confColor + '15' }]}>
+        <View style={[s.confDot, { backgroundColor: confColor }]} />
+        <Text style={[s.confText, { color: confColor }]}>{conf.toUpperCase()} CONFIDENCE</Text>
+      </View>
+
+      {!!results.notes && (
+        <View style={s.noteBox}>
+          <Text style={s.noteText}>{results.notes}</Text>
+        </View>
+      )}
+
+      {results.items.length === 0 && (
+        <Text style={s.emptyText}>No items left. Start over to try again.</Text>
+      )}
+
+      {results.items.map((it) => {
+        const isEditing = editingId === it._localId;
+        return (
+          <View key={it._localId} style={s.itemCard}>
+            <View style={s.itemTop}>
+              <Text style={s.itemName} numberOfLines={2}>{it.name}</Text>
+              <TouchableOpacity onPress={() => removeItem(it._localId)} hitSlop={8}>
+                <Text style={s.itemRemove}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={s.itemRow}>
+              {isEditing ? (
+                <View style={s.qtyEdit}>
+                  <TextInput
+                    style={s.qtyInput}
+                    value={editingQty}
+                    onChangeText={setEditingQty}
+                    keyboardType="decimal-pad"
+                    autoFocus
+                    onBlur={commitEdit}
+                    onSubmitEditing={commitEdit}
+                    returnKeyType="done"
+                    selectionColor={colors.success}
+                  />
+                  <Text style={s.itemUnit}>{it.unit}</Text>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={() => beginEdit(it)} style={s.qtyDisplay} activeOpacity={0.7}>
+                  <Text style={s.itemQty}>{it.quantity}</Text>
+                  <Text style={s.itemUnit}>{it.unit}</Text>
+                  <Text style={s.itemEditHint}>edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={s.macroRow}>
+              <MacroCell v={it.calories} u="kcal" c={macroColors.calories} />
+              <MacroCell v={it.protein} u="P" c={macroColors.protein} />
+              <MacroCell v={it.carbs} u="C" c={macroColors.carbs} />
+              <MacroCell v={it.fat} u="F" c={macroColors.fat} />
+            </View>
+          </View>
+        );
+      })}
+
+      <View style={s.totalsCard}>
+        <Text style={s.totalsLabel}>TOTAL</Text>
+        <View style={s.totalsGrid}>
+          <TotalCell label="Calories" value={results.totals.calories} color={macroColors.calories} />
+          <TotalCell label="Protein" value={`${results.totals.protein}g`} color={macroColors.protein} />
+          <TotalCell label="Carbs" value={`${results.totals.carbs}g`} color={macroColors.carbs} />
+          <TotalCell label="Fat" value={`${results.totals.fat}g`} color={macroColors.fat} />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={[s.logBtn, !results.items.length && s.logBtnOff]}
+        onPress={handleLog}
+        activeOpacity={0.8}
+        disabled={!results.items.length}
+      >
+        <Text style={s.logBtnText}>Log Food</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={s.retakeBtn} onPress={onStartOver} activeOpacity={0.7}>
+        <Text style={s.retakeText}>Start over</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+const s = StyleSheet.create({
+  pad: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xxl },
+  emptyText: { color: colors.textTertiary, fontFamily: fonts.mono, fontSize: fontSize.footnote, textAlign: 'center', paddingVertical: spacing.md },
+
+  confPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    alignSelf: 'flex-start', paddingHorizontal: spacing.sm + 2, paddingVertical: 4,
+    borderRadius: radius.full, borderWidth: 1,
+  },
+  confDot: { width: 6, height: 6, borderRadius: 3 },
+  confText: { fontSize: 10, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: 1 },
+
+  noteBox: {
+    backgroundColor: colors.surfaceElevated, borderRadius: radius.md,
+    padding: spacing.sm + 2, borderLeftWidth: 3, borderLeftColor: colors.warning,
+  },
+  noteText: { fontSize: fontSize.footnote, color: colors.textSecondary, fontFamily: fonts.mono, lineHeight: 18 },
+
+  itemCard: {
+    backgroundColor: colors.surfaceElevated, borderRadius: radius.lg,
+    padding: spacing.sm + 2, borderWidth: 1, borderColor: colors.border, gap: spacing.xs,
+  },
+  itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  itemName: { flex: 1, fontSize: fontSize.subhead, fontWeight: '700', color: colors.text, fontFamily: fonts.mono },
+  itemRemove: { fontSize: 14, color: colors.textTertiary, fontWeight: '600', paddingHorizontal: 4 },
+
+  itemRow: { flexDirection: 'row', alignItems: 'center' },
+  qtyDisplay: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  qtyEdit: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  qtyInput: {
+    minWidth: 60, backgroundColor: colors.surfaceHigh, borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm, paddingVertical: 4,
+    fontSize: fontSize.subhead, color: colors.text, fontFamily: fonts.mono, fontWeight: '700',
+    borderWidth: 1, borderColor: colors.success + '60',
+  },
+  itemQty: { fontSize: fontSize.subhead, color: colors.text, fontFamily: fonts.mono, fontWeight: '700' },
+  itemUnit: { fontSize: fontSize.footnote, color: colors.textSecondary, fontFamily: fonts.mono },
+  itemEditHint: { marginLeft: 6, fontSize: 10, color: colors.textTertiary, fontFamily: fonts.mono, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' },
+
+  macroRow: { flexDirection: 'row', gap: spacing.sm, marginTop: 4 },
+  macroCell: { flexDirection: 'row', alignItems: 'baseline', gap: 3 },
+  macroVal: { fontSize: fontSize.footnote, fontWeight: '700', fontFamily: fonts.mono },
+  macroUnit: { fontSize: 10, color: colors.textTertiary, fontFamily: fonts.mono, fontWeight: '600' },
+
+  totalsCard: {
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md,
+    borderWidth: 1, borderColor: colors.border, marginTop: spacing.xs, gap: spacing.sm,
+  },
+  totalsLabel: { fontSize: 10, fontWeight: '700', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1.5 },
+  totalsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  totalCell: { alignItems: 'center', gap: 2, flex: 1 },
+  totalVal: { fontSize: fontSize.title3, fontWeight: '700', fontFamily: fonts.mono },
+  totalLabel: { fontSize: 10, color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 0.5, textTransform: 'uppercase' },
+
+  logBtn: {
+    backgroundColor: colors.success, borderRadius: radius.xl, height: 52,
+    alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm,
+  },
+  logBtnOff: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border },
+  logBtnText: { fontSize: fontSize.headline, fontWeight: '700', color: '#fff', fontFamily: fonts.mono, letterSpacing: 0.5 },
+  retakeBtn: { paddingVertical: spacing.sm, alignItems: 'center' },
+  retakeText: { fontSize: fontSize.footnote, color: colors.textTertiary, fontFamily: fonts.mono, fontWeight: '600' },
+});

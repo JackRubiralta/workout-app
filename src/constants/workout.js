@@ -24,6 +24,8 @@ function ex({
   warmupReps = 'Light weight, 12–15 reps',
   tracksWeight = true,
   tracksReps = true,
+  tracksTime = false,
+  durationSeconds = 60,
 }) {
   return {
     name,
@@ -35,6 +37,8 @@ function ex({
     warmupReps,
     tracksWeight,
     tracksReps,
+    tracksTime,
+    durationSeconds,
   };
 }
 
@@ -44,9 +48,11 @@ const bikeWarmup = ex({
   sets: 1,
   restSeconds: 30,
   nextRestSeconds: 30,
-  reps: '5 min (easy pace)',
+  reps: '5 min easy pace',
   tracksWeight: false,
   tracksReps: false,
+  tracksTime: true,
+  durationSeconds: 300,
 });
 
 export const DAYS = [
@@ -170,8 +176,9 @@ export const DAYS = [
         name: 'Plank',
         sets: 2,
         restSeconds: 60, nextRestSeconds: 60,
-        reps: '45–60 sec hold',
+        reps: '60 sec hold',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 60,
       }),
       ex({
         name: 'Dead Bug',
@@ -190,8 +197,9 @@ export const DAYS = [
         name: 'Hollow Body Hold',
         sets: 2,
         restSeconds: 60, nextRestSeconds: 90,
-        reps: '20–30 sec hold',
+        reps: '30 sec hold',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 30,
       }),
       ex({
         name: 'Cat-Cow',
@@ -227,6 +235,7 @@ export const DAYS = [
         restSeconds: 30, nextRestSeconds: 30,
         reps: '45 sec hold',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 45,
       }),
       ex({
         name: 'Pigeon Pose',
@@ -234,6 +243,7 @@ export const DAYS = [
         restSeconds: 30, nextRestSeconds: 30,
         reps: '45 sec per side',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 45,
       }),
       ex({
         name: 'Doorway Chest Stretch',
@@ -241,6 +251,7 @@ export const DAYS = [
         restSeconds: 30, nextRestSeconds: 30,
         reps: '45 sec per side',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 45,
       }),
       ex({
         name: 'Standing Hamstring + Hip Flexor',
@@ -248,6 +259,7 @@ export const DAYS = [
         restSeconds: 30,
         reps: '45 sec per side',
         tracksWeight: false, tracksReps: false,
+        tracksTime: true, durationSeconds: 45,
       }),
     ],
   },

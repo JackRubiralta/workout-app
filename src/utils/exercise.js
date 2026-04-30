@@ -11,6 +11,8 @@ export function defaultExercise(name = '') {
     warmupReps: 'Light weight, 12–15 reps',
     tracksWeight: true,
     tracksReps: true,
+    tracksTime: false,
+    durationSeconds: 60, // used when tracksTime is true
   };
 }
 
@@ -27,7 +29,16 @@ export function migrateExercise(ex) {
     warmupReps: ex.warmupReps ?? 'Light weight, 12–15 reps',
     tracksWeight: ex.tracksWeight ?? true,
     tracksReps: ex.tracksReps ?? true,
+    tracksTime: ex.tracksTime ?? false,
+    durationSeconds: ex.durationSeconds ?? 60,
   };
+}
+
+export function formatDuration(seconds) {
+  if (seconds == null || isNaN(seconds)) return '–:–';
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // Total number of sets for an exercise (warmup counts as 1 extra set)
