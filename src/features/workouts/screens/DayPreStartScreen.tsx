@@ -360,10 +360,14 @@ const styles = StyleSheet.create({
   },
   addText: { ...(text.button as TextStyle), fontSize: 14, color: colors.textSecondary },
 
+  // The screen sits inside the tab navigator, so the bottom tab bar handles
+  // the iOS home-indicator inset. The CTA only needs a small breath above
+  // the tab bar — `spacing.sm` mirrors the top padding so the buttons don't
+  // sit lopsided against the hairline divider.
   cta: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.sm,
     gap: spacing.sm,
     backgroundColor: colors.background,
     borderTopWidth: StyleSheet.hairlineWidth,

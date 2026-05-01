@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import * as Notifications from 'expo-notifications';
-
-const NOTIF_BUFFER_MS = 500;
+import {
+  cancelWorkoutTimerNotification,
+  scheduleWorkoutTimerNotification,
+} from '../services/workoutTimerNotifications';
 
 export type UseRestTimer = {
   isResting: boolean;
@@ -14,9 +15,13 @@ export type UseRestTimer = {
 };
 
 /**
- * Wall-clock-based rest timer with iOS local-notification fallback so the
- * "rest complete" cue still fires when the phone is locked / app
+ * Wall-clock-based rest timer with a local-notification fallback so the
+ * "rest complete" cue still fires when the phone is locked / the app is
  * backgrounded. Only one rest timer is active at a time per app instance.
+ *
+ * Scheduling/dismissing the notification goes through
+ * `workoutTimerNotifications` so the rest timer and the working-set timer
+ * stay in lockstep on sound, interruption level, and timing.
  */
 export function useRestTimer(): UseRestTimer {
   const [isResting, setIsResting] = useState(false);
@@ -25,38 +30,36 @@ export function useRestTimer(): UseRestTimer {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const endTimeRef = useRef<number | null>(null);
-  const notifIdsRef = useRef<string[]>([]);
+  const notifIdRef = useRef<string | null>(null);
   const isRestingRef = useRef(false);
 
   useEffect(() => {
     isRestingRef.current = isResting;
   }, [isResting]);
 
-  const clearInterval_ = useCallback(() => {
+  const clearTick = useCallback(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
   }, []);
 
-  const cancelAllNotifs = useCallback(() => {
-    const ids = notifIdsRef.current;
-    notifIdsRef.current = [];
-    if (!ids.length) return;
-    for (const id of ids) {
-      Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
-      Notifications.dismissNotificationAsync(id).catch(() => {});
-    }
+  const dismissNotif = useCallback(() => {
+    const id = notifIdRef.current;
+    notifIdRef.current = null;
+    cancelWorkoutTimerNotification(id);
   }, []);
 
+  // Recompute remaining when the app returns from background; bail to
+  // idle if the timer has already ticked past zero while we were away.
   useEffect(() => {
     const sub = AppState.addEventListener('change', next => {
       if (next !== 'active' || !isRestingRef.current || endTimeRef.current === null) return;
       const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
       if (remaining <= 0) {
-        clearInterval_();
+        clearTick();
         endTimeRef.current = null;
-        cancelAllNotifs();
+        dismissNotif();
         setSecondsLeft(0);
         setIsResting(false);
       } else {
@@ -64,8 +67,9 @@ export function useRestTimer(): UseRestTimer {
       }
     });
     return () => sub.remove();
-  }, [clearInterval_, cancelAllNotifs]);
+  }, [clearTick, dismissNotif]);
 
+  // Wall-clock-based ticker.
   useEffect(() => {
     if (!isResting) return;
     intervalRef.current = setInterval(() => {
@@ -73,24 +77,26 @@ export function useRestTimer(): UseRestTimer {
       const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
       setSecondsLeft(Math.max(0, remaining));
     }, 1000);
-    return clearInterval_;
-  }, [isResting, clearInterval_]);
+    return clearTick;
+  }, [isResting, clearTick]);
 
+  // Foreground completion. Cancel the scheduled notification before iOS
+  // delivers it, then fire one manual haptic.
   useEffect(() => {
     if (!isResting || secondsLeft > 0) return;
-    clearInterval_();
+    clearTick();
     setIsResting(false);
     endTimeRef.current = null;
-    cancelAllNotifs();
+    dismissNotif();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
-  }, [isResting, secondsLeft, clearInterval_, cancelAllNotifs]);
+  }, [isResting, secondsLeft, clearTick, dismissNotif]);
 
-  useEffect(() => () => clearInterval_(), [clearInterval_]);
+  useEffect(() => () => clearTick(), [clearTick]);
 
   const startRest = useCallback(
     (duration: number, exerciseName?: string) => {
-      clearInterval_();
-      cancelAllNotifs();
+      clearTick();
+      dismissNotif();
 
       const endTime = Date.now() + duration * 1000;
       endTimeRef.current = endTime;
@@ -98,37 +104,24 @@ export function useRestTimer(): UseRestTimer {
       setSecondsLeft(duration);
       setIsResting(true);
 
-      const body = exerciseName ? `Time for ${exerciseName}` : 'Time to get back to it';
-
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Rest Complete',
-          body,
-          sound: 'triple_alert.caf',
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' } : {}),
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: new Date(endTime + NOTIF_BUFFER_MS),
-          channelId: 'workout-timer',
-        },
-      })
-        .then(id => {
-          notifIdsRef.current = [id];
-        })
-        .catch(() => {});
+      void scheduleWorkoutTimerNotification({
+        endTime,
+        title: 'Rest Complete',
+        body: exerciseName ? `Time for ${exerciseName}` : 'Time to get back to it',
+      }).then(id => {
+        notifIdRef.current = id;
+      });
     },
-    [clearInterval_, cancelAllNotifs],
+    [clearTick, dismissNotif],
   );
 
   const skipRest = useCallback(() => {
-    clearInterval_();
-    cancelAllNotifs();
+    clearTick();
+    dismissNotif();
     endTimeRef.current = null;
     setIsResting(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-  }, [clearInterval_, cancelAllNotifs]);
+  }, [clearTick, dismissNotif]);
 
   return { isResting, secondsLeft, totalSeconds, startRest, skipRest };
 }

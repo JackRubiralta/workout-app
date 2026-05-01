@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import * as Notifications from 'expo-notifications';
-
-const NOTIF_BUFFER_MS = 500;
+import {
+  cancelWorkoutTimerNotification,
+  scheduleWorkoutTimerNotification,
+} from '../services/workoutTimerNotifications';
 
 type Phase = 'idle' | 'running' | 'finished';
 
@@ -24,10 +25,15 @@ export type UseSetTimer = {
 };
 
 /**
- * Wall-clock-based countdown for the WORKING SET (e.g. Plank, Bike Warmup).
- * Three-phase machine: idle → running → finished → idle (after acknowledge).
+ * Wall-clock-based countdown for the WORKING SET (Plank, Bike Warmup, …).
+ * Three-phase machine: `idle → running → finished → idle (after acknowledge)`.
+ * `stopEarly()` skips the finished phase and fires `onComplete` immediately
+ * with the partial elapsed time.
  *
- * `stopEarly()` skips the finished phase and fires onComplete immediately.
+ * Scheduling/dismissing the "set done" notification goes through
+ * `workoutTimerNotifications` — the same service the rest timer uses —
+ * so a finishing working set delivers the same backgrounded cue (sound +
+ * banner + system haptic) as a finishing rest period.
  */
 export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}): UseSetTimer {
   const [phase, setPhase] = useState<Phase>('idle');
@@ -56,12 +62,10 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
     }
   }, []);
 
-  const cancelNotif = useCallback(() => {
+  const dismissNotif = useCallback(() => {
     const id = notifIdRef.current;
-    if (!id) return;
     notifIdRef.current = null;
-    Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
-    Notifications.dismissNotificationAsync(id).catch(() => {});
+    cancelWorkoutTimerNotification(id);
   }, []);
 
   const computeElapsed = useCallback(() => {
@@ -73,7 +77,7 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
 
   const enterFinished = useCallback(() => {
     clearTick();
-    cancelNotif();
+    dismissNotif();
     const elapsed = totalRef.current;
     elapsedAtFinishRef.current = elapsed;
     endTimeRef.current = null;
@@ -82,8 +86,10 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
     setPhase('finished');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     onAutoFinishRef.current?.(elapsed);
-  }, [clearTick, cancelNotif]);
+  }, [clearTick, dismissNotif]);
 
+  // Wall-clock ticker (only while running). 250 ms cadence so the visible
+  // CircularTimer reads "0:00" within a quarter-second of true zero.
   useEffect(() => {
     if (phase !== 'running') return;
     intervalRef.current = setInterval(() => {
@@ -94,11 +100,13 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
     return clearTick;
   }, [phase, clearTick]);
 
+  // Foreground hit-zero → enter finished phase.
   useEffect(() => {
     if (phase !== 'running' || secondsLeft > 0) return;
     enterFinished();
   }, [phase, secondsLeft, enterFinished]);
 
+  // App-state resync: if backgrounded past endTime, jump straight to finished.
   useEffect(() => {
     const sub = AppState.addEventListener('change', next => {
       if (next !== 'active' || phaseRef.current !== 'running' || endTimeRef.current === null) return;
@@ -112,41 +120,18 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
     return () => sub.remove();
   }, [enterFinished]);
 
+  // Belt-and-braces unmount cleanup.
   useEffect(
     () => () => {
       clearTick();
-      cancelNotif();
+      dismissNotif();
     },
-    [clearTick, cancelNotif],
+    [clearTick, dismissNotif],
   );
-
-  const scheduleFinishNotif = useCallback((endTime: number, exerciseName?: string) => {
-    const body = exerciseName
-      ? `${exerciseName} — tap Done to log this set`
-      : 'Set timer finished — tap Done to log';
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Set Done',
-        body,
-        sound: 'triple_alert.caf',
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-        ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' } : {}),
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: new Date(endTime + NOTIF_BUFFER_MS),
-        channelId: 'workout-timer',
-      },
-    })
-      .then(id => {
-        notifIdRef.current = id;
-      })
-      .catch(() => {});
-  }, []);
 
   const start = useCallback(
     (duration: number, exerciseName?: string) => {
-      cancelNotif();
+      dismissNotif();
       clearTick();
       const now = Date.now();
       const endTime = now + duration * 1000;
@@ -157,16 +142,24 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
       setSecondsLeft(duration);
       setPhase('running');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      scheduleFinishNotif(endTime, exerciseName);
+      void scheduleWorkoutTimerNotification({
+        endTime,
+        title: 'Set Done',
+        body: exerciseName
+          ? `${exerciseName} — tap Done to log this set`
+          : 'Set timer finished — tap Done to log',
+      }).then(id => {
+        notifIdRef.current = id;
+      });
     },
-    [clearTick, cancelNotif, scheduleFinishNotif],
+    [clearTick, dismissNotif],
   );
 
   const stopEarly = useCallback(() => {
     if (phaseRef.current !== 'running') return;
     const elapsed = computeElapsed();
     clearTick();
-    cancelNotif();
+    dismissNotif();
     endTimeRef.current = null;
     startedAtRef.current = null;
     elapsedAtFinishRef.current = 0;
@@ -175,7 +168,7 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
     setPhase('idle');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     onCompleteRef.current?.(elapsed);
-  }, [clearTick, cancelNotif, computeElapsed]);
+  }, [clearTick, dismissNotif, computeElapsed]);
 
   const acknowledge = useCallback(() => {
     if (phaseRef.current !== 'finished') return;
@@ -189,14 +182,14 @@ export function useSetTimer({ onComplete, onAutoFinish }: UseSetTimerArgs = {}):
 
   const cancel = useCallback(() => {
     clearTick();
-    cancelNotif();
+    dismissNotif();
     endTimeRef.current = null;
     startedAtRef.current = null;
     elapsedAtFinishRef.current = 0;
     setSecondsLeft(0);
     setTotalSeconds(0);
     setPhase('idle');
-  }, [clearTick, cancelNotif]);
+  }, [clearTick, dismissNotif]);
 
   return {
     isRunning: phase === 'running',
