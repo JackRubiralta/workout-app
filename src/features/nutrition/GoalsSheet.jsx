@@ -10,6 +10,7 @@ const FIELDS = [
   { key: 'protein', label: 'PROTEIN', unit: 'g', accent: macroColors.protein },
   { key: 'carbs', label: 'CARBS', unit: 'g', accent: macroColors.carbs },
   { key: 'fat', label: 'FAT', unit: 'g', accent: macroColors.fat },
+  { key: 'fiber', label: 'FIBER', unit: 'g', accent: macroColors.fiber },
 ];
 
 export function GoalsSheet({ visible, goals, onSave, onClose }) {
@@ -18,12 +19,9 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
 
   useEffect(() => {
     if (visible) {
-      setValues({
-        calories: String(goals.calories),
-        protein: String(goals.protein),
-        carbs: String(goals.carbs),
-        fat: String(goals.fat),
-      });
+      const next = {};
+      for (const f of FIELDS) next[f.key] = String(goals[f.key] ?? 0);
+      setValues(next);
     }
   }, [visible, goals]);
 

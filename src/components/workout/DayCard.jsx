@@ -2,15 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
-import { colors, radius, shadow, spacing, text } from '../../theme';
-
-function ChevronRight({ color, size = 20 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+import { colors, radius, shadow, spacing, surfaces, text } from '../../theme';
+import { ChevronRight } from '../../shell/icons';
 
 function CheckCircle({ color, size = 22 }) {
   return (
@@ -75,7 +68,7 @@ export function DayCard({ day, doneSets, totalSets, exerciseCount, isDone, isInP
         {isDone ? (
           <CheckCircle color={colors.success} />
         ) : (
-          <ChevronRight color={colors.textSecondary} />
+          <ChevronRight color={colors.textSecondary} size={20} />
         )}
       </View>
     </TouchableOpacity>
@@ -84,14 +77,11 @@ export function DayCard({ day, doneSets, totalSets, exerciseCount, isDone, isInP
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    ...surfaces.card,
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     minHeight: 84,
     overflow: 'hidden',
     ...shadow.sm,

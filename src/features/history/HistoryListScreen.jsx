@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
-import { colors, spacing, text } from '../../theme';
+import { colors, layout, spacing } from '../../theme';
 import { useSessionData, useBodyWeightData } from '../../shell/store';
 import { EmptyState } from '../../components/primitives/EmptyState';
+import { ScreenHeader } from '../../components/primitives/ScreenHeader';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { SummaryCard } from './SummaryCard';
 import { SessionCard } from './SessionCard';
 import { HistoryCharts } from './HistoryCharts';
@@ -56,20 +58,15 @@ export function HistoryListScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.eyebrow}>
-            {sessions.length > 0
-              ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
-              : 'TRACKING'}
-          </Text>
-          <Text style={text.hero}>Tracking</Text>
-        </View>
-        {sessions.length > 0 && (
-          <TouchableOpacity onPress={handleClear} hitSlop={10} activeOpacity={0.6} style={styles.clearBtn}>
-            <Text style={styles.clearText}>Clear</Text>
-          </TouchableOpacity>
-        )}
+      <View style={styles.headerWrap}>
+        <ScreenHeader
+          eyebrow={sessions.length > 0
+            ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
+            : 'TRACKING'}
+          title="Tracking"
+          actionLabel={sessions.length > 0 ? 'Clear' : undefined}
+          onActionPress={sessions.length > 0 ? handleClear : undefined}
+        />
       </View>
 
       {!hasContent ? (
@@ -112,7 +109,7 @@ export function HistoryListScreen({ navigation }) {
 
           {sessions.length > 0 && (
             <>
-              <Text style={[text.eyebrow, { color: colors.textTertiary, marginTop: spacing.md, marginLeft: 2 }]}>SESSIONS</Text>
+              <SectionLabel style={{ marginTop: spacing.md }}>SESSIONS</SectionLabel>
               {sessions.map(session => (
                 <SessionCard
                   key={session.id}
@@ -123,7 +120,7 @@ export function HistoryListScreen({ navigation }) {
             </>
           )}
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: layout.tabBarClearance }} />
         </ScrollView>
       )}
 
@@ -139,16 +136,6 @@ export function HistoryListScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 4 },
-  clearBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
-  clearText: { ...text.buttonSmall, color: colors.textSecondary, fontWeight: '600' },
+  headerWrap: { paddingHorizontal: spacing.lg },
   list: { paddingHorizontal: spacing.lg, gap: spacing.sm },
 });

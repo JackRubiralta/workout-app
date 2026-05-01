@@ -1,5 +1,7 @@
 import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
+
+// ─── Tab bar icons ──────────────────────────────────────────────────────────
 
 export function DumbbellIcon({ color = '#fff', size = 24 }) {
   return (
@@ -34,6 +36,62 @@ export function ClockIcon({ color = '#fff', size = 24 }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </Svg>
+  );
+}
+
+// ─── Action / chrome icons ──────────────────────────────────────────────────
+// All accept `color` and `size`. Default size 20 for chrome; bump or shrink
+// at the call site to match the surrounding type.
+
+export function ChevronLeft({ color, size = 22, strokeWidth = 2 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function ChevronRight({ color, size = 22, strokeWidth = 2 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function PlusIcon({ color, size = 18, strokeWidth = 2.4 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function PencilIcon({ color, size = 16 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M16.5 3.5l4 4-12 12-4 .5.5-4 12-12.5z" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function TrashIcon({ color, size = 18 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 6h18M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+            stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M10 11v6M14 11v6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function CameraIcon({ color, size = 22, strokeWidth = 1.7 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 9V19a1 1 0 0 0 1 1H20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H17l-2-3H9L7 8H4a1 1 0 0 0-1 1z"
+            stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+      <Circle cx={12} cy={13} r={3.5} stroke={color} strokeWidth={strokeWidth} />
     </Svg>
   );
 }

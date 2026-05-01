@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Polyline, Circle } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, spacing, surfaces, text } from '../../theme';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { topExercises, topSetPerSession, epley } from '../workout/logic/suggestions';
 
 const MAX_POINTS = 10;
@@ -74,7 +75,7 @@ export function TopExercises({ sessions, onPressExercise }) {
 
   return (
     <View style={s.wrap}>
-      <Text style={[text.eyebrow, { color: colors.textTertiary, marginLeft: 2 }]}>TOP EXERCISES</Text>
+      <SectionLabel>TOP EXERCISES</SectionLabel>
       <View style={s.list}>
         {rows.map((r, i) => {
           const trendColor = r.deltaWeight == null ? colors.textSecondary
@@ -120,10 +121,9 @@ const s = StyleSheet.create({
   wrap: { gap: spacing.sm, marginTop: spacing.sm },
   list: { gap: 6 },
   row: {
+    ...surfaces.row,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
   },
   name: { ...text.title3, fontSize: 15, color: colors.text, fontWeight: '600' },
   metaRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },

@@ -58,13 +58,31 @@ export function CalorieRing({ value = 0, goal = 2000, color = colors.text, size 
   );
 }
 
-export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size = 70 }) {
+// `polarity` controls how the bottom delta reads. `more-is-better` (default)
+// shows "X left" / "+X over" — matching protein/carbs/fat/fiber where you
+// want to hit the target. `less-is-better` is for sugar/sodium where the
+// number is a ceiling: "X under" / "+X over".
+export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size = 70, polarity = 'more-is-better' }) {
   const STROKE = 6;
   const { r, c, cx } = geometry(size, STROKE);
   const targetPct = goal > 0 ? Math.min(value / goal, 1.5) : 0;
   const animated = useMountedValue(targetPct);
   const offset = c * (1 - Math.min(animated, 1));
   const over = goal > 0 && value > goal;
+  const remaining = Math.max(Math.round(goal - value), 0);
+  const overAmount = Math.round(value - goal);
+  const lessIsBetter = polarity === 'less-is-better';
+  const deltaText = goal <= 0
+    ? ''
+    : over
+      ? `+${overAmount} over`
+      : lessIsBetter
+        ? `${remaining} under`
+        : `${remaining} left`;
+  // For less-is-better metrics, "over" is the bad state — keep danger.
+  // For more-is-better, "over" just means you hit the goal — show the
+  // accent colour, not danger.
+  const overColor = lessIsBetter ? colors.danger : color;
   return (
     <View style={s.macroOuter}>
       <View style={{ width: size, height: size }}>
@@ -74,7 +92,7 @@ export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size 
             cx={cx}
             cy={cx}
             r={r}
-            stroke={over ? colors.danger : color}
+            stroke={over ? overColor : color}
             strokeWidth={STROKE}
             fill="none"
             strokeDasharray={`${c} ${c}`}
@@ -84,12 +102,12 @@ export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size 
           />
         </Svg>
         <View style={[StyleSheet.absoluteFill, s.center]} pointerEvents="none">
-          <Text style={[s.macroValue, { color: over ? colors.danger : colors.text }]}>{Math.round(value)}</Text>
+          <Text style={[s.macroValue, { color: over && lessIsBetter ? colors.danger : colors.text }]}>{Math.round(value)}</Text>
           <Text style={s.macroUnit}>{unit}</Text>
         </View>
       </View>
       <Text style={[s.macroLabel, { color }]}>{label}</Text>
-      <Text style={s.macroGoal}>of {goal}{unit}</Text>
+      <Text style={[s.macroGoal, over && lessIsBetter && { color: colors.danger }]}>{deltaText}</Text>
     </View>
   );
 }

@@ -103,6 +103,17 @@ export const shadow = {
   }),
 };
 
+// ─── Layout constants ───────────────────────────────────────────────────────
+// Centralised so we change them in one place. `tabBarClearance` is the
+// bottom spacer that every tabbed scroll view ends with so its content
+// doesn't get hidden behind the tab bar. `sectionIndent` is the small
+// 2px nudge applied to section eyebrows to optically align them with the
+// rounded card edges below.
+export const layout = {
+  tabBarClearance: 100,
+  sectionIndent: 2,
+};
+
 export const dayPalette = ['#FF4757', '#3742FA', '#2ED573', '#FFA502', '#A55EEA', '#00B894', '#FF7675', '#74B9FF'];
 
 export const macroColors = {
@@ -110,5 +121,5 @@ export const macroColors = {
   protein: '#3742FA',
   carbs: '#FFA502',
   fat: '#A55EEA',
-  fiber: palette.gray2,
+  fiber: '#26C6DA',
 };

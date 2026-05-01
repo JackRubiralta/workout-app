@@ -2,10 +2,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
 import { Button, IconButton } from '../../components/primitives/Button';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { ChevronLeft, PencilIcon, PlusIcon } from '../../shell/icons';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { DayEditSheet } from './DayEditSheet';
 import { activeSessionForDay, dayProgress, isDayComplete } from './logic/progress';
@@ -25,27 +26,6 @@ function estimateMinutes(day) {
   return Math.max(5, Math.round(secs / 60));
 }
 
-function ChevronLeft({ color, size = 20 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function PencilIcon({ color, size = 16 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M16.5 3.5l4 4-12 12-4 .5.5-4 12-12.5z" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function PlusIcon({ color, size = 18 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.4} strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 export function DayPreStartScreen({ navigation, route }) {
   const dayIndex = route.params?.dayIndex ?? 0;
@@ -165,7 +145,7 @@ export function DayPreStartScreen({ navigation, route }) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <IconButton onPress={() => navigation.goBack()}>
-          <ChevronLeft color={colors.text} />
+          <ChevronLeft color={colors.text} size={20} />
         </IconButton>
         <View style={[styles.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
           <Text style={[styles.dayDotText, { color: day.color }]}>{day.day}</Text>
@@ -207,7 +187,7 @@ export function DayPreStartScreen({ navigation, route }) {
           </View>
         )}
 
-        <Text style={[text.eyebrow, styles.sectionLabel]}>EXERCISES · TAP TO EDIT</Text>
+        <SectionLabel style={styles.sectionLabel}>EXERCISES · TAP TO EDIT</SectionLabel>
         <View style={styles.exerciseList}>
           {day.exercises.map((ex, i) => {
             const total = exerciseTotalSets(ex);
@@ -335,18 +315,15 @@ const styles = StyleSheet.create({
 
   metaRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   metaCard: {
+    ...surfaces.row,
     flex: 1, alignItems: 'center', gap: 2,
     paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
   },
   metaValue: { ...text.monoNumber, fontSize: fontSize.title2, fontWeight: '700' },
   metaLabel: { ...text.eyebrowSmall },
 
   resumeBanner: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    ...surfaces.row,
     padding: spacing.md,
     marginBottom: spacing.md,
     gap: 4,
@@ -354,13 +331,12 @@ const styles = StyleSheet.create({
   resumeTitle: { ...text.eyebrow, color: colors.text, letterSpacing: 1.5, fontWeight: '700' },
   resumeBody: { ...text.bodySecondary, fontSize: 14, lineHeight: 20, color: colors.textSecondary },
 
-  sectionLabel: { color: colors.textTertiary, marginLeft: 2, marginBottom: spacing.sm, marginTop: spacing.xs },
+  sectionLabel: { marginBottom: spacing.sm, marginTop: spacing.xs },
   exerciseList: { gap: spacing.sm },
   exerciseRow: {
+    ...surfaces.row,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-    borderRadius: radius.lg, backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border,
   },
   exNumber: { width: 28, height: 28, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   exNumberText: { ...text.monoCaption, fontWeight: '700', color: colors.text },
@@ -370,10 +346,9 @@ const styles = StyleSheet.create({
   dot: { width: 5, height: 5, borderRadius: 3 },
 
   addRow: {
+    ...surfaces.dashed,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-    borderRadius: radius.lg, backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed',
   },
   addIcon: {
     width: 28, height: 28, borderRadius: radius.full,

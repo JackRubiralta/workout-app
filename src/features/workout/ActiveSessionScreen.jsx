@@ -5,6 +5,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
+import { ChevronLeft } from '../../shell/icons';
 import { useRestTimer } from './hooks/useRestTimer';
 import { useSetTimer } from './hooks/useSetTimer';
 import { useLiveActivity } from './hooks/useLiveActivity';
@@ -45,13 +46,6 @@ function UndoIcon({ color }) {
   );
 }
 
-function ChevronLeft({ color }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
 
 // "Avg of last 5: 80 lb × 8" reference shown under the rep guide so the user
 // has a quick sense of where they're at without opening the history sheet.

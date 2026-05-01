@@ -2,14 +2,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { colors, fonts, fontSize, macroColors, radius, shadow, spacing, text } from '../../theme';
+import { colors, fontSize, layout, macroColors, radius, shadow, spacing, surfaces, text } from '../../theme';
 import { useNutritionData } from '../../shell/store';
 import { CalorieRing, MacroRing } from '../../components/nutrition/MacroRing';
+import { ScreenHeader } from '../../components/primitives/ScreenHeader';
+import { CameraIcon, ChevronLeft, ChevronRight } from '../../shell/icons';
 import { GoalsSheet } from './GoalsSheet';
 import { AddFoodSheet } from './AddFoodSheet/AddFoodSheet';
 import { FoodLog } from './FoodLog';
-import { DailyTotalsBar } from './DailyTotalsBar';
 import { NutritionTrends } from './NutritionTrends';
 import { formatDateKey, totalsForDay } from './hooks/useNutritionLog';
 
@@ -26,29 +26,6 @@ function formatDateLong(d) {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
-function ChevLeft({ color, size = 18 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function ChevRight({ color, size = 18 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function CameraIcon({ color, size = 22 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M3 9V19a1 1 0 0 0 1 1H20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H17l-2-3H9L7 8H4a1 1 0 0 0-1 1z"
-            stroke={color} strokeWidth={1.7} strokeLinejoin="round" />
-      <Circle cx={12} cy={13} r={3.5} stroke={color} strokeWidth={1.7} />
-    </Svg>
-  );
-}
 
 function DateStrip({ date, onChange }) {
   const today = startOfDay(new Date());
@@ -60,13 +37,13 @@ function DateStrip({ date, onChange }) {
   return (
     <View style={ds.row}>
       <TouchableOpacity onPress={goPrev} hitSlop={8} style={ds.arrow} activeOpacity={0.6}>
-        <ChevLeft color={colors.textSecondary} />
+        <ChevronLeft color={colors.textSecondary} size={18} strokeWidth={2.2} />
       </TouchableOpacity>
       <TouchableOpacity onPress={goToday} activeOpacity={0.7} style={ds.center}>
         <Text style={ds.label}>{isToday ? 'Today' : formatDateLong(date)}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={goNext} hitSlop={8} style={[ds.arrow, isToday && { opacity: 0.3 }]} activeOpacity={0.6} disabled={isToday}>
-        <ChevRight color={colors.textSecondary} />
+        <ChevronRight color={colors.textSecondary} size={18} strokeWidth={2.2} />
       </TouchableOpacity>
     </View>
   );
@@ -100,9 +77,8 @@ function CaptureCard({ onScan }) {
 }
 const cap = StyleSheet.create({
   primary: {
+    ...surfaces.card,
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.md, paddingVertical: spacing.md,
     ...shadow.sm,
   },
@@ -123,13 +99,14 @@ function RingsBlock({ totals, goals }) {
         <MacroRing label="Protein" value={totals.protein} goal={goals.protein} color={macroColors.protein} />
         <MacroRing label="Carbs" value={totals.carbs} goal={goals.carbs} color={macroColors.carbs} />
         <MacroRing label="Fat" value={totals.fat} goal={goals.fat} color={macroColors.fat} />
+        <MacroRing label="Fiber" value={totals.fiber} goal={goals.fiber} color={macroColors.fiber} />
       </View>
     </View>
   );
 }
 const rb = StyleSheet.create({
   wrap: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
-  row: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', paddingHorizontal: spacing.lg },
+  row: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: spacing.sm },
 });
 
 export function NutritionScreen({ navigation }) {
@@ -205,15 +182,12 @@ export function NutritionScreen({ navigation }) {
   return (
     <SafeAreaView style={s.container} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={s.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.eyebrow}>{totals.calories > 0 ? `${Math.round(totals.calories)} / ${goals.calories} KCAL` : 'NUTRITION'}</Text>
-            <Text style={text.hero}>Today</Text>
-          </View>
-          <TouchableOpacity onPress={() => setGoalsOpen(true)} hitSlop={10} activeOpacity={0.6} style={s.editGoalsBtn}>
-            <Text style={s.editGoalsText}>Edit goals</Text>
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          eyebrow={`${Math.round(totals.calories)} / ${goals.calories} KCAL`}
+          title="Nutrition"
+          actionLabel="Edit goals"
+          onActionPress={() => setGoalsOpen(true)}
+        />
 
         <View style={s.captureWrap}>
           <CaptureCard onScan={() => openAdd('scan')} />
@@ -229,13 +203,11 @@ export function NutritionScreen({ navigation }) {
           <FoodLog items={sortedItems} onPressItem={openItem} />
         </View>
 
-        <DailyTotalsBar totals={totals} goals={goals} />
-
         <View style={{ marginTop: spacing.lg }}>
           <NutritionTrends logsByDate={logsByDate} goals={goals} />
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: layout.tabBarClearance }} />
       </ScrollView>
 
       <GoalsSheet visible={goalsOpen} goals={goals} onSave={setGoals} onClose={() => setGoalsOpen(false)} />
@@ -247,18 +219,8 @@ export function NutritionScreen({ navigation }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { paddingHorizontal: spacing.lg },
-  header: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 4 },
-  editGoalsBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
-  editGoalsText: { ...text.buttonSmall, color: colors.textSecondary, fontWeight: '600' },
 
-  captureWrap: { marginTop: spacing.md, marginBottom: spacing.md },
+  captureWrap: { marginBottom: spacing.md },
 
   logWrap: { marginTop: spacing.md, marginBottom: spacing.sm },
 });

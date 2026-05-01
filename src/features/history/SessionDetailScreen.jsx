@@ -1,30 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
 import { useSessionData } from '../../shell/store';
 import { IconButton } from '../../components/primitives/Button';
+import { ChevronLeft, TrashIcon } from '../../shell/icons';
 import { ExerciseHistorySheet } from '../workout/ExerciseHistorySheet';
 import { sessionVolume } from '../workout/logic/volume';
 import { confirm } from '../../utils/confirm';
-
-function ChevronLeft({ color, size = 22 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function TrashIcon({ color, size = 18 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M3 6h18M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-            stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M10 11v6M14 11v6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 function groupByExercise(entries) {
   const out = [];

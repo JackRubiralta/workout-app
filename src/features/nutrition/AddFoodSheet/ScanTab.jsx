@@ -6,6 +6,7 @@ import { colors, fonts, fontSize, radius, shadow, spacing } from '../../../theme
 import { analyzeFoodPhotos } from '../services/anthropic';
 import { LoadingState } from './PulseDots';
 import { ResultsView } from './ResultsView';
+import { NoFoodView } from './NoFoodView';
 
 const MAX_PHOTOS = 3;
 
@@ -80,6 +81,13 @@ export function ScanTab({
   }, [photos, setBusy, setStatus, setResults, abortRef]);
 
   if (busy) return <LoadingState status={status} />;
+  if (results && results.foodDetected === false) return (
+    <NoFoodView
+      notes={results.notes}
+      source="photo"
+      onStartOver={() => { setResults(null); setPhotos([]); }}
+    />
+  );
   if (results) return (
     <ResultsView
       results={results}

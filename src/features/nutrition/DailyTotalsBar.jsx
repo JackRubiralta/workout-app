@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, macroColors, spacing, surfaces, text } from '../../theme';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
 
 export function DailyTotalsBar({ totals, goals }) {
   const cells = [
@@ -12,7 +13,7 @@ export function DailyTotalsBar({ totals, goals }) {
   ];
   return (
     <View style={s.wrap}>
-      <Text style={[text.eyebrow, { color: colors.textTertiary, marginLeft: 2 }]}>DAILY TOTALS</Text>
+      <SectionLabel>DAILY TOTALS</SectionLabel>
       <View style={s.card}>
         <View style={s.row}>
           {cells.map(c => (
@@ -35,8 +36,7 @@ export function DailyTotalsBar({ totals, goals }) {
 const s = StyleSheet.create({
   wrap: { gap: spacing.sm },
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.md,
   },
   row: { flexDirection: 'row', justifyContent: 'space-between' },

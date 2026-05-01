@@ -3,22 +3,17 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
-import { colors, radius, spacing, text } from '../../theme';
+import { colors, layout, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
 import { DayCard } from '../../components/workout/DayCard';
+import { ScreenHeader } from '../../components/primitives/ScreenHeader';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { PlusIcon } from '../../shell/icons';
 import { WeekStrip } from './WeekStrip';
 import { dayProgress, isDayComplete, activeSessionForDay } from './logic/progress';
 import { exerciseTotalSets } from '../../utils/exercise';
 import { workoutsThisWeek, streakStats } from './logic/volume';
 import { confirm } from '../../utils/confirm';
-
-function PlusIcon({ color, size = 18 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.4} strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 function FlameIcon({ color, size = 14 }) {
   return (
@@ -61,15 +56,12 @@ export function WorkoutListScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.eyebrow}>{todayLabel().toUpperCase()}</Text>
-            <Text style={text.hero}>Workout</Text>
-          </View>
-          <TouchableOpacity onPress={handleResetProgram} hitSlop={10} activeOpacity={0.6} style={styles.resetBtn}>
-            <Text style={styles.resetText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          eyebrow={todayLabel().toUpperCase()}
+          title="Workout"
+          actionLabel="Reset"
+          onActionPress={handleResetProgram}
+        />
 
         <View style={styles.statsRow}>
           <View style={styles.statChip}>
@@ -87,7 +79,7 @@ export function WorkoutListScreen({ navigation }) {
           <WeekStrip sessions={sessions} />
         </View>
 
-        <Text style={[text.eyebrow, styles.sectionLabel]}>Program</Text>
+        <SectionLabel style={styles.sectionLabel}>Program</SectionLabel>
         <View style={styles.list}>
           {config.days.map((day, index) => {
             const active = activeSessionForDay(sessions, index);
@@ -118,7 +110,7 @@ export function WorkoutListScreen({ navigation }) {
 
         <Text style={styles.hint}>Tap a day to view exercises and start.</Text>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: layout.tabBarClearance }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -127,46 +119,30 @@ export function WorkoutListScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { paddingHorizontal: spacing.lg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 4 },
-  resetBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
-  resetText: { ...text.buttonSmall, color: colors.textSecondary, fontWeight: '600' },
 
   statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   statChip: {
+    ...surfaces.row,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.sm + 4,
   },
   statValue: { ...text.monoNumber, fontSize: 20 },
   statLabel: { ...text.bodySecondary, fontSize: 13, color: colors.textSecondary, flex: 1 },
 
-  sectionLabel: { color: colors.textTertiary, marginBottom: spacing.sm, marginLeft: 2 },
+  sectionLabel: { marginBottom: spacing.sm },
 
   list: { gap: spacing.sm },
 
   addBtn: {
+    ...surfaces.card,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
-    borderRadius: radius.xl,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     minHeight: 64,
   },
   addIconWrap: {

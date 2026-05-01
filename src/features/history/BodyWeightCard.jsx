@@ -1,16 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path, Polyline, Circle, Line } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
-
-function PlusIcon({ color, size = 16 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.4} strokeLinecap="round" />
-    </Svg>
-  );
-}
+import Svg, { Polyline, Circle, Line } from 'react-native-svg';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
+import { PlusIcon } from '../../shell/icons';
 
 function relativeDay(iso) {
   if (!iso) return '';
@@ -144,7 +137,7 @@ export function BodyWeightCard({ entries, latest, onLog }) {
             onLog();
           }}
         >
-          <PlusIcon color={colors.text} />
+          <PlusIcon color={colors.text} size={16} />
           <Text style={s.logBtnText}>Log</Text>
         </TouchableOpacity>
       </View>
@@ -160,8 +153,7 @@ export function BodyWeightCard({ entries, latest, onLog }) {
 
 const s = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,
   },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },

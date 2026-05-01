@@ -5,6 +5,7 @@ import { colors, fonts, fontSize, radius, spacing } from '../../../theme';
 import { analyzeFoodText } from '../services/anthropic';
 import { LoadingState } from './PulseDots';
 import { ResultsView } from './ResultsView';
+import { NoFoodView } from './NoFoodView';
 
 export function SearchTab({
   query, setQuery, results, setResults,
@@ -42,6 +43,13 @@ export function SearchTab({
   }, [query, setBusy, setStatus, setResults, abortRef]);
 
   if (busy) return <LoadingState status={status} />;
+  if (results && results.foodDetected === false) return (
+    <NoFoodView
+      notes={results.notes}
+      source="text"
+      onStartOver={() => { setResults(null); setQuery(''); }}
+    />
+  );
   if (results) return (
     <ResultsView
       results={results}

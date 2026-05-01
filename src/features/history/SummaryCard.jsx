@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, spacing, text } from '../../theme';
+import { colors, spacing, surfaces, text } from '../../theme';
 
 function Stat({ value, label, accent }) {
   return (
@@ -39,8 +39,7 @@ export function SummaryCard({ thisWeek, thisMonth, currentStreak, longestStreak,
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

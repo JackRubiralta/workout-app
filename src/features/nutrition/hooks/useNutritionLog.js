@@ -3,7 +3,8 @@ import { KEYS } from '../../../storage/keys';
 import { readJson, writeJson } from '../../../storage/asyncStore';
 import { ensureMigrated } from '../../../storage/migrate';
 
-const DEFAULT_GOALS = { calories: 2000, protein: 150, carbs: 220, fat: 65 };
+// Fiber: aim-for goal (≥30g daily is the typical recommendation).
+const DEFAULT_GOALS = { calories: 2000, protein: 150, carbs: 220, fat: 65, fiber: 30 };
 
 export function formatDateKey(date) {
   const y = date.getFullYear();

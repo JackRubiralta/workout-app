@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, radius, shadow, spacing, text } from '../../theme';
+import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../theme';
 import { sessionVolume } from '../workout/logic/volume';
 
 function formatDate(iso) {
@@ -96,9 +96,9 @@ export function SessionCard({ session, onPress }) {
 
 const s = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
-    overflow: 'hidden', ...shadow.sm,
+    ...surfaces.card,
+    overflow: 'hidden',
+    ...shadow.sm,
   },
   colorBar: { height: 3 },
   header: {

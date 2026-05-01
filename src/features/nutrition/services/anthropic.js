@@ -11,12 +11,15 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 // ─── Prompts ────────────────────────────────────────────────────────────────
 
 const JSON_SHAPE = `{
+  "food_detected": boolean,
   "meal_name": string,
   "items": [{ "name": string, "quantity": number, "unit": string, "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number }],
   "totals": { "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number },
   "confidence": "high" | "medium" | "low",
   "notes": string
-}`;
+}
+
+If the input does not depict food (e.g. a person, an object, a screenshot, a blank / blurry image, an animal not being eaten), set "food_detected": false, leave "items" and "totals" as empty/zero, and put a one-sentence description of what the input actually shows in "notes" (e.g. "Photo shows a dog on a couch — no food in frame."). Do not invent food in this case.`;
 
 const SYSTEM_PROMPT_PHOTO = `You are a precise nutrition analyst. Analyze the food in the image(s) and identify each distinct component. Use multiple photos together to improve portion estimation. Use your training knowledge of standard nutrition data (USDA / common food databases) to estimate calories and macros for each component, then sum them.
 
@@ -97,7 +100,15 @@ function normalizeFinal(parsed) {
   totals.fat = Math.round(totals.fat * 10) / 10;
   totals.fiber = Math.round(totals.fiber * 10) / 10;
 
+  // food_detected explicit, OR fall back to "is there at least one item with
+  // calories?" — Claude sometimes forgets the flag but never invents food
+  // when there isn't any.
+  const foodDetected = parsed.food_detected === false
+    ? false
+    : items.some(it => it.calories > 0);
+
   return {
+    foodDetected,
     items,
     totals,
     confidence: parsed.confidence === 'high' || parsed.confidence === 'low' ? parsed.confidence : 'medium',

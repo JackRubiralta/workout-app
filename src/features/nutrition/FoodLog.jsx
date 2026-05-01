@@ -1,22 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, radius, spacing, text } from '../../theme';
+import { colors, fonts, radius, rowPadding, spacing, surfaces, text } from '../../theme';
+import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { CameraIcon } from '../../shell/icons';
 
 function formatTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function CameraIcon({ color, size = 12 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M3 9V19a1 1 0 0 0 1 1H20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H17l-2-3H9L7 8H4a1 1 0 0 0-1 1z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
-    </Svg>
-  );
 }
 
 function FoodPill({ item, onPress }) {
@@ -38,7 +31,7 @@ function FoodPill({ item, onPress }) {
           <Text style={s.name} numberOfLines={1}>{item.name}</Text>
           {photoCount > 0 && (
             <View style={s.photoBadge}>
-              <CameraIcon color={colors.textSecondary} />
+              <CameraIcon color={colors.textSecondary} size={12} strokeWidth={1.6} />
               {photoCount > 1 ? <Text style={s.photoBadgeText}>{photoCount}</Text> : null}
             </View>
           )}
@@ -56,7 +49,7 @@ export function FoodLog({ items, onPressItem }) {
   return (
     <View style={s.wrap}>
       <View style={s.headerRow}>
-        <Text style={[text.eyebrow, { color: colors.textTertiary }]}>FOOD LOG</Text>
+        <SectionLabel>FOOD LOG</SectionLabel>
         <Text style={s.count}>{items.length} item{items.length === 1 ? '' : 's'}</Text>
       </View>
       {items.length === 0 ? (
@@ -79,16 +72,14 @@ const s = StyleSheet.create({
   wrap: { gap: spacing.sm },
   headerRow: {
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
-    paddingHorizontal: 2,
   },
   count: { ...text.monoCaption, fontWeight: '600', color: colors.textSecondary, letterSpacing: 0.3 },
 
   list: { gap: 6 },
   pill: {
+    ...surfaces.row,
+    ...rowPadding,
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
   timeCol: { width: 56 },
@@ -107,8 +98,7 @@ const s = StyleSheet.create({
   kcal: { ...text.title3, fontSize: 15, fontWeight: '700', color: colors.text, fontFamily: fonts.mono, minWidth: 50, textAlign: 'right' },
 
   emptyBox: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.lg, alignItems: 'center', gap: 4,
   },
   emptyTitle: { ...text.title3, fontSize: 17, color: colors.text },
