@@ -1,12 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { KEYS } from '../../../storage/keys';
-import { readJson, writeJson } from '../../../storage/asyncStore';
-import { ensureMigrated } from '../../../storage/migrate';
+import { usePersistedState } from '../../../storage/usePersistedState';
 import { activeSessionForDay } from '../logic/progress';
 import { MAX_SESSIONS } from '../../../constants/workout';
+import { makeId } from '../../../utils/ids';
 
-function generateId() {
-  return `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const INITIAL = { sessions: [], activeSessionId: null };
+
+// If the stored activeSessionId points to a session that no longer exists
+// (e.g. the user wiped history out from under it), drop it so the active-
+// session screen never tries to render against a ghost id.
+function hydrate(stored) {
+  const sessions = stored.sessions ?? [];
+  const activeSessionId = stored.activeSessionId
+    && sessions.some(s => s.id === stored.activeSessionId)
+    ? stored.activeSessionId
+    : null;
+  return { sessions, activeSessionId };
 }
 
 /**
@@ -34,34 +44,10 @@ function generateId() {
  * }}
  */
 export function useWorkoutSession() {
-  const [state, setState] = useState({ sessions: [], activeSessionId: null });
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      await ensureMigrated();
-      const stored = await readJson(KEYS.sessions);
-      if (alive && stored) {
-        // If we have an activeSessionId but the session no longer exists, clear it.
-        const valid = stored.activeSessionId
-          && stored.sessions.some(s => s.id === stored.activeSessionId);
-        setState({
-          sessions: stored.sessions ?? [],
-          activeSessionId: valid ? stored.activeSessionId : null,
-        });
-      }
-      if (alive) setLoaded(true);
-    })();
-    return () => { alive = false; };
-  }, []);
+  const [state, setState, loaded] = usePersistedState(KEYS.sessions, INITIAL, hydrate);
 
   const stateRef = useRef(state);
   stateRef.current = state;
-
-  useEffect(() => {
-    if (loaded) writeJson(KEYS.sessions, state);
-  }, [state, loaded]);
 
   const sessions = state.sessions;
   const activeSessionId = state.activeSessionId;
@@ -76,7 +62,7 @@ export function useWorkoutSession() {
   // caller must explicitly call abandonSession or resumeSession first.
   const startSession = useCallback((day, dayIndex) => {
     const session = {
-      id: generateId(),
+      id: makeId('s'),
       startedAt: new Date().toISOString(),
       completedAt: null,
       abandonedAt: null,

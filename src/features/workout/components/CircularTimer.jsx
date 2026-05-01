@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, fonts } from '../../theme';
+import { colors, fonts } from '../../../theme';
 
 const STROKE_WIDTH = 10;
 
@@ -10,7 +10,7 @@ function getGeometry(size) {
   return { r, circumference: 2 * Math.PI * r, center: size / 2 };
 }
 
-export function CircularTimer({ secondsLeft, totalSeconds, size = 180, label = 'REST' }) {
+export function CircularTimer({ secondsLeft, totalSeconds, size = 180, label = 'REST', color }) {
   const { r, circumference, center } = getGeometry(size);
   const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
   const dashOffset = circumference * (1 - progress);
@@ -21,6 +21,12 @@ export function CircularTimer({ secondsLeft, totalSeconds, size = 180, label = '
   const timeFontSize = Math.round(size * 0.255);
   const labelFontSize = Math.round(size * 0.072);
 
+  // `color` overrides both the progress ring and the label so callers can
+  // signal state shifts (e.g. green when a set timer has finished and is
+  // awaiting acknowledgement). Default keeps the original neutral look.
+  const ringColor = color ?? colors.text;
+  const labelColor = color ?? colors.textSecondary;
+
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
@@ -29,7 +35,7 @@ export function CircularTimer({ secondsLeft, totalSeconds, size = 180, label = '
           cx={center}
           cy={center}
           r={r}
-          stroke={colors.text}
+          stroke={ringColor}
           strokeWidth={STROKE_WIDTH}
           fill="none"
           strokeDasharray={`${circumference} ${circumference}`}
@@ -45,7 +51,7 @@ export function CircularTimer({ secondsLeft, totalSeconds, size = 180, label = '
         >
           {display}
         </Text>
-        <Text style={{ marginTop: 3, fontSize: labelFontSize, fontWeight: '600', color: colors.textSecondary, letterSpacing: 3, fontFamily: fonts.mono }}>
+        <Text style={{ marginTop: 3, fontSize: labelFontSize, fontWeight: '600', color: labelColor, letterSpacing: 3, fontFamily: fonts.mono }}>
           {label}
         </Text>
       </View>

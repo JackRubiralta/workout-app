@@ -6,7 +6,7 @@ import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { CameraIcon } from '../../shell/icons';
 import { formatTime } from '../../utils/date';
 import { copy } from '../../copy';
-import { formatFoodMeta } from './hooks/useNutritionLog';
+import { formatFoodMeta } from './nutritionMath';
 
 function FoodPill({ item, onPress }) {
   const photoCount = (item.photos ?? []).length;

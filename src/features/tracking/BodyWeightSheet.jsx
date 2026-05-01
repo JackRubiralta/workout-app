@@ -1,31 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Sheet } from '../../components/primitives/Sheet';
-import { ScrollPicker } from '../../components/primitives/ScrollPicker';
-import { BODY_WEIGHT_MIN_LB, BODY_WEIGHT_MAX_LB, BODY_WEIGHT_STEP_LB } from '../../constants/history';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, text } from '../../theme';
+import { Button, ScrollPicker, Sheet, SheetHeader } from '../../components/primitives';
+import { useSettingsData } from '../../shell/store';
+import { BODY_WEIGHT_PICKER, fromLb, toLb, unitLabel } from '../../utils/units';
 
-const VALUES = ScrollPicker.range(BODY_WEIGHT_MIN_LB, BODY_WEIGHT_MAX_LB, BODY_WEIGHT_STEP_LB);
+// Picker values in the user's preferred unit. Memoised on unitSystem so
+// switching from imperial → metric rebuilds (different bounds + step).
+function pickerValuesFor(system) {
+  const { min, max, step } = BODY_WEIGHT_PICKER[system];
+  return ScrollPicker.range(min, max, step);
+}
 
-function formatWeight(v) {
+function formatPickerValue(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1);
 }
 
 export function BodyWeightSheet({ visible, onClose, onSave, defaultWeight }) {
-  const [weight, setWeight] = useState(170);
+  const { unitSystem } = useSettingsData();
+  const values = useMemo(() => pickerValuesFor(unitSystem), [unitSystem]);
+  const fallback = unitSystem === 'metric' ? 75 : 170;
+
+  // Picker state lives in display unit. We convert to lb on save so
+  // storage stays uniform regardless of preference.
+  const [displayWeight, setDisplayWeight] = useState(fallback);
   const [openKey, setOpenKey] = useState(0);
 
   useEffect(() => {
     if (visible) {
-      setWeight(defaultWeight && defaultWeight > 0 ? defaultWeight : 170);
+      const seedLb = defaultWeight && defaultWeight > 0 ? defaultWeight : (unitSystem === 'metric' ? toLb(75, 'metric') : 170);
+      setDisplayWeight(Math.round(fromLb(seedLb, unitSystem) * 10) / 10);
       setOpenKey(k => k + 1);
     }
-  }, [visible, defaultWeight]);
+  }, [visible, defaultWeight, unitSystem]);
 
   const handleSave = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onSave(weight);
+    const lb = toLb(displayWeight, unitSystem);
+    onSave(Math.round(lb * 10) / 10, 'lb');
     onClose();
   };
 
@@ -35,60 +46,34 @@ export function BodyWeightSheet({ visible, onClose, onSave, defaultWeight }) {
 
   return (
     <Sheet visible={visible} onClose={onClose}>
+      <SheetHeader eyebrow="BODY WEIGHT" title="Log Weight" onClose={onClose} />
       <View style={s.body}>
-        <View style={s.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.eyebrow}>BODY WEIGHT</Text>
-            <Text style={s.title}>Log weight</Text>
-          </View>
-          <TouchableOpacity onPress={onClose} hitSlop={12} style={s.closeBtn}>
-            <Text style={s.closeBtnText}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
         <Text style={s.timestamp}>{stamp}</Text>
 
         <View style={s.pickerWrap}>
-          <Text style={s.unitLabel}>WEIGHT (lb)</Text>
+          <Text style={s.unitLabel}>WEIGHT ({unitLabel(unitSystem)})</Text>
           <ScrollPicker
-            key={`w${openKey}`}
-            values={VALUES}
-            value={weight}
-            onChange={setWeight}
-            format={formatWeight}
+            key={`w${openKey}-${unitSystem}`}
+            values={values}
+            value={displayWeight}
+            onChange={setDisplayWeight}
+            format={formatPickerValue}
             accent={colors.success}
           />
         </View>
 
-        <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.85}>
-          <Text style={s.saveText}>Save weight</Text>
-        </TouchableOpacity>
+        <Button label="Save Weight" onPress={handleSave} color={colors.success} style={s.saveBtn} />
       </View>
     </Sheet>
   );
 }
 
 const s = StyleSheet.create({
-  body: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
-  },
-  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 2 },
-  title: { ...text.title3, fontSize: fontSize.headline },
-  closeBtn: { width: 28, height: 28, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
-
+  body: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg, gap: spacing.md },
   timestamp: { ...text.bodySecondary, fontSize: 13, color: colors.textSecondary },
 
   pickerWrap: { gap: spacing.xs },
   unitLabel: { ...text.eyebrowSmall, textAlign: 'center' },
 
-  saveBtn: {
-    height: 52, backgroundColor: colors.success, borderRadius: radius.xl,
-    alignItems: 'center', justifyContent: 'center',
-    marginTop: spacing.sm,
-  },
-  saveText: { ...text.button, color: '#fff', letterSpacing: 0.3 },
+  saveBtn: { height: 52, marginTop: spacing.sm },
 });

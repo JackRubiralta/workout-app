@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { KEYS } from '../../../storage/keys';
-import { readJson, writeJson } from '../../../storage/asyncStore';
-import { ensureMigrated } from '../../../storage/migrate';
+import { usePersistedState } from '../../../storage/usePersistedState';
 import { roundTenths } from '../../../utils/format';
+import { makeId } from '../../../utils/ids';
 
-function generateId() {
-  return `bw_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+const INITIAL = { entries: [] };
+function hydrate(stored) {
+  return { entries: Array.isArray(stored.entries) ? stored.entries : [] };
 }
 
 /**
@@ -22,47 +23,35 @@ function generateId() {
  * }}
  */
 export function useBodyWeight() {
-  const [entries, setEntries] = useState([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      await ensureMigrated();
-      const stored = await readJson(KEYS.bodyweight);
-      if (alive && stored && Array.isArray(stored.entries)) {
-        setEntries(stored.entries);
-      }
-      if (alive) setLoaded(true);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (loaded) writeJson(KEYS.bodyweight, { entries });
-  }, [entries, loaded]);
+  const [state, setState, loaded] = usePersistedState(KEYS.bodyweight, INITIAL, hydrate);
+  const entries = state.entries;
 
   const addEntry = useCallback((weight, unit = 'lb') => {
     const w = Number(weight);
     if (!isFinite(w) || w <= 0) return;
     const entry = {
-      id: generateId(),
+      id: makeId('bw'),
       weight: roundTenths(w),
       unit,
       recordedAt: new Date().toISOString(),
     };
-    setEntries(prev => [...prev, entry].sort(
-      (a, b) => (a.recordedAt ?? '').localeCompare(b.recordedAt ?? ''),
-    ));
-  }, []);
+    setState(prev => ({
+      entries: [...prev.entries, entry].sort(
+        (a, b) => (a.recordedAt ?? '').localeCompare(b.recordedAt ?? ''),
+      ),
+    }));
+  }, [setState]);
 
   const removeEntry = useCallback((id) => {
-    setEntries(prev => prev.filter(e => e.id !== id));
-  }, []);
+    setState(prev => ({ entries: prev.entries.filter(e => e.id !== id) }));
+  }, [setState]);
 
-  const clearAll = useCallback(() => setEntries([]), []);
+  const clearAll = useCallback(() => setState({ entries: [] }), [setState]);
 
   const latest = entries.length > 0 ? entries[entries.length - 1] : null;
 
-  return { loaded, entries, latest, addEntry, removeEntry, clearAll };
+  return useMemo(
+    () => ({ loaded, entries, latest, addEntry, removeEntry, clearAll }),
+    [loaded, entries, latest, addEntry, removeEntry, clearAll],
+  );
 }

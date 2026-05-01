@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
-import { Sheet } from '../primitives/Sheet';
-import { Toggle } from '../primitives/Toggle';
-import { ScrollPicker } from '../primitives/ScrollPicker';
-import { WEIGHT_STEP_LB, WEIGHT_MAX_LB, REPS_MAX } from '../../constants/workout';
+import { colors, fontSize, radius, spacing, surfaces, text } from '../../../theme';
+import { Button, ScrollPicker, Sheet, Toggle } from '../../../components/primitives';
+import { useSettingsData } from '../../../shell/store';
+import { fromLb, toLb, unitLabel, WEIGHT_PICKER } from '../../../utils/units';
+import { REPS_MAX } from '../../../constants/workout';
 
 function formatWeight(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1);
 }
 
-const WEIGHT_VALUES = ScrollPicker.range(0, WEIGHT_MAX_LB, WEIGHT_STEP_LB);
+// Picker values built per-system: imperial = 2.5 lb steps, metric = 1 kg
+// steps. We rebuild on system change so flipping the unit selector
+// rerenders the picker against the new bounds.
+function weightValuesFor(system) {
+  const { min, max, step } = WEIGHT_PICKER[system];
+  return ScrollPicker.range(min, max, step);
+}
+
 const REPS_VALUES = ScrollPicker.range(0, REPS_MAX, 1);
 
 export function SetLogSheet({
@@ -28,24 +35,30 @@ export function SetLogSheet({
   onSave,
   onDismiss,
 }) {
-  const [weight, setWeight] = useState(0);
+  const { unitSystem } = useSettingsData();
+  const weightValues = useMemo(() => weightValuesFor(unitSystem), [unitSystem]);
+
+  // Picker state lives in display unit (whatever the user prefers); we
+  // convert to lb on save so storage stays uniform.
+  const [displayWeight, setDisplayWeight] = useState(0);
   const [reps, setReps] = useState(0);
   const [toFailure, setToFailure] = useState(false);
   const [openKey, setOpenKey] = useState(0);
 
   useEffect(() => {
     if (visible) {
-      setWeight(defaultWeight ?? 0);
+      const seedDisplay = Math.round(fromLb(defaultWeight ?? 0, unitSystem) * 10) / 10;
+      setDisplayWeight(seedDisplay);
       setReps(defaultReps ?? 0);
       setToFailure(false);
       setOpenKey(k => k + 1); // re-mount pickers so they snap to new defaults
     }
-  }, [visible, defaultWeight, defaultReps]);
+  }, [visible, defaultWeight, defaultReps, unitSystem]);
 
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onSave({
-      weight: tracksWeight ? weight : 0,
+      weight: tracksWeight ? Math.round(toLb(displayWeight, unitSystem) * 10) / 10 : 0,
       reps: tracksReps ? reps : 0,
       toFailure,
     });
@@ -80,12 +93,12 @@ export function SetLogSheet({
           <View style={s.controls}>
             {tracksWeight && (
               <View style={s.col}>
-                <Text style={s.colLabel}>WEIGHT (lb)</Text>
+                <Text style={s.colLabel}>WEIGHT ({unitLabel(unitSystem)})</Text>
                 <ScrollPicker
-                  key={`w${openKey}`}
-                  values={WEIGHT_VALUES}
-                  value={weight}
-                  onChange={setWeight}
+                  key={`w${openKey}-${unitSystem}`}
+                  values={weightValues}
+                  value={displayWeight}
+                  onChange={setDisplayWeight}
                   format={formatWeight}
                   accent={dayColor}
                 />
@@ -123,9 +136,7 @@ export function SetLogSheet({
           <Toggle value={toFailure} onChange={setToFailure} accent={dayColor} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[s.saveBtn, { backgroundColor: dayColor }]} onPress={handleSave} activeOpacity={0.85}>
-          <Text style={s.saveText}>Save Set</Text>
-        </TouchableOpacity>
+        <Button label="Save Set" onPress={handleSave} color={dayColor} style={s.saveBtn} />
       </View>
     </Sheet>
   );
@@ -179,6 +190,5 @@ const s = StyleSheet.create({
   },
   failLabel: { ...text.monoSubhead, fontWeight: '600' },
 
-  saveBtn: { height: 52, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
-  saveText: { ...text.button, color: '#fff', fontFamily: fonts.mono, letterSpacing: 0.5 },
+  saveBtn: { height: 52 },
 });

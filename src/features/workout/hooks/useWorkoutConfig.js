@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { KEYS } from '../../../storage/keys';
-import { readJson, writeJson } from '../../../storage/asyncStore';
-import { ensureMigrated, defaultConfig } from '../../../storage/migrate';
+import { usePersistedState } from '../../../storage/usePersistedState';
+import { defaultConfig } from '../../../storage/migrate';
 import { dayPalette } from '../../../theme';
 import { defaultExercise } from '../../../utils/exercise';
 import { EXERCISE_REST_SECONDS } from '../../../constants/workout';
@@ -22,30 +22,14 @@ import { EXERCISE_REST_SECONDS } from '../../../constants/workout';
  * }}
  */
 export function useWorkoutConfig() {
-  const [config, setConfig] = useState(defaultConfig);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      await ensureMigrated();
-      const stored = await readJson(KEYS.config);
-      if (alive && stored) setConfig(stored);
-      if (alive) setLoaded(true);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (loaded) writeJson(KEYS.config, config);
-  }, [config, loaded]);
+  const [config, setConfig, loaded] = usePersistedState(KEYS.config, defaultConfig);
 
   const updateDay = useCallback((dayIndex, updates) => {
     setConfig(prev => ({
       ...prev,
       days: prev.days.map((d, i) => (i === dayIndex ? { ...d, ...updates } : d)),
     }));
-  }, []);
+  }, [setConfig]);
 
   const addDay = useCallback(() => {
     setConfig(prev => {
@@ -70,7 +54,7 @@ export function useWorkoutConfig() {
         ],
       };
     });
-  }, []);
+  }, [setConfig]);
 
   const deleteDay = useCallback((dayIndex) => {
     setConfig(prev => ({
@@ -79,7 +63,7 @@ export function useWorkoutConfig() {
         .filter((_, i) => i !== dayIndex)
         .map((d, i) => ({ ...d, day: i + 1 })),
     }));
-  }, []);
+  }, [setConfig]);
 
   const reorderDay = useCallback((from, to) => {
     setConfig(prev => {
@@ -89,9 +73,9 @@ export function useWorkoutConfig() {
       days.splice(to, 0, moved);
       return { ...prev, days: days.map((d, i) => ({ ...d, day: i + 1 })) };
     });
-  }, []);
+  }, [setConfig]);
 
-  const resetConfig = useCallback(() => setConfig(defaultConfig()), []);
+  const resetConfig = useCallback(() => setConfig(defaultConfig()), [setConfig]);
 
   return { config, loaded, updateDay, addDay, deleteDay, reorderDay, resetConfig };
 }

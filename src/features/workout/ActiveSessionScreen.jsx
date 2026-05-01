@@ -3,12 +3,12 @@ import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
 import { colors, spacing } from '../../theme';
-import { useWorkoutData, useSessionData } from '../../shell/store';
+import { useWorkoutData, useSessionData, useSettingsData } from '../../shell/store';
 import { useRestTimer } from './hooks/useRestTimer';
 import { useSetTimer } from './hooks/useSetTimer';
 import { useLiveActivity } from './hooks/useLiveActivity';
-import { ExerciseList } from '../../components/workout/ExerciseList';
-import { SetLogSheet } from '../../components/workout/SetLogSheet';
+import { ExerciseList } from './components/ExerciseList';
+import { SetLogSheet } from './components/SetLogSheet';
 import { ExerciseHistorySheet } from './ExerciseHistorySheet';
 import { SessionTopBar } from './SessionTopBar';
 import { SessionStage } from './SessionStage';
@@ -16,6 +16,7 @@ import { SessionFooter } from './SessionFooter';
 import { findNextSet, isDayComplete, dayProgress, restDurationFor } from './logic/progress';
 import { lastTwoWorkingSets, averageOfLastN } from './logic/suggestions';
 import { exerciseTotalSets, getSetLabel, formatDuration } from '../../utils/exercise';
+import { fromLb, unitLabel } from '../../utils/units';
 import { confirm } from '../../utils/confirm';
 
 // Layout-derived sizing pulled into a hook so the screen reads cleanly.
@@ -31,10 +32,15 @@ function useResponsiveLayout() {
 }
 
 // Picks the primary CTA based on which mode the session is in. Returning a
-// {label, onPress, variant} keeps the JSX below tidy.
-function resolvePrimaryAction({ isDayDone, isResting, setTimerRunning, isTimed, currentEx, handlers }) {
+// {label, onPress, variant} keeps the JSX below tidy. Order matters —
+// "set timer finished" wins over "running" because the timer transitions
+// running → finished on natural completion.
+function resolvePrimaryAction({
+  isDayDone, isResting, setTimerFinished, setTimerRunning, isTimed, currentEx, handlers,
+}) {
   if (isDayDone) return { label: 'Back to Days', onPress: handlers.onComplete, variant: 'filled' };
   if (isResting) return { label: 'Skip Rest', onPress: handlers.onSkipRest, variant: 'outline' };
+  if (setTimerFinished) return { label: 'Done', onPress: handlers.onAcknowledgeSetTimer, variant: 'filled' };
   if (setTimerRunning) return { label: 'Stop & Save', onPress: handlers.onStopSetTimer, variant: 'outline' };
   if (isTimed) return { label: `Start ${formatDuration(currentEx.durationSeconds)}`, onPress: handlers.onStartSetTimer, variant: 'filled' };
   return { label: 'Done', onPress: handlers.onDone, variant: 'filled' };
@@ -44,6 +50,7 @@ export function ActiveSessionScreen({ navigation, route }) {
   useKeepAwake();
   const dayIndex = route.params?.dayIndex ?? 0;
   const { config } = useWorkoutData();
+  const { unitSystem } = useSettingsData();
   const day = config.days[dayIndex];
   const {
     activeSession, sessions, markSetDone, recordSetValues, popUndo, pushUndo,
@@ -60,17 +67,28 @@ export function ActiveSessionScreen({ navigation, route }) {
   const { done: doneSets } = useMemo(() => dayProgress(activeSession, day), [activeSession, day]);
   const currentEx = day && currentPos ? day.exercises[currentPos.e] : null;
   const isTimed = !!(currentEx && currentEx.tracksTime);
-  const recentAvg = useMemo(
-    () => (currentEx ? averageOfLastN(sessions, currentEx.name, 5, activeSession?.id) : null),
-    [sessions, currentEx, activeSession?.id],
-  );
   const totalSets = useMemo(
     () => day ? day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0) : 0,
     [day],
   );
 
-  // ─── Set logging ─────────────────────────────────────────────────────────
-  const handleSetTimerComplete = useCallback((elapsedSeconds) => {
+  // Recent-average chip displayed under the exercise hero. Pre-formatted
+  // here (not in SessionStage) so the conversion lives in one place; the
+  // stage stays a dumb presentational component.
+  const recentAvg = useMemo(() => {
+    if (!currentEx) return null;
+    const avg = averageOfLastN(sessions, currentEx.name, 5, activeSession?.id);
+    if (!avg) return null;
+    const w = Math.round(fromLb(avg.weight, unitSystem) * 10) / 10;
+    return { count: avg.count, label: `${w} ${unitLabel(unitSystem)} × ${avg.reps}` };
+  }, [sessions, currentEx, activeSession?.id, unitSystem]);
+
+  // ── Set logging ─────────────────────────────────────────────────────────
+  // Shared persistence for both natural-acknowledged AND stop-early
+  // completions of a timed exercise. Stores the elapsed time on the
+  // entry, marks done, advances to rest. (Was inlined into onComplete
+  // in the old single-callback flow.)
+  const finalizeTimedSet = useCallback((elapsedSeconds) => {
     if (!day || !currentPos) return;
     const ex = day.exercises[currentPos.e];
     const isWarmup = ex.warmup && currentPos.s === 0;
@@ -86,7 +104,20 @@ export function ActiveSessionScreen({ navigation, route }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day, currentPos, activeSession, markSetDone, recordSetValues, startRest]);
 
-  const setTimer = useSetTimer({ onComplete: handleSetTimerComplete });
+  // Natural finish (timer hit 0) — keep the user on the set screen and
+  // flash the LA "GO" banner. They have to acknowledge with Done before
+  // we save anything.
+  const handleSetTimerAutoFinish = useCallback(() => {
+    if (!day || !currentPos) return;
+    const ex = day.exercises[currentPos.e];
+    live.onSetTimerFinish(ex, currentPos.e, currentPos.s, activeSession?.entries?.length ?? 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, currentPos, activeSession]);
+
+  const setTimer = useSetTimer({
+    onComplete: finalizeTimedSet,         // fires from acknowledge() AND stopEarly()
+    onAutoFinish: handleSetTimerAutoFinish, // fires only on natural hit-zero
+  });
   const live = useLiveActivity({ day, session: activeSession, isResting, isDayDone, currentPos });
 
   useEffect(() => {
@@ -98,10 +129,14 @@ export function ActiveSessionScreen({ navigation, route }) {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
   const handleStartSetTimer = useCallback(() => {
-    if (currentEx) setTimer.start(currentEx.durationSeconds || 60);
-  }, [currentEx, setTimer]);
+    if (!currentEx || !currentPos) return;
+    const duration = currentEx.durationSeconds || 60;
+    setTimer.start(duration, currentEx.name);
+    live.onSetTimerStart(currentEx, currentPos.e, currentPos.s, duration, activeSession?.entries?.length ?? 0);
+  }, [currentEx, currentPos, activeSession, setTimer, live]);
 
   const handleStopSetTimer = useCallback(() => setTimer.stopEarly(), [setTimer]);
+  const handleAcknowledgeSetTimer = useCallback(() => setTimer.acknowledge(), [setTimer]);
 
   const handleDone = useCallback(() => {
     if (!currentPos || !day) return;
@@ -121,10 +156,15 @@ export function ActiveSessionScreen({ navigation, route }) {
     const tracksReps = ex.tracksReps !== false;
     if (tracksWeight || tracksReps) {
       const avg = averageOfLastN(sessions, ex.name, 5, activeSession?.id);
-      const trend = lastTwoWorkingSets(sessions, ex.name, activeSession?.id)
-        .map(({ entry }) => `${entry.weight}×${entry.reps}`).join(' · ');
+      const trendPairs = lastTwoWorkingSets(sessions, ex.name, activeSession?.id);
+      // Trend hint shows the last 1–2 working sets in the user's unit.
+      const trend = trendPairs
+        .map(({ entry }) => `${Math.round(fromLb(entry.weight, unitSystem) * 10) / 10}×${entry.reps}`)
+        .join(' · ');
       setLogSheet({
         exerciseIndex: currentPos.e, setIndex: currentPos.s, exerciseName: ex.name, setLabel: setLbl, isWarmup,
+        // SetLogSheet stores these as lb internally, then the picker
+        // converts to the display unit. Pass lb here.
         defaultWeight: tracksWeight && avg ? avg.weight : 0,
         defaultReps: tracksReps && avg ? avg.reps : 0,
         tracksWeight, tracksReps,
@@ -134,7 +174,7 @@ export function ActiveSessionScreen({ navigation, route }) {
       // Nothing to log — finalize the entry right away so it's not a placeholder.
       recordSetValues({ exerciseIndex: currentPos.e, setIndex: currentPos.s, weight: 0, reps: 0, toFailure: false, unit: 'lb' });
     }
-  }, [currentPos, day, sessions, activeSession, markSetDone, recordSetValues, startRest, live]);
+  }, [currentPos, day, sessions, activeSession, markSetDone, recordSetValues, startRest, live, unitSystem]);
 
   const handleSaveLog = useCallback(({ weight, reps, toFailure }) => {
     if (!logSheet) return;
@@ -189,11 +229,15 @@ export function ActiveSessionScreen({ navigation, route }) {
   }
 
   const undoEnabled = (activeSession.undoStack?.length ?? 0) > 0;
-  const canShowSecondary = !isDayDone && !isResting && !setTimer.isRunning;
+  const canShowSecondary = !isDayDone && !isResting && !setTimer.isRunning && !setTimer.isFinished;
   const primary = resolvePrimaryAction({
-    isDayDone, isResting, setTimerRunning: setTimer.isRunning, isTimed, currentEx,
+    isDayDone, isResting,
+    setTimerFinished: setTimer.isFinished,
+    setTimerRunning: setTimer.isRunning,
+    isTimed, currentEx,
     handlers: {
       onComplete: handleComplete, onSkipRest: handleSkipRest,
+      onAcknowledgeSetTimer: handleAcknowledgeSetTimer,
       onStopSetTimer: handleStopSetTimer, onStartSetTimer: handleStartSetTimer, onDone: handleDone,
     },
   });
@@ -222,6 +266,7 @@ export function ActiveSessionScreen({ navigation, route }) {
           secondsLeft={secondsLeft}
           totalSeconds={totalSeconds}
           setTimerRunning={setTimer.isRunning}
+          setTimerFinished={setTimer.isFinished}
           setTimerSecondsLeft={setTimer.secondsLeft}
           setTimerTotalSeconds={setTimer.totalSeconds}
           currentEx={currentEx}

@@ -4,8 +4,10 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Path, Polyline, Circle } from 'react-native-svg';
 import { colors, fonts, spacing, surfaces, text } from '../../theme';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { useSettingsData } from '../../shell/store';
+import { fromLb, unitLabel } from '../../utils/units';
 import { topExercises, topSetPerSession, epley } from '../workout/logic/suggestions';
-import { TOP_EXERCISES_COUNT, TOP_EXERCISES_POINTS } from '../../constants/history';
+import { TOP_EXERCISES_COUNT, TOP_EXERCISES_POINTS } from '../../constants/tracking';
 
 function MiniSparkline({ points, color, width = 90, height = 32 }) {
   if (points.length < 2) {
@@ -51,24 +53,31 @@ function ChevronIcon({ color, size = 16 }) {
 }
 
 export function TopExercises({ sessions, onPressExercise }) {
+  const { unitSystem } = useSettingsData();
+  const unit = unitLabel(unitSystem);
+  const round1 = (n) => Math.round(n * 10) / 10;
   const tops = useMemo(() => topExercises(sessions, TOP_EXERCISES_COUNT), [sessions]);
 
   const rows = useMemo(() => tops.map(({ name, sessionCount }) => {
     const series = topSetPerSession(sessions, name).slice(0, TOP_EXERCISES_POINTS).reverse();
-    const weights = series.map(({ entry }) => entry.weight);
-    const e1rms = series.map(({ entry }) => Math.round(epley(entry.weight, entry.reps)));
+    // Sparkline values + the row's last-set display both convert lb → user unit.
+    const weights = series.map(({ entry }) => round1(fromLb(entry.weight, unitSystem)));
+    const e1rms = series.map(({ entry }) => Math.round(fromLb(epley(entry.weight, entry.reps), unitSystem)));
     const last = series[series.length - 1]?.entry;
     const first = series[0]?.entry;
-    const deltaWeight = last && first ? Math.round((last.weight - first.weight) * 10) / 10 : null;
+    const deltaWeight = last && first
+      ? round1(fromLb(last.weight, unitSystem) - fromLb(first.weight, unitSystem))
+      : null;
     return {
       name,
       sessionCount,
       weights,
       e1rms,
       last,
+      lastDisplay: last ? round1(fromLb(last.weight, unitSystem)) : null,
       deltaWeight,
     };
-  }), [tops, sessions]);
+  }), [tops, sessions, unitSystem]);
 
   if (rows.length === 0) return null;
 
@@ -95,11 +104,11 @@ export function TopExercises({ sessions, onPressExercise }) {
                 <Text style={s.name} numberOfLines={1}>{r.name}</Text>
                 <View style={s.metaRow}>
                   <Text style={s.meta}>
-                    <Text style={[s.metaVal, { color: colors.text }]}>{r.last?.weight ?? '—'}</Text> lb × {r.last?.reps ?? '—'}
+                    <Text style={[s.metaVal, { color: colors.text }]}>{r.lastDisplay ?? '—'}</Text> {unit} × {r.last?.reps ?? '—'}
                   </Text>
                   {r.deltaWeight != null && r.deltaWeight !== 0 && (
                     <Text style={[s.deltaText, { color: trendColor }]}>
-                      {r.deltaWeight > 0 ? '+' : ''}{r.deltaWeight} lb
+                      {r.deltaWeight > 0 ? '+' : ''}{r.deltaWeight} {unit}
                     </Text>
                   )}
                 </View>

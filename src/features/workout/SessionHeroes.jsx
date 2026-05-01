@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize, radius, spacing, fonts, text } from '../../theme';
-import { CircularTimer } from '../../components/workout/CircularTimer';
+import { CircularTimer } from './components/CircularTimer';
 import { getRepsGuide, getSetLabel } from '../../utils/exercise';
 
 export function ExerciseHero({ day, exIndex, setIndex, nameFontSize, isSmall }) {

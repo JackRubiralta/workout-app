@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, text } from '../../theme';
-import { Sheet, SheetHeader } from '../../components/primitives';
+import { Button, Sheet, SheetHeader } from '../../components/primitives';
 import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
 import { Stepper } from '../../components/primitives/Stepper';
 import { Toggle } from '../../components/primitives/Toggle';
-import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
+import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
 export function ExerciseEditSheet({ visible, exercise, exIndex, dayColor, onSave, onClose, onDelete, canDelete }) {
   const [name, setName] = useState('');
@@ -160,9 +160,7 @@ export function ExerciseEditSheet({ visible, exercise, exIndex, dayColor, onSave
       </ScrollView>
       {!kbVisible && (
         <View style={s.footer}>
-          <TouchableOpacity style={[s.saveBtn, { backgroundColor: dayColor }]} onPress={handleSave} activeOpacity={0.8}>
-            <Text style={s.saveBtnText}>Save Exercise</Text>
-          </TouchableOpacity>
+          <Button label="Save Exercise" onPress={handleSave} color={dayColor} style={s.saveBtn} />
           {canDelete && (
             <TouchableOpacity style={s.deleteBtn} onPress={onDelete} hitSlop={8}>
               <Text style={s.deleteBtnText}>Delete Exercise</Text>
@@ -194,8 +192,7 @@ const s = StyleSheet.create({
     borderTopColor: colors.border,
     gap: spacing.sm,
   },
-  saveBtn: { height: 52, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
-  saveBtnText: { ...text.button, color: '#fff' },
+  saveBtn: { height: 52 },
   deleteBtn: { alignItems: 'center', paddingVertical: spacing.sm },
   deleteBtnText: { ...text.monoSubhead, fontWeight: '600', color: colors.danger, letterSpacing: 0.3 },
 });

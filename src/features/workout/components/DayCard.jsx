@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, radius, shadow, spacing, surfaces, text } from '../../theme';
-import { CheckCircle, ChevronRight } from '../../shell/icons';
+import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../../theme';
+import { CheckCircle, ChevronRight } from '../../../shell/icons';
 
 export function DayCard({ day, doneSets, totalSets, exerciseCount, isDone, isInProgress, onPress }) {
   const accent = isDone ? colors.success : day.color;
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: radius.full,
     alignItems: 'center', justifyContent: 'center',
   },
-  numText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: 'System' },
+  numText: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: fonts.sans },
   body: { flex: 1, gap: 3 },
   title: { ...text.title2, fontSize: 19 },
   focus: { ...text.bodySecondary, fontSize: 14 },

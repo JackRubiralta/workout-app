@@ -11,28 +11,20 @@ function Stat({ value, label, accent }) {
   );
 }
 
-export function SummaryCard({ thisWeek, thisMonth, currentStreak, longestStreak, totalSessions }) {
+// Four equal columns, divider between each. The previous layout split into
+// 3+2 rows with bottom cells centred between top columns — visually
+// unbalanced. The TOTAL stat lived here too, but `SESSIONS · N` directly
+// below restated it so it was dropped.
+export function SummaryCard({ thisWeek, thisMonth, currentStreak, longestStreak }) {
   return (
     <View style={s.wrap}>
-      <View style={s.row}>
-        <Stat value={thisWeek} label="This week" accent={colors.success} />
-        <View style={s.divider} />
-        <Stat value={thisMonth} label="This month" />
-        <View style={s.divider} />
-        <Stat value={totalSessions} label="Total" />
-      </View>
-      {(currentStreak > 0 || longestStreak > 0) && (
-        <View style={s.streakRow}>
-          <View style={s.streak}>
-            <Text style={s.streakValue}>{currentStreak}</Text>
-            <Text style={s.streakLabel}>CURRENT STREAK</Text>
-          </View>
-          <View style={s.streak}>
-            <Text style={s.streakValue}>{longestStreak}</Text>
-            <Text style={s.streakLabel}>LONGEST STREAK</Text>
-          </View>
-        </View>
-      )}
+      <Stat value={thisWeek} label="This week" accent={thisWeek > 0 ? colors.success : undefined} />
+      <View style={s.divider} />
+      <Stat value={thisMonth} label="This month" />
+      <View style={s.divider} />
+      <Stat value={currentStreak} label="Streak" accent={currentStreak > 0 ? colors.success : undefined} />
+      <View style={s.divider} />
+      <Stat value={longestStreak} label="Best" />
     </View>
   );
 }
@@ -40,20 +32,11 @@ export function SummaryCard({ thisWeek, thisMonth, currentStreak, longestStreak,
 const s = StyleSheet.create({
   wrap: {
     ...surfaces.card,
-    padding: spacing.md, gap: spacing.sm,
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: spacing.md,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  divider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.border },
-  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing.xs },
-  value: { ...text.monoNumber },
-  label: { ...text.eyebrowSmall },
-
-  streakRow: {
-    flexDirection: 'row', gap: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
-  },
-  streak: { flex: 1, alignItems: 'center', gap: 2 },
-  streakValue: { ...text.monoNumber, color: colors.success },
-  streakLabel: { ...text.eyebrowSmall },
+  divider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', backgroundColor: colors.border },
+  stat: { flex: 1, alignItems: 'center', gap: 4 },
+  value: { ...text.monoNumber, fontSize: 22 },
+  label: { ...text.eyebrowSmall, textAlign: 'center' },
 });

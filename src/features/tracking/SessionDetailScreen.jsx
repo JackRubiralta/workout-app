@@ -2,12 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
-import { useSessionData } from '../../shell/store';
+import { useSessionData, useSettingsData } from '../../shell/store';
 import { DetailHeader, IconButton, StatCard, StatusPill } from '../../components/primitives';
 import { TrashIcon } from '../../shell/icons';
 import { ExerciseHistorySheet } from '../workout/ExerciseHistorySheet';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatDurationISO } from '../../utils/format';
+import { formatWeight, fromLb, unitLabel } from '../../utils/units';
 import { formatDateHeading } from '../../utils/date';
 import { confirm } from '../../utils/confirm';
 import { copy } from '../../copy';
@@ -29,12 +30,15 @@ function groupByExercise(entries) {
 
 export function SessionDetailScreen({ navigation, route }) {
   const { sessions, deleteSession } = useSessionData();
+  const { unitSystem } = useSettingsData();
+  const unit = unitLabel(unitSystem);
   const sessionId = route.params?.sessionId;
   const session = useMemo(() => sessions.find(s => s.id === sessionId) ?? null, [sessions, sessionId]);
   const [historyExercise, setHistoryExercise] = useState(null);
 
   const groups = useMemo(() => session ? groupByExercise(session.entries) : [], [session]);
-  const volume = useMemo(() => session ? sessionVolume(session) : 0, [session]);
+  const volumeLb = useMemo(() => session ? sessionVolume(session) : 0, [session]);
+  const volumeDisplay = useMemo(() => Math.round(fromLb(volumeLb, unitSystem)), [volumeLb, unitSystem]);
 
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
@@ -89,7 +93,7 @@ export function SessionDetailScreen({ navigation, route }) {
         <View style={s.statsRow}>
           <StatCard value={groups.length} label="EXERCISES" />
           <StatCard value={session.entries.filter(e => !e.isPlaceholder).length} label="SETS" />
-          <StatCard value={volume > 0 ? volume.toLocaleString() : '—'} label="VOLUME (lb)" />
+          <StatCard value={volumeDisplay > 0 ? volumeDisplay.toLocaleString() : '—'} label={`VOLUME (${unit})`} />
           <StatCard value={formatDurationISO(session.startedAt, session.completedAt) ?? '—'} label="DURATION" />
         </View>
 
@@ -138,7 +142,8 @@ export function SessionDetailScreen({ navigation, route }) {
                             <>
                               {hasWeight ? (
                                 <Text style={s.weight}>
-                                  {entry.weight}<Text style={s.weightUnit}> lb</Text>
+                                  {formatWeight(entry.weight, unitSystem, { withUnit: false })}
+                                  <Text style={s.weightUnit}> {unit}</Text>
                                 </Text>
                               ) : (
                                 <Text style={[s.weight, { color: colors.textTertiary }]}>—</Text>

@@ -3,6 +3,7 @@ export const KEYS = {
   sessions: '@workout_sessions_v2',
   nutrition: '@nutrition_log_v2',
   bodyweight: '@bodyweight_log_v2',
+  settings: '@settings_v2',
   meta: '@app_meta_v2',
 };
 

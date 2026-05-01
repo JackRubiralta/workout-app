@@ -3,11 +3,13 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, layout, radius, spacing, surfaces, text } from '../../theme';
-import { useWorkoutData, useSessionData } from '../../shell/store';
-import { DayCard } from '../../components/workout/DayCard';
+import { useWorkoutData, useSessionData, useSettingsData } from '../../shell/store';
+import { DayCard } from './components/DayCard';
 import { ScreenHeader } from '../../components/primitives/ScreenHeader';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { SegmentedControl } from '../../components/primitives/SegmentedControl';
 import { PlusIcon } from '../../shell/icons';
+import { UnitSystem } from '../../utils/units';
 import { WeekStrip } from './WeekStrip';
 import { dayProgress, isDayComplete, activeSessionForDay } from './logic/progress';
 import { exerciseTotalSets } from '../../utils/exercise';
@@ -17,9 +19,15 @@ function todayLabel() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+const UNIT_OPTIONS = [
+  { value: UnitSystem.IMPERIAL, label: 'Imperial · lb' },
+  { value: UnitSystem.METRIC, label: 'Metric · kg' },
+];
+
 export function WorkoutListScreen({ navigation }) {
   const { config, addDay, resetConfig } = useWorkoutData();
   const { sessions } = useSessionData();
+  const { unitSystem, setUnitSystem } = useSettingsData();
 
   const handleCardPress = useCallback((index) => {
     navigation.navigate('DayPreStart', { dayIndex: index });
@@ -86,6 +94,16 @@ export function WorkoutListScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* Unit preference. Stored in settings; weights are persisted in lb
+            regardless of selection — the UI converts at display + input
+            time so flipping units is non-destructive. */}
+        <SectionLabel style={styles.unitsLabel}>UNITS</SectionLabel>
+        <SegmentedControl
+          value={unitSystem}
+          options={UNIT_OPTIONS}
+          onChange={setUnitSystem}
+        />
+
         <View style={{ height: layout.tabBarClearance }} />
       </ScrollView>
     </SafeAreaView>
@@ -99,6 +117,7 @@ const styles = StyleSheet.create({
   weekWrap: { marginBottom: spacing.lg },
 
   sectionLabel: { marginBottom: spacing.sm },
+  unitsLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
 
   list: { gap: spacing.sm },
 

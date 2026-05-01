@@ -7,7 +7,7 @@ import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../
  * Small rounded pill — `[icon?] [label]` — used wherever the app needs a
  * lightweight tap-target that isn't a primary button. Centralised so the
  * five places that previously rolled their own (BodyWeightCard "Log",
- * DayPreStartScreen "Edit day", HistoryListScreen "Show more",
+ * DayPreStartScreen "Edit day", TrackingScreen "Show more",
  * SessionStage "Skip this exercise", ExerciseHero AVG hint) stay in
  * lockstep.
  *

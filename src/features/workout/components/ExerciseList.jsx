@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../theme';
-import { NumberedListRow } from '../primitives';
-import { exerciseTotalSets } from '../../utils/exercise';
-import { isSetDone } from '../../features/workout/logic/progress';
+import { colors, radius, spacing } from '../../../theme';
+import { NumberedListRow } from '../../../components/primitives';
+import { exerciseTotalSets } from '../../../utils/exercise';
+import { isSetDone } from '../logic/progress';
 
 // Compact ordered list of exercises shown above the active session stage.
 // Each row reflects per-exercise progress (current → done → upcoming) and

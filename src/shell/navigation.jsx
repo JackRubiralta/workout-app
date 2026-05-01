@@ -9,8 +9,8 @@ import { DayPreStartScreen } from '../features/workout/DayPreStartScreen';
 import { ActiveSessionScreen } from '../features/workout/ActiveSessionScreen';
 import { NutritionScreen } from '../features/nutrition/NutritionScreen';
 import { FoodItemDetailScreen } from '../features/nutrition/FoodItemDetailScreen';
-import { HistoryListScreen } from '../features/history/HistoryListScreen';
-import { SessionDetailScreen } from '../features/history/SessionDetailScreen';
+import { TrackingScreen } from '../features/tracking/TrackingScreen';
+import { SessionDetailScreen } from '../features/tracking/SessionDetailScreen';
 import { DumbbellIcon, AppleIcon, ClockIcon } from './icons';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -45,10 +45,10 @@ function WorkoutStack() {
   );
 }
 
-function HistoryStack() {
+function TrackingStack() {
   return (
     <Stack.Navigator screenOptions={STACK_OPTIONS}>
-      <Stack.Screen name="HistoryList" component={HistoryListScreen} />
+      <Stack.Screen name="TrackingHome" component={TrackingScreen} />
       <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
     </Stack.Navigator>
   );
@@ -69,7 +69,7 @@ function NutritionStack() {
 const TABS = [
   { name: 'Nutrition', label: 'Nutrition', stack: NutritionStack, Icon: AppleIcon },
   { name: 'Workout',   label: 'Workout',   stack: WorkoutStack,   Icon: DumbbellIcon },
-  { name: 'History',   label: 'Tracking',  stack: HistoryStack,   Icon: ClockIcon },
+  { name: 'Tracking',  label: 'Tracking',  stack: TrackingStack,  Icon: ClockIcon },
 ];
 
 // Factory for the tabBarIcon render-prop. Bound to the icon component so

@@ -2,14 +2,18 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { colors, fontSize, spacing, surfaces, text } from '../../theme';
 import { Sheet, SectionLabel, Sparkline, StatCard } from '../../components/primitives';
-import { useSessionData } from '../../shell/store';
+import { useSessionData, useSettingsData } from '../../shell/store';
 import { topSetPerSession, personalRecords, epley } from './logic/suggestions';
 import { formatDateShort } from '../../utils/date';
-import { MAX_HISTORY_POINTS } from '../../constants/history';
+import { fromLb, unitLabel } from '../../utils/units';
+import { MAX_HISTORY_POINTS } from '../../constants/tracking';
 import { copy } from '../../copy';
 
 export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose }) {
   const { sessions } = useSessionData();
+  const { unitSystem } = useSettingsData();
+  const unit = unitLabel(unitSystem);
+  const round1 = (n) => Math.round(n * 10) / 10;
 
   const topSets = useMemo(() => {
     if (!exerciseName) return [];
@@ -23,12 +27,12 @@ export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose 
   }, [sessions, exerciseName]);
 
   const points = useMemo(
-    () => topSets.map(({ entry }) => ({ value: entry.weight })),
-    [topSets],
+    () => topSets.map(({ entry }) => ({ value: round1(fromLb(entry.weight, unitSystem)) })),
+    [topSets, unitSystem],
   );
   const e1rmPoints = useMemo(
-    () => topSets.map(({ entry }) => ({ value: Math.round(epley(entry.weight, entry.reps)) })),
-    [topSets],
+    () => topSets.map(({ entry }) => ({ value: Math.round(fromLb(epley(entry.weight, entry.reps), unitSystem)) })),
+    [topSets, unitSystem],
   );
 
   return (
@@ -51,19 +55,19 @@ export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose 
             <>
               <View style={s.statsGrid}>
                 <StatCard
-                  value={prs.bestWeight ? prs.bestWeight.weight : '—'}
-                  label="BEST WEIGHT (lb)"
+                  value={prs.bestWeight ? round1(fromLb(prs.bestWeight.weight, unitSystem)) : '—'}
+                  label={`BEST WEIGHT (${unit})`}
                   sub={prs.bestWeight ? `× ${prs.bestWeight.reps} reps` : undefined}
                 />
                 <StatCard
-                  value={prs.bestE1RM ? Math.round(epley(prs.bestE1RM.weight, prs.bestE1RM.reps)) : '—'}
+                  value={prs.bestE1RM ? Math.round(fromLb(epley(prs.bestE1RM.weight, prs.bestE1RM.reps), unitSystem)) : '—'}
                   label="e1RM (Epley)"
-                  sub={prs.bestE1RM ? `${prs.bestE1RM.weight} × ${prs.bestE1RM.reps}` : undefined}
+                  sub={prs.bestE1RM ? `${round1(fromLb(prs.bestE1RM.weight, unitSystem))} × ${prs.bestE1RM.reps}` : undefined}
                 />
               </View>
 
               <View style={s.chartSection}>
-                <SectionLabel style={s.chartLabel}>TOP SET (lb) · LAST {topSets.length}</SectionLabel>
+                <SectionLabel style={s.chartLabel}>TOP SET ({unit}) · LAST {topSets.length}</SectionLabel>
                 <Sparkline points={points} color={dayColor ?? colors.text} height={88} />
               </View>
 
@@ -79,7 +83,7 @@ export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose 
                     <Text style={s.rowDate}>{formatDateShort(session.startedAt)}</Text>
                     <Text style={s.rowDay} numberOfLines={1}>{session.dayTitle}</Text>
                     <Text style={s.rowValue}>
-                      {entry.weight}<Text style={s.rowUnit}> lb</Text> × {entry.reps}
+                      {round1(fromLb(entry.weight, unitSystem))}<Text style={s.rowUnit}> {unit}</Text> × {entry.reps}
                     </Text>
                   </View>
                 ))}

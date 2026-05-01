@@ -7,16 +7,15 @@ import { useSessionData, useBodyWeightData } from '../../shell/store';
 import { Chip, ScreenHeader, SectionLabel } from '../../components/primitives';
 import { SummaryCard } from './SummaryCard';
 import { SessionCard } from './SessionCard';
-import { HistoryCharts } from './HistoryCharts';
+import { TrackingCharts } from './TrackingCharts';
 import { TopExercises } from './TopExercises';
 import { BodyWeightCard } from './BodyWeightCard';
 import { BodyWeightSheet } from './BodyWeightSheet';
 import { workoutsThisMonth, workoutsThisWeek, streakStats } from '../workout/logic/volume';
-import { confirm } from '../../utils/confirm';
-import { SESSIONS_PREVIEW_COUNT } from '../../constants/history';
+import { SESSIONS_PREVIEW_COUNT } from '../../constants/tracking';
 
-export function HistoryListScreen({ navigation }) {
-  const { sessions, clearHistory } = useSessionData();
+export function TrackingScreen({ navigation }) {
+  const { sessions } = useSessionData();
   const bw = useBodyWeightData();
   const [bwOpen, setBwOpen] = useState(false);
   const [showAllSessions, setShowAllSessions] = useState(false);
@@ -28,7 +27,6 @@ export function HistoryListScreen({ navigation }) {
       thisMonth: workoutsThisMonth(sessions),
       currentStreak: streak.current,
       longestStreak: streak.longest,
-      totalSessions: sessions.filter(s => s.completedAt || s.entries.some(e => !e.isPlaceholder)).length,
     };
   }, [sessions]);
 
@@ -40,20 +38,6 @@ export function HistoryListScreen({ navigation }) {
     [sessions, showAllSessions],
   );
   const hiddenSessionCount = Math.max(sessions.length - SESSIONS_PREVIEW_COUNT, 0);
-
-  const handleClear = useCallback(() => {
-    confirm({
-      title: 'Clear all history?',
-      message: 'Permanently deletes every workout log. This cannot be undone.',
-      confirmLabel: 'Clear all',
-      destructive: true,
-      onConfirm: () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-        clearHistory();
-        setShowAllSessions(false);
-      },
-    });
-  }, [clearHistory]);
 
   const handleToggleSessions = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
@@ -82,14 +66,12 @@ export function HistoryListScreen({ navigation }) {
             ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
             : 'TRACKING'}
           title="Tracking"
-          actionLabel={sessions.length > 0 ? 'Clear' : undefined}
-          onActionPress={sessions.length > 0 ? handleClear : undefined}
         />
       </View>
 
       {/* Single rendering path — the scaffolding always renders. Cards
           render their own zero/empty states (e.g. SummaryCard with 0/0/0,
-          BodyWeightCard with "No entries yet"). HistoryCharts and
+          BodyWeightCard with "No entries yet"). TrackingCharts and
           TopExercises gate themselves on having enough data. */}
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         <SummaryCard
@@ -97,7 +79,6 @@ export function HistoryListScreen({ navigation }) {
           thisMonth={summary.thisMonth}
           currentStreak={summary.currentStreak}
           longestStreak={summary.longestStreak}
-          totalSessions={summary.totalSessions}
         />
 
         <BodyWeightCard
@@ -106,7 +87,7 @@ export function HistoryListScreen({ navigation }) {
           onLog={() => setBwOpen(true)}
         />
 
-        {sessions.length > 0 && <HistoryCharts sessions={sessions} />}
+        {sessions.length > 0 && <TrackingCharts sessions={sessions} />}
 
         {sessions.length > 1 && (
           <TopExercises sessions={sessions} onPressExercise={handleOpenExercise} />
@@ -144,7 +125,7 @@ export function HistoryListScreen({ navigation }) {
         visible={bwOpen}
         onClose={() => setBwOpen(false)}
         defaultWeight={bw.latest?.weight ?? 170}
-        onSave={(w) => bw.addEntry(w, 'lb')}
+        onSave={(w, unit) => bw.addEntry(w, unit)}
       />
     </SafeAreaView>
   );

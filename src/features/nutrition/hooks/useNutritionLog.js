@@ -1,20 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { KEYS } from '../../../storage/keys';
-import { readJson, writeJson } from '../../../storage/asyncStore';
-import { ensureMigrated } from '../../../storage/migrate';
+import { usePersistedState } from '../../../storage/usePersistedState';
 import { roundInt, roundTenths } from '../../../utils/format';
 import { DEFAULT_GOALS } from '../../../constants/nutrition';
-
-export function formatDateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function generateId() {
-  return `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
+import { makeId } from '../../../utils/ids';
 
 // Normalize the nutrition shape into integer calories + tenths-rounded
 // gram macros. Used identically for the top-level entry and each
@@ -32,28 +21,6 @@ function normalizeFood(it) {
   };
 }
 
-// Compact macro line for food rows: "1 cup · 14P / 14C / 1F / 3Fb".
-// Fiber is suppressed when 0 so a stick of butter doesn't end with "/ 0Fb".
-export function formatFoodMeta(item) {
-  if (!item) return '';
-  const head = `${item.quantity} ${item.unit}`;
-  const macros = `${item.protein ?? 0}P / ${item.carbs ?? 0}C / ${item.fat ?? 0}F`;
-  const fb = item.fiber > 0 ? ` / ${item.fiber}Fb` : '';
-  return `${head} · ${macros}${fb}`;
-}
-
-export function totalsForDay(items) {
-  const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  for (const item of items ?? []) {
-    totals.calories += item.calories ?? 0;
-    totals.protein += item.protein ?? 0;
-    totals.carbs += item.carbs ?? 0;
-    totals.fat += item.fat ?? 0;
-    totals.fiber += item.fiber ?? 0;
-  }
-  return totals;
-}
-
 /**
  * Reads / writes the user's food log (per-day entries) and macro goals.
  * Lazy-loaded on mount; mutations persist immediately.
@@ -67,28 +34,21 @@ export function totalsForDay(items) {
  *   setGoals: (next:object) => void,
  * }}
  */
+// Bucket both halves of the nutrition state under one storage key so
+// usePersistedState owns the whole load/persist cycle. Hydrator merges
+// any missing macro into DEFAULT_GOALS so users on older blobs don't
+// crash when a newly-added goal field (e.g. fiber) is undefined.
+const INITIAL = { logsByDate: {}, goals: DEFAULT_GOALS };
+function hydrate(stored) {
+  return {
+    logsByDate: stored.logsByDate ?? {},
+    goals: { ...DEFAULT_GOALS, ...(stored.goals ?? {}) },
+  };
+}
+
 export function useNutritionLog() {
-  const [logsByDate, setLogsByDate] = useState({});
-  const [goals, setGoalsState] = useState(DEFAULT_GOALS);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      await ensureMigrated();
-      const stored = await readJson(KEYS.nutrition);
-      if (alive && stored) {
-        setLogsByDate(stored.logsByDate ?? {});
-        setGoalsState({ ...DEFAULT_GOALS, ...(stored.goals ?? {}) });
-      }
-      if (alive) setLoaded(true);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (loaded) writeJson(KEYS.nutrition, { logsByDate, goals });
-  }, [logsByDate, goals, loaded]);
+  const [state, setState, loaded] = usePersistedState(KEYS.nutrition, INITIAL, hydrate);
+  const { logsByDate, goals } = state;
 
   // photos: array of { uri, mediaType? } from image-picker. URIs may be
   // file:// (native) or blob: (web). Stored as-is — note that file URIs may
@@ -99,7 +59,7 @@ export function useNutritionLog() {
       : null;
     const entry = {
       ...normalizeFood(item),
-      id: generateId(),
+      id: makeId('f'),
       addedAt: new Date().toISOString(),
       photos: Array.isArray(photos) ? photos.slice(0, 3).map(p => ({ uri: p.uri ?? p })) : [],
       source: item.source ?? null, // 'photo' | 'text' | 'manual' | null
@@ -107,20 +67,29 @@ export function useNutritionLog() {
       confidence: item.confidence ?? null,
       components,
     };
-    setLogsByDate(prev => ({ ...prev, [dateKey]: [...(prev[dateKey] ?? []), entry] }));
-  }, []);
+    setState(prev => ({
+      ...prev,
+      logsByDate: { ...prev.logsByDate, [dateKey]: [...(prev.logsByDate[dateKey] ?? []), entry] },
+    }));
+  }, [setState]);
 
   const removeFood = useCallback((dateKey, itemId) => {
-    setLogsByDate(prev => {
-      const day = prev[dateKey];
+    setState(prev => {
+      const day = prev.logsByDate[dateKey];
       if (!day) return prev;
-      return { ...prev, [dateKey]: day.filter(it => it.id !== itemId) };
+      return {
+        ...prev,
+        logsByDate: { ...prev.logsByDate, [dateKey]: day.filter(it => it.id !== itemId) },
+      };
     });
-  }, []);
+  }, [setState]);
 
   const setGoals = useCallback((next) => {
-    setGoalsState(prev => ({ ...prev, ...next }));
-  }, []);
+    setState(prev => ({ ...prev, goals: { ...prev.goals, ...next } }));
+  }, [setState]);
 
-  return { loaded, logsByDate, goals, addFood, removeFood, setGoals };
+  return useMemo(
+    () => ({ loaded, logsByDate, goals, addFood, removeFood, setGoals }),
+    [loaded, logsByDate, goals, addFood, removeFood, setGoals],
+  );
 }

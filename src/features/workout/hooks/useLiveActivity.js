@@ -7,6 +7,12 @@ import { exerciseTotalSets } from '../../../utils/exercise';
  * active session. Auto-starts on first render and exposes imperative
  * commands the screen calls when the user advances state.
  *
+ * The widget renders a generic countdown whenever `isResting && !timerDone`,
+ * so we reuse that path for *both* the rest timer and the working-set
+ * timer (e.g. Bike Warmup). `onSetTimerStart` arms the countdown,
+ * `onSetTimerFinish` flips it to the "GO / tap Done" flash, and the
+ * rest-flow `onSetDone` reuses the same chrome for the subsequent rest.
+ *
  * @param {object} args
  * @param {object} args.day
  * @param {object} args.session
@@ -15,6 +21,8 @@ import { exerciseTotalSets } from '../../../utils/exercise';
  * @param {{ e:number, s:number }|null} args.currentPos
  * @returns {{
  *   onSetDone: (ex:object, exIndex:number, setIndex:number, restSeconds:number, setLabel:string, doneCount:number) => void,
+ *   onSetTimerStart: (ex:object, exIndex:number, setIndex:number, durationSeconds:number, doneCount:number) => void,
+ *   onSetTimerFinish: (ex:object, exIndex:number, setIndex:number, doneCount:number) => void,
  *   onSkipRest: () => void,
  *   onEnd: () => void,
  * }}
@@ -91,6 +99,43 @@ export function useLiveActivity({ day, session, isResting, isDayDone, currentPos
     });
   }, [day]);
 
+  // Working-set countdown (timed exercises). Shares the rest-timer
+  // rendering path: `isResting:true + secondsRemaining` makes the widget
+  // run its built-in date-based countdown.
+  const onSetTimerStart = useCallback((ex, exIndex, setIndex, durationSeconds, doneCount) => {
+    if (!day) return;
+    const total = day.exercises.reduce((acc, e) => acc + exerciseTotalSets(e), 0);
+    updateLiveActivity({
+      dayTitle: day.title,
+      exerciseName: ex.name,
+      secondsRemaining: durationSeconds,
+      setsCompleted: doneCount,
+      totalSets: total,
+      isResting: true,
+      timerDone: false,
+      exSetNum: setIndex + 1,
+      exSetTotal: exerciseTotalSets(ex),
+    });
+  }, [day]);
+
+  // Set timer hit zero — flash "GO" so the user knows to tap Done.
+  // Stays in this state until the user acknowledges in the app.
+  const onSetTimerFinish = useCallback((ex, exIndex, setIndex, doneCount) => {
+    if (!day) return;
+    const total = day.exercises.reduce((acc, e) => acc + exerciseTotalSets(e), 0);
+    updateLiveActivity({
+      dayTitle: day.title,
+      exerciseName: ex.name,
+      secondsRemaining: 0,
+      setsCompleted: doneCount,
+      totalSets: total,
+      isResting: true,
+      timerDone: true,
+      exSetNum: setIndex + 1,
+      exSetTotal: exerciseTotalSets(ex),
+    });
+  }, [day]);
+
   const onSkipRest = useCallback(() => {
     if (!day || !currentPos) return;
     const nextEx = day.exercises[currentPos.e];
@@ -109,5 +154,5 @@ export function useLiveActivity({ day, session, isResting, isDayDone, currentPos
 
   const onEnd = useCallback(() => endLiveActivity(), []);
 
-  return { onSetDone, onSkipRest, onEnd };
+  return { onSetDone, onSetTimerStart, onSetTimerFinish, onSkipRest, onEnd };
 }

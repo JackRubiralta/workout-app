@@ -11,6 +11,7 @@ export { SheetHeader } from './SheetHeader';
 export { SheetInput } from './SheetInput';
 export { DetailSheet } from './DetailSheet';
 export { ScrollPicker } from './ScrollPicker';
+export { SegmentedControl } from './SegmentedControl';
 export { Sparkline } from './Sparkline';
 export { StatCard } from './StatCard';
 export { StatusPill } from './StatusPill';

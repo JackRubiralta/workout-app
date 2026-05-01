@@ -4,12 +4,18 @@ import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { colors, fonts, fontSize, spacing, surfaces, text } from '../../theme';
 import { Chip } from '../../components/primitives';
 import { PlusIcon } from '../../shell/icons';
+import { useSettingsData } from '../../shell/store';
+import { fromLb, unitLabel } from '../../utils/units';
 import { formatTime, relativeDay } from '../../utils/date';
 
 // Weight chart: draws an SVG line over the entries with a guide line at the
 // minimum and a filled dot at the latest point. Tries to be informative even
 // with few data points (renders single dot when only one entry).
-function WeightChart({ entries, color, height = 110, width = 320 }) {
+//
+// Each entry is stored in lb; the chart projects to display unit so the
+// last-value tag matches the rest of the card and the y-axis range scales
+// correctly when the user flips imperial ↔ metric.
+function WeightChart({ entries, color, system, height = 110, width = 320 }) {
   if (!entries.length) return null;
 
   const padX = 12;
@@ -18,9 +24,9 @@ function WeightChart({ entries, color, height = 110, width = 320 }) {
   const innerW = width - padX * 2;
   const innerH = height - padTop - padBottom;
 
-  const values = entries.map(e => e.weight);
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
+  const displayValues = entries.map(e => fromLb(e.weight, system));
+  const minV = Math.min(...displayValues);
+  const maxV = Math.max(...displayValues);
   const range = Math.max(maxV - minV, 1);
 
   const ts = entries.map(e => new Date(e.recordedAt).getTime());
@@ -29,9 +35,10 @@ function WeightChart({ entries, color, height = 110, width = 320 }) {
   const tRange = Math.max(maxT - minT, 1);
 
   const pts = entries.map((e, i) => {
+    const dv = displayValues[i];
     const x = padX + ((new Date(e.recordedAt).getTime() - minT) / tRange) * innerW;
-    const y = padTop + innerH - ((e.weight - minV) / range) * innerH;
-    return { x, y, value: e.weight };
+    const y = padTop + innerH - ((dv - minV) / range) * innerH;
+    return { x, y, value: dv };
   });
 
   if (pts.length === 1) pts[0] = { ...pts[0], x: padX + innerW / 2 };
@@ -66,21 +73,31 @@ function WeightChart({ entries, color, height = 110, width = 320 }) {
         ))}
       </Svg>
       <View style={{ position: 'absolute', left: Math.max(spacing.xs, last.x - 22), top: Math.max(0, last.y - 22) }}>
-        <Text style={{ fontSize: 11, fontWeight: '800', color, fontFamily: fonts.mono }}>{last.value}</Text>
+        <Text style={{ fontSize: 11, fontWeight: '800', color, fontFamily: fonts.mono }}>
+          {Math.round(last.value * 10) / 10}
+        </Text>
       </View>
     </View>
   );
 }
 
 export function BodyWeightCard({ entries, latest, onLog }) {
+  const { unitSystem } = useSettingsData();
+  const unit = unitLabel(unitSystem);
   const recent = useMemo(() => entries.slice(-30), [entries]);
+
+  const latestDisplay = useMemo(() => {
+    if (!latest) return null;
+    const v = fromLb(latest.weight, unitSystem);
+    return Math.round(v * 10) / 10;
+  }, [latest, unitSystem]);
 
   const delta = useMemo(() => {
     if (entries.length < 2) return null;
-    const first = entries[0].weight;
-    const last = entries[entries.length - 1].weight;
-    return Math.round((last - first) * 10) / 10;
-  }, [entries]);
+    const firstLb = entries[0].weight;
+    const lastLb = entries[entries.length - 1].weight;
+    return Math.round((fromLb(lastLb, unitSystem) - fromLb(firstLb, unitSystem)) * 10) / 10;
+  }, [entries, unitSystem]);
 
   const period = useMemo(() => {
     if (entries.length < 2) return null;
@@ -97,8 +114,8 @@ export function BodyWeightCard({ entries, latest, onLog }) {
           <Text style={[text.eyebrow, { color: colors.textTertiary }]}>BODY WEIGHT</Text>
           {latest ? (
             <View style={s.valueRow}>
-              <Text style={s.value}>{latest.weight}</Text>
-              <Text style={s.unit}>{latest.unit ?? 'lb'}</Text>
+              <Text style={s.value}>{latestDisplay}</Text>
+              <Text style={s.unit}>{unit}</Text>
               <Text style={s.relative}>· {relativeDay(latest.recordedAt, { lowercase: true })} · {formatTime(latest.recordedAt)}</Text>
             </View>
           ) : (
@@ -106,7 +123,7 @@ export function BodyWeightCard({ entries, latest, onLog }) {
           )}
           {delta != null && (
             <Text style={[s.delta, delta < 0 ? { color: colors.success } : delta > 0 ? { color: colors.warning } : { color: colors.textSecondary }]}>
-              {delta > 0 ? '+' : ''}{delta} lb · last {period}
+              {delta > 0 ? '+' : ''}{delta} {unit} · last {period}
             </Text>
           )}
         </View>
@@ -121,7 +138,7 @@ export function BodyWeightCard({ entries, latest, onLog }) {
 
       {recent.length > 0 && (
         <View style={s.chartWrap}>
-          <WeightChart entries={recent} color={colors.success} />
+          <WeightChart entries={recent} color={colors.success} system={unitSystem} />
         </View>
       )}
     </View>

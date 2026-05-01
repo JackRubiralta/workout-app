@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fonts, spacing, surfaces, text } from '../../theme';
 import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
+import { useSettingsData } from '../../shell/store';
+import { fromLb, unitLabel } from '../../utils/units';
 import {
   sessionVolume, workoutsByDayLastN, weeklyVolume, volumeTrend,
 } from '../workout/logic/volume';
@@ -19,18 +21,26 @@ function compactNum(v) {
 }
 
 
-export function HistoryCharts({ sessions }) {
+export function TrackingCharts({ sessions }) {
+  const { unitSystem } = useSettingsData();
+  const unit = unitLabel(unitSystem);
   const last7 = useMemo(() => workoutsByDayLastN(sessions, 7), [sessions]);
-  const weekly = useMemo(() => weeklyVolume(sessions, 4), [sessions]);
+  // Volume math stays in lb (storage unit); we project to display unit at
+  // the boundary so the bar heights and trend chip scale identically.
+  const weekly = useMemo(
+    () => weeklyVolume(sessions, 4).map(w => ({ ...w, volume: fromLb(w.volume, unitSystem) })),
+    [sessions, unitSystem],
+  );
   const perSession = useMemo(() => {
     const valid = sessions.filter(s => s.completedAt && !s.abandonedAt);
     return valid.slice(0, SESSIONS).reverse().map(s => ({
-      value: sessionVolume(s),
+      value: fromLb(sessionVolume(s), unitSystem),
       label: shortDate(new Date(s.completedAt ?? s.startedAt)),
       accent: s.dayColor,
     }));
-  }, [sessions]);
+  }, [sessions, unitSystem]);
   const trend = useMemo(() => volumeTrend(sessions, 4), [sessions]);
+  const trendCurrentDisplay = fromLb(trend.current, unitSystem);
 
   const totalCount = last7.reduce((a, b) => a + b.count, 0);
 
@@ -67,7 +77,7 @@ export function HistoryCharts({ sessions }) {
           <View style={{ flex: 1 }}>
             <Text style={s.cardTitle}>Volume this period</Text>
             <Text style={s.cardSub}>
-              <Text style={s.cardSubVal}>{compactNum(trend.current)}</Text> lb · last 4 weeks
+              <Text style={s.cardSubVal}>{compactNum(trendCurrentDisplay)}</Text> {unit} · last 4 weeks
             </Text>
           </View>
           <TrendChip delta={trend.deltaPercent} />

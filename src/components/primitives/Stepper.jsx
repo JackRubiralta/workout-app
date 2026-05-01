@@ -3,6 +3,19 @@ import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, radius } from '../../theme';
 
+/**
+ * Horizontal `−  N  +` numeric stepper. Each tap fires a selection
+ * haptic; the boundary buttons grey out at min/max so the user can see
+ * they've hit the limit.
+ *
+ * @param {object} props
+ * @param {number} props.value
+ * @param {number} [props.min=0]
+ * @param {number} [props.max=999]
+ * @param {number} [props.step=1]
+ * @param {(next:number) => void} props.onChange
+ * @param {string} [props.accent] - Override the value text colour (e.g. day color).
+ */
 export function Stepper({ value, min = 0, max = 999, step = 1, onChange, accent }) {
   const dec = () => {
     if (value <= min) return;

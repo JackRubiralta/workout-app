@@ -32,8 +32,8 @@ export function NoFoodView({ notes, source, onStartOver }) {
       ) : null}
       <Text style={s.hint}>
         {source === 'photo'
-          ? 'Try retaking with the meal centred and well lit, or use the Describe / Manual tabs above.'
-          : 'Try describing what you ate (e.g. "two scrambled eggs and toast"), or use Manual.'}
+          ? 'Try retaking with the meal centred and well lit, or add a description to give the AI more to work with.'
+          : 'Try describing what you ate (e.g. "two scrambled eggs and toast") or attaching a photo.'}
       </Text>
       <TouchableOpacity style={s.btn} onPress={onStartOver} activeOpacity={0.85}>
         <Text style={s.btnText}>{source === 'photo' ? 'Try another photo' : 'Try again'}</Text>

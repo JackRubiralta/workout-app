@@ -8,7 +8,7 @@ import { TrashIcon } from '../../shell/icons';
 import { FoodSource, Confidence } from '../../constants/nutrition';
 import { formatDateTime } from '../../utils/date';
 import { confirm } from '../../utils/confirm';
-import { formatFoodMeta } from './hooks/useNutritionLog';
+import { formatFoodMeta } from './nutritionMath';
 
 function MacroCell({ label, value, unit, color }) {
   return (
@@ -45,12 +45,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
   if (!item) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
-        <View style={s.header}>
-          <IconButton onPress={() => navigation.goBack()}>
-            <ChevronLeft color={colors.text} />
-          </IconButton>
-          <View style={{ flex: 1 }} />
-        </View>
+        <DetailHeader onBack={() => navigation.goBack()} />
         <Text style={[text.title3, { padding: spacing.lg, color: colors.textSecondary }]}>
           Item not found
         </Text>
@@ -61,7 +56,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
   const photos = item.photos ?? [];
   const sourceLabel = item.source === FoodSource.PHOTO ? 'PHOTO'
                     : item.source === FoodSource.TEXT ? 'DESCRIBED'
-                    : item.source === FoodSource.MANUAL ? 'MANUAL'
+                    : item.source === FoodSource.MANUAL ? 'MANUAL' // legacy entries only
                     : null;
   const confColor = item.confidence === Confidence.HIGH ? colors.success
                   : item.confidence === Confidence.LOW ? colors.danger
@@ -89,15 +84,19 @@ export function FoodItemDetailScreen({ navigation, route }) {
           </View>
         </View>
 
-        <View style={s.qtyCard}>
-          <Text style={s.qtyValue}>{item.quantity}</Text>
-          <Text style={s.qtyUnit}>{item.unit}</Text>
-        </View>
-
         <View style={s.macroGrid}>
+          {/* Calorie + quantity hero: the big red number reads first, the
+              quantity context sits to the right so the card feels like one
+              unit instead of two empty stacked blocks. */}
           <View style={s.macroBlock}>
-            <Text style={[s.macroBig, { color: macroColors.calories }]}>{item.calories}</Text>
-            <Text style={s.macroBigLabel}>CAL</Text>
+            <View style={s.macroBlockMain}>
+              <Text style={[s.macroBig, { color: macroColors.calories }]}>{item.calories}</Text>
+              <Text style={s.macroBigLabel}>CAL</Text>
+            </View>
+            <View style={s.macroBlockMeta}>
+              <Text style={s.qtyValue}>{item.quantity}</Text>
+              <Text style={s.qtyUnit}>{item.unit}</Text>
+            </View>
           </View>
           <View style={s.macrosRow}>
             <MacroCell label="PROTEIN" value={item.protein} unit="g" color={macroColors.protein} />
@@ -163,27 +162,24 @@ const s = StyleSheet.create({
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   dateText: { ...text.monoSubhead, fontSize: 13, color: colors.textSecondary },
 
-  qtyCard: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  qtyValue: { ...text.monoNumber, fontSize: 28 },
-  qtyUnit: { ...text.bodySecondary, fontSize: fontSize.body, color: colors.textSecondary },
+  qtyValue: { ...text.monoNumber, fontSize: 22, color: colors.text },
+  qtyUnit: { ...text.bodySecondary, fontSize: 13, color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 0.3 },
 
   macroGrid: { gap: spacing.sm, marginBottom: spacing.md },
-  // Calorie hero cell — same neutral surface chrome as the protein/carb/
-  // fat/fiber cells below, just larger and with the calorie accent on the
-  // numeric value only. Avoids the "red box screams at you" feel.
+  // Calorie hero cell — big red CAL number on the left, quantity stacked on
+  // the right. Two columns make the card feel intentional instead of an
+  // empty block of dark space; same neutral surface chrome as the protein/
+  // carb/fat/fiber cells below for consistency.
   macroBlock: {
     ...surfaces.card,
-    paddingVertical: spacing.lg,
-    alignItems: 'center', justifyContent: 'center',
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
   },
-  macroBig: { fontSize: 42, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: -0.5 },
+  macroBlockMain: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  macroBlockMeta: { alignItems: 'flex-end', gap: 2 },
+  macroBig: { fontSize: 42, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: -0.5, lineHeight: 46 },
   macroBigLabel: { ...text.eyebrowSmall, fontFamily: fonts.mono },
 
   macrosRow: { flexDirection: 'row', gap: spacing.xs + 2 },

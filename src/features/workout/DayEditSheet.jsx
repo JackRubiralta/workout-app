@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Sheet, SheetHeader } from '../../components/primitives';
+import { Button, Sheet, SheetHeader } from '../../components/primitives';
 import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { defaultExercise } from '../../utils/exercise';
 import { confirm } from '../../utils/confirm';
-import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
+import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
 export function DayEditSheet({ visible, day, dayIndex, onSave, onDelete, onClose, daysCount }) {
   const [title, setTitle] = useState('');
@@ -151,9 +151,7 @@ export function DayEditSheet({ visible, day, dayIndex, onSave, onDelete, onClose
 
         {!kbVisible && (
           <View style={s.footer}>
-            <TouchableOpacity style={[s.saveBtn, { backgroundColor: day.color }]} onPress={handleSaveDay} activeOpacity={0.8}>
-              <Text style={s.saveBtnText}>Save Day</Text>
-            </TouchableOpacity>
+            <Button label="Save Day" onPress={handleSaveDay} color={day.color} style={s.saveBtn} />
             {daysCount > 1 && (
               <TouchableOpacity style={s.deleteBtn} onPress={handleDeletePress} hitSlop={8}>
                 <Text style={s.deleteBtnText}>Delete Day</Text>
@@ -226,8 +224,7 @@ const s = StyleSheet.create({
     borderTopColor: colors.border,
     gap: spacing.sm,
   },
-  saveBtn: { height: 52, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
-  saveBtnText: { ...text.button, color: '#fff' },
+  saveBtn: { height: 52 },
   deleteBtn: { alignItems: 'center', paddingVertical: spacing.sm },
   deleteBtnText: { ...text.monoSubhead, fontWeight: '600', color: colors.danger, letterSpacing: 0.3 },
 });

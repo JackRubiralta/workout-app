@@ -3,13 +3,17 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, shadow, spacing, surfaces, text } from '../../theme';
 import { StatusPill } from '../../components/primitives';
+import { useSettingsData } from '../../shell/store';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatTime, relativeDay } from '../../utils/date';
 import { compactNumber, formatDurationISO } from '../../utils/format';
+import { fromLb, unitLabel } from '../../utils/units';
 
 export function SessionCard({ session, onPress }) {
+  const { unitSystem } = useSettingsData();
   const duration = formatDurationISO(session.startedAt, session.completedAt);
-  const volume = sessionVolume(session);
+  const volumeLb = sessionVolume(session);
+  const volumeDisplay = fromLb(volumeLb, unitSystem);
   const status = session.completedAt ? 'done' : session.abandonedAt ? 'abandoned' : 'in-progress';
 
   return (
@@ -45,10 +49,10 @@ export function SessionCard({ session, onPress }) {
           <Text style={s.chipVal}>{session.entries.filter(e => !e.isPlaceholder).length}</Text>
           <Text style={s.chipLabel}>sets</Text>
         </View>
-        {volume > 0 && (
+        {volumeLb > 0 && (
           <View style={s.chip}>
-            <Text style={s.chipVal}>{compactNumber(volume)}</Text>
-            <Text style={s.chipLabel}>lb vol</Text>
+            <Text style={s.chipVal}>{compactNumber(volumeDisplay)}</Text>
+            <Text style={s.chipLabel}>{unitLabel(unitSystem)} vol</Text>
           </View>
         )}
       </View>

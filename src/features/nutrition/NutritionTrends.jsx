@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, macroColors, spacing, surfaces, text } from '../../theme';
 import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
-import { totalsForDay } from './hooks/useNutritionLog';
+import { totalsForDay } from './nutritionMath';
 
 const DAYS = 7;
 

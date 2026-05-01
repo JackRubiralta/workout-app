@@ -13,7 +13,7 @@ export function CaptureCard({ onScan }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.title}>Add food</Text>
-        <Text style={s.sub}>Photo, describe, or enter manually</Text>
+        <Text style={s.sub}>Snap a photo, describe it, or both</Text>
       </View>
     </TouchableOpacity>
   );

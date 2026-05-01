@@ -2,7 +2,8 @@ import React, { createContext, useContext } from 'react';
 import { useWorkoutConfig } from '../features/workout/hooks/useWorkoutConfig';
 import { useWorkoutSession } from '../features/workout/hooks/useWorkoutSession';
 import { useNutritionLog } from '../features/nutrition/hooks/useNutritionLog';
-import { useBodyWeight } from '../features/history/hooks/useBodyWeight';
+import { useBodyWeight } from '../features/tracking/hooks/useBodyWeight';
+import { useSettings } from '../hooks/useSettings';
 
 const StoreContext = createContext(null);
 
@@ -11,7 +12,8 @@ export function StoreProvider({ children }) {
   const session = useWorkoutSession();
   const nutrition = useNutritionLog();
   const bodyweight = useBodyWeight();
-  const value = { config, session, nutrition, bodyweight };
+  const settings = useSettings();
+  const value = { config, session, nutrition, bodyweight, settings };
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
@@ -33,8 +35,11 @@ export function useNutritionData() {
 export function useBodyWeightData() {
   return useStore().bodyweight;
 }
+export function useSettingsData() {
+  return useStore().settings;
+}
 
 export function useStoreLoaded() {
-  const { config, session, nutrition, bodyweight } = useStore();
-  return config.loaded && session.loaded && nutrition.loaded && bodyweight.loaded;
+  const { config, session, nutrition, bodyweight, settings } = useStore();
+  return config.loaded && session.loaded && nutrition.loaded && bodyweight.loaded && settings.loaded;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, radius, spacing, text } from '../../theme';
+import { colors, radius, spacing, surfaces, text } from '../../theme';
 import { ChevronLeft, ChevronRight } from '../../shell/icons';
 import { addDays, formatDateLong, isSameDay, startOfDay } from '../../utils/date';
 
@@ -31,9 +31,8 @@ export function DateStrip({ date, onChange }) {
 
 const s = StyleSheet.create({
   row: {
+    ...surfaces.row,
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border,
     borderRadius: radius.full,
     paddingHorizontal: 4, paddingVertical: 4,
     alignSelf: 'center',

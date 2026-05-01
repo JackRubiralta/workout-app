@@ -3,6 +3,18 @@ import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../theme';
 
+/**
+ * iOS-style on/off switch (44 × 26). Tap anywhere on the track to flip;
+ * a light haptic ticks on every change. The accent colour determines the
+ * "on" track tint — pass the day color when the toggle sits in a
+ * day-scoped context (ExerciseEditSheet), leave default for neutral
+ * surfaces.
+ *
+ * @param {object} props
+ * @param {boolean} props.value
+ * @param {(next:boolean) => void} props.onChange
+ * @param {string} [props.accent=colors.success] - "On" track colour.
+ */
 export function Toggle({ value, onChange, accent = colors.success }) {
   return (
     <TouchableOpacity

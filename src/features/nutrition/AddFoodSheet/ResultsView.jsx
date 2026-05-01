@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 
 import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../theme';
 import { StatusPill } from '../../../components/primitives';
 import { roundInt, roundTenths } from '../../../utils/format';
-import { totalsForDay } from '../hooks/useNutritionLog';
+import { totalsForDay } from '../nutritionMath';
 import { copy } from '../../../copy';
 
 function recomputeTotals(items) {

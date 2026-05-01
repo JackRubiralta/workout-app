@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
-import { DetailSheet } from '../../components/primitives';
-import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
+import { Button, DetailSheet } from '../../components/primitives';
+import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
 const FIELDS = [
   { key: 'calories', label: 'CALORIES', unit: 'kcal', accent: macroColors.calories },
@@ -26,7 +25,6 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
   }, [visible, goals]);
 
   const handleSave = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     const parsed = {};
     for (const f of FIELDS) {
       const n = parseInt(values[f.key], 10);
@@ -44,9 +42,7 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
   // a sticky footer and the soft keyboard.
   const footer = kbVisible ? null : (
     <View style={s.footerInner}>
-      <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-        <Text style={s.saveBtnText}>Save Goals</Text>
-      </TouchableOpacity>
+      <Button label="Save Goals" onPress={handleSave} color={colors.success} style={s.saveBtn} />
     </View>
   );
 
@@ -109,6 +105,5 @@ const s = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  saveBtn: { height: 52, backgroundColor: colors.success, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
-  saveBtnText: { ...text.button, color: '#fff', letterSpacing: 0.3 },
+  saveBtn: { height: 52 },
 });

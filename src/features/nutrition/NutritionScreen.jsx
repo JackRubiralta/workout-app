@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, layout, macroColors, spacing } from '../../theme';
 import { useNutritionData } from '../../shell/store';
-import { CalorieRing, MacroRing } from '../../components/nutrition/MacroRing';
+import { CalorieRing, MacroRing } from './components/MacroRing';
 import { ScreenHeader } from '../../components/primitives/ScreenHeader';
 import { GoalsSheet } from './GoalsSheet';
 import { AddFoodSheet } from './AddFoodSheet/AddFoodSheet';
@@ -12,7 +12,7 @@ import { FoodLog } from './FoodLog';
 import { NutritionTrends } from './NutritionTrends';
 import { DateStrip } from './DateStrip';
 import { CaptureCard } from './CaptureCard';
-import { formatDateKey, totalsForDay } from './hooks/useNutritionLog';
+import { formatDateKey, totalsForDay } from './nutritionMath';
 import { startOfDay } from '../../utils/date';
 
 function RingsBlock({ totals, goals }) {
@@ -38,7 +38,6 @@ export function NutritionScreen({ navigation }) {
   const [date, setDate] = useState(() => startOfDay(new Date()));
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [addInitial, setAddInitial] = useState('scan');
 
   const dateKey = formatDateKey(date);
   const items = useMemo(() => logsByDate[dateKey] ?? [], [logsByDate, dateKey]);
@@ -48,9 +47,8 @@ export function NutritionScreen({ navigation }) {
   );
   const totals = useMemo(() => totalsForDay(items), [items]);
 
-  const openAdd = (tab) => {
+  const openAdd = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setAddInitial(tab);
     setAddOpen(true);
   };
 
@@ -98,7 +96,7 @@ export function NutritionScreen({ navigation }) {
         />
 
         <View style={s.captureWrap}>
-          <CaptureCard onScan={() => openAdd('scan')} />
+          <CaptureCard onScan={openAdd} />
         </View>
 
         <DateStrip date={date} onChange={setDate} />
@@ -119,7 +117,7 @@ export function NutritionScreen({ navigation }) {
       </ScrollView>
 
       <GoalsSheet visible={goalsOpen} goals={goals} onSave={setGoals} onClose={() => setGoalsOpen(false)} />
-      <AddFoodSheet visible={addOpen} initialTab={addInitial} onClose={() => setAddOpen(false)} onLogItems={handleLogItems} />
+      <AddFoodSheet visible={addOpen} onClose={() => setAddOpen(false)} onLogItems={handleLogItems} />
     </SafeAreaView>
   );
 }

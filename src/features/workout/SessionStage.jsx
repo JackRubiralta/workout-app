@@ -2,16 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, text } from '../../theme';
 import { Chip } from '../../components/primitives';
-import { CircularTimer } from '../../components/workout/CircularTimer';
+import { CircularTimer } from './components/CircularTimer';
 import { ExerciseHero, RestHero, CompletionHero } from './SessionHeroes';
 
 /**
- * The big middle area of the active session screen. Renders one of four
+ * The big middle area of the active session screen. Renders one of five
  * states based on the props (in priority order):
- *   1. Day complete       → <CompletionHero />
- *   2. Resting             → <RestHero />
- *   3. Set timer running   → exercise name + <CircularTimer label="WORK" />
- *   4. Working through a set → <ExerciseHero /> + last-set hint + skip-this-exercise pill
+ *   1. Day complete             → <CompletionHero />
+ *   2. Resting                   → <RestHero />
+ *   3. Set timer FINISHED        → green DONE ring + "Tap Done to log" hint
+ *   4. Set timer running         → exercise name + <CircularTimer label="WORK" />
+ *   5. Working through a set     → <ExerciseHero /> + last-set hint + skip pill
  *
  * Pure presentational — every value comes from props. Keeps
  * ActiveSessionScreen focused on state + handlers.
@@ -24,11 +25,12 @@ export function SessionStage({
   secondsLeft,
   totalSeconds,
   setTimerRunning,
+  setTimerFinished,
   setTimerSecondsLeft,
   setTimerTotalSeconds,
   currentEx,
   currentPos,
-  recentAvg,
+  recentAvg, // { count: number, label: string } already formatted in the user's unit
   timerSize,
   isSmall,
   nameFontSize,
@@ -47,6 +49,21 @@ export function SessionStage({
         timerSize={timerSize}
         isSmall={isSmall}
       />
+    );
+  }
+  if (setTimerFinished) {
+    return (
+      <View style={s.timedWrap}>
+        <Text style={s.timedExName} numberOfLines={1}>{currentEx?.name}</Text>
+        <CircularTimer
+          secondsLeft={0}
+          totalSeconds={setTimerTotalSeconds || 1}
+          size={timerSize}
+          label="DONE"
+          color={colors.success}
+        />
+        <Text style={[s.timedHint, { color: colors.success }]}>Tap Done to log this set</Text>
+      </View>
     );
   }
   if (setTimerRunning) {
@@ -77,7 +94,7 @@ export function SessionStage({
           <Chip
             variant="static"
             eyebrow={`AVG · LAST ${recentAvg.count}`}
-            label={`${recentAvg.weight} lb × ${recentAvg.reps}`}
+            label={recentAvg.label}
             style={s.hintChip}
           />
         ) : null}

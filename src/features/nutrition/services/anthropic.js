@@ -5,7 +5,7 @@
 
 import { roundInt, roundTenths } from '../../../utils/format';
 
-const ANTHROPIC_API_KEY = ""; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
+const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
@@ -21,9 +21,29 @@ const JSON_SHAPE = `{
   "notes": string
 }
 
-If the input does not depict food (e.g. a person, an object, a screenshot, a blank / blurry image, an animal not being eaten), set "food_detected": false, leave "items" and "totals" as empty/zero, and put a one-sentence description of what the input actually shows in "notes" (e.g. "Photo shows a dog on a couch — no food in frame."). Do not invent food in this case.`;
+If neither the photo(s) nor the text describes food (e.g. a person, an object, a screenshot, a blank/blurry image, an animal not being eaten, an empty string), set "food_detected": false, leave "items" and "totals" empty/zero, and put a one-sentence description of what the input actually shows in "notes" (e.g. "Photo shows a dog on a couch — no food in frame."). Do not invent food in this case.`;
 
-const SYSTEM_PROMPT_PHOTO = `You are a precise nutrition analyst. Analyze the food in the image(s) and identify each distinct component. Use multiple photos together to improve portion estimation. Use your training knowledge of standard nutrition data (USDA / common food databases) to estimate calories and macros for each component, then sum them.
+// One unified system prompt that handles three modes in a single call:
+//   (1) photos only
+//   (2) text only
+//   (3) photos + text — text adds quantity/identity/context to the photo
+//
+// Rule of thumb baked into the prompt: when both inputs disagree, the text
+// wins for *quantity* and *identity disambiguation* (because the user is
+// telling you the truth about portion), and the photo wins for *visual
+// identification* of components and dishes.
+const SYSTEM_PROMPT = `You are a precise nutrition analyst. Identify each distinct food component the user is logging and estimate its calories + macros using your training knowledge of standard nutrition databases (USDA / common food databases).
+
+You may receive:
+  • photo(s) of food
+  • a text description of food
+  • or both — in which case the text gives extra context for the photo (e.g. "I ate 3 of these", "this is the low-fat version", "skip the bread")
+
+When BOTH a photo and text are provided:
+  • The text is authoritative for QUANTITY — if the photo shows one yogurt and the text says "I had 3", log 3.
+  • The text is authoritative for VARIANT/BRAND/PREPARATION — "low-fat", "no dressing", "skim milk".
+  • The photo is authoritative for VISUAL IDENTIFICATION of components (what's actually on the plate).
+  • Never silently ignore either input. If they conflict beyond reconciliation, prefer the text and add a short caveat in "notes".
 
 Return a final JSON object with this exact shape:
 ${JSON_SHAPE}
@@ -31,27 +51,11 @@ ${JSON_SHAPE}
 "meal_name" is a short, descriptive name for the whole plate/meal as a single phrase (e.g. "Sushi platter", "Chicken & rice bowl", "Greek yogurt with berries", "Avocado toast"). Keep it under 32 characters. If only one component is shown, use its name.
 
 Confidence rubric:
-- "high" — items clearly identifiable AND portion cues are good (utensils, plate, multiple angles)
-- "medium" — items identified but portion is a rough guess
-- "low" — ambiguous, partially obscured, or hard to identify
+  • "high" — items clearly identifiable AND portions are well-anchored (clear text quantity, multiple photo angles, utensils/plate for scale)
+  • "medium" — items identified but portion is partly inferred
+  • "low" — ambiguous, partially obscured, hard to identify, or vague text
 
-Use the "notes" field for short caveats (e.g. "Assumed olive oil; could be butter", "Portion estimated from plate size"). Keep notes under 200 characters.
-
-Return ONLY the JSON object — no prose, no markdown fences. Use grams or common household units (cup, tbsp, slice, piece, oz, medium, large) as appropriate.`;
-
-const SYSTEM_PROMPT_TEXT = `You are a precise nutrition analyst. The user describes a food or meal in plain English. Identify each component, fill in sensible portions if the user did not specify them, and return nutrition data using your training knowledge of standard nutrition databases.
-
-Return a final JSON object with this exact shape:
-${JSON_SHAPE}
-
-"meal_name" is a short, descriptive name for the whole meal as a single phrase (e.g. "Greek yogurt bowl", "Chipotle bowl"). Under 32 characters. If only one component, use its name.
-
-Confidence rubric:
-- "high" — query is specific and unambiguous (clear food name + clear portion)
-- "medium" — query is recognizable but portion was inferred
-- "low" — query is vague, ambiguous brand, or unusual food
-
-Use the "notes" field for short caveats (e.g. "Assumed 1 medium banana", "Brand-specific values vary"). Keep notes under 200 characters.
+Use the "notes" field for short caveats (e.g. "Assumed olive oil; could be butter", "Trusted user's '3 eggs' over the 2 visible in frame"). Keep notes under 200 characters.
 
 Return ONLY the JSON object — no prose, no markdown fences. Use grams or common household units (cup, tbsp, slice, piece, oz, medium, large) as appropriate.`;
 
@@ -151,63 +155,69 @@ function pullText(data) {
     .trim();
 }
 
+// Builds the user message content array for the Messages API. Photos go
+// first (Claude is more accurate when it sees the image before the text
+// instructions), the text caption goes last and *always* exists — even
+// for photo-only calls — so the prompt template above can reliably refer
+// to "the user's text".
+function buildUserContent({ images, query, photoCount, hasQuery }) {
+  const content = [];
+  for (const img of images) {
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: img.base64 },
+    });
+  }
+  let textBlock;
+  if (photoCount > 0 && hasQuery) {
+    textBlock = `Here ${photoCount === 1 ? 'is 1 photo' : `are ${photoCount} photos`} of the meal, plus context from the user:\n\n"${query}"\n\nUse both. Reconcile per the system rules.`;
+  } else if (photoCount > 0) {
+    textBlock = photoCount > 1
+      ? `Here are ${photoCount} photos of the same meal from different angles. Identify every component and estimate its nutrition.`
+      : 'Identify every food component in this photo and estimate its nutrition.';
+  } else {
+    textBlock = `The user described their meal:\n\n"${query}"\n\nIdentify components and estimate nutrition. If they didn't specify portions, fill in sensible defaults.`;
+  }
+  content.push({ type: 'text', text: textBlock });
+  return content;
+}
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * @param {{ images: Array<{ base64: string, mediaType: string }>, signal?: AbortSignal, onProgress?: (msg: string) => void }} args
+ * Analyze a meal from photo(s), a text description, or both.
+ *
+ * @param {object} args
+ * @param {Array<{ base64: string, mediaType: string }>} [args.images=[]] - 0–N photos.
+ * @param {string} [args.query=''] - Optional text description / portion context.
+ * @param {AbortSignal} [args.signal] - Cancel the in-flight request.
+ * @param {(msg: string) => void} [args.onProgress] - Status updates ("Sending photos to Claude…").
+ * @returns {Promise<{ foodDetected: boolean, items: Array, totals: object, confidence: 'high'|'medium'|'low', notes: string, mealName: string|null }>}
+ *
+ * Throws if both `images` and `query` are empty.
  */
-export async function analyzeFoodPhotos({ images, signal, onProgress }) {
+export async function analyzeFood({ images = [], query = '', signal, onProgress } = {}) {
   assertAnthropicKey();
-  if (!images?.length) throw new Error('Need at least one photo to analyze.');
+  const trimmedQuery = (query ?? '').trim();
+  const photoCount = images?.length ?? 0;
+  if (photoCount === 0 && !trimmedQuery) {
+    throw new Error('Add a photo or describe what you ate.');
+  }
 
-  onProgress?.('Sending photos to Claude…');
-
-  const userContent = [
-    ...images.map(img => ({
-      type: 'image',
-      source: {
-        type: 'base64',
-        media_type: img.mediaType || 'image/jpeg',
-        data: img.base64,
-      },
-    })),
-    {
-      type: 'text',
-      text:
-        images.length > 1
-          ? `Here are ${images.length} photos of the same meal from different angles. Identify every component and estimate its nutrition.`
-          : 'Identify every food component in this photo and estimate its nutrition.',
-    },
-  ];
+  const status = photoCount > 0 && trimmedQuery
+    ? 'Sending photos and notes to Claude…'
+    : photoCount > 0
+      ? (photoCount > 1 ? `Sending ${photoCount} photos to Claude…` : 'Sending photo to Claude…')
+      : 'Asking Claude…';
+  onProgress?.(status);
 
   const data = await callAnthropic({
-    system: SYSTEM_PROMPT_PHOTO,
-    messages: [{ role: 'user', content: userContent }],
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: buildUserContent({ images, query: trimmedQuery, photoCount, hasQuery: !!trimmedQuery }) }],
     signal,
   });
 
   onProgress?.('Tallying totals…');
-
-  const text = pullText(data);
-  if (!text) throw new Error('Claude returned no text.');
-  return normalizeFinal(extractJson(text));
-}
-
-/**
- * @param {{ query: string, signal?: AbortSignal, onProgress?: (msg: string) => void }} args
- */
-export async function analyzeFoodText({ query, signal, onProgress }) {
-  assertAnthropicKey();
-  const trimmed = (query ?? '').trim();
-  if (!trimmed) throw new Error('Type what you ate to look it up.');
-
-  onProgress?.('Asking Claude…');
-
-  const data = await callAnthropic({
-    system: SYSTEM_PROMPT_TEXT,
-    messages: [{ role: 'user', content: trimmed }],
-    signal,
-  });
 
   const text = pullText(data);
   if (!text) throw new Error('Claude returned no text.');

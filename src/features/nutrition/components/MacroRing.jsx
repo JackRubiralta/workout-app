@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, fontSize, fonts } from '../../theme';
+import { colors, fontSize, fonts } from '../../../theme';
 
 function geometry(size, strokeWidth) {
   const r = (size - strokeWidth) / 2;
