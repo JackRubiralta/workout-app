@@ -85,14 +85,6 @@ export function SearchTab({
         autoCorrect
       />
 
-      <View style={s.examples}>
-        {['Greek yogurt with berries', 'Chipotle chicken bowl', '2 slices pepperoni pizza'].map(ex => (
-          <TouchableOpacity key={ex} style={s.examplePill} onPress={() => setQuery(ex)} activeOpacity={0.7}>
-            <Text style={s.exampleText}>{ex}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       <TouchableOpacity
         style={[s.primaryBtn, !query.trim() && s.primaryBtnOff]}
         onPress={analyze}
@@ -117,14 +109,6 @@ const s = StyleSheet.create({
     fontSize: fontSize.body, color: colors.text, fontFamily: fonts.mono,
     minHeight: 110,
   },
-  examples: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  examplePill: {
-    backgroundColor: colors.surface, borderRadius: radius.full,
-    borderWidth: 1, borderColor: colors.border,
-    paddingHorizontal: spacing.sm + 2, paddingVertical: 6,
-  },
-  exampleText: { fontSize: 11, color: colors.textSecondary, fontFamily: fonts.mono, fontWeight: '600', letterSpacing: 0.3 },
-
   primaryBtn: {
     backgroundColor: colors.text, borderRadius: radius.xl, height: 52,
     alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm,

@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Sheet } from '../../components/primitives/Sheet';
-import { Sparkline } from '../../components/primitives/Sparkline';
+import { colors, fontSize, spacing, surfaces, text } from '../../theme';
+import { Sheet, SectionLabel, Sparkline, StatCard } from '../../components/primitives';
 import { useSessionData } from '../../shell/store';
 import { topSetPerSession, personalRecords, epley } from './logic/suggestions';
 import { formatDateShort } from '../../utils/date';
 import { MAX_HISTORY_POINTS } from '../../constants/history';
+import { copy } from '../../copy';
 
 export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose }) {
   const { sessions } = useSessionData();
@@ -44,44 +44,36 @@ export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose 
         <ScrollView contentContainerStyle={{ paddingBottom: spacing.lg }} showsVerticalScrollIndicator={false}>
           {topSets.length === 0 ? (
             <View style={s.empty}>
-              <Text style={s.emptyTitle}>No history yet</Text>
-              <Text style={s.emptySub}>
-                Log this exercise during a workout and we'll start charting top sets here.
-              </Text>
+              <Text style={s.emptyTitle}>{copy.empty.exerciseHistory.title}</Text>
+              <Text style={s.emptySub}>{copy.empty.exerciseHistory.subtitle}</Text>
             </View>
           ) : (
             <>
               <View style={s.statsGrid}>
-                <View style={s.stat}>
-                  <Text style={s.statValue}>{prs.bestWeight ? `${prs.bestWeight.weight}` : '—'}</Text>
-                  <Text style={s.statLabel}>BEST WEIGHT (lb)</Text>
-                  {prs.bestWeight ? (
-                    <Text style={s.statSub}>× {prs.bestWeight.reps} reps</Text>
-                  ) : null}
-                </View>
-                <View style={s.stat}>
-                  <Text style={s.statValue}>
-                    {prs.bestE1RM ? Math.round(epley(prs.bestE1RM.weight, prs.bestE1RM.reps)) : '—'}
-                  </Text>
-                  <Text style={s.statLabel}>e1RM (Epley)</Text>
-                  {prs.bestE1RM ? (
-                    <Text style={s.statSub}>{prs.bestE1RM.weight} × {prs.bestE1RM.reps}</Text>
-                  ) : null}
-                </View>
+                <StatCard
+                  value={prs.bestWeight ? prs.bestWeight.weight : '—'}
+                  label="BEST WEIGHT (lb)"
+                  sub={prs.bestWeight ? `× ${prs.bestWeight.reps} reps` : undefined}
+                />
+                <StatCard
+                  value={prs.bestE1RM ? Math.round(epley(prs.bestE1RM.weight, prs.bestE1RM.reps)) : '—'}
+                  label="e1RM (Epley)"
+                  sub={prs.bestE1RM ? `${prs.bestE1RM.weight} × ${prs.bestE1RM.reps}` : undefined}
+                />
               </View>
 
               <View style={s.chartSection}>
-                <Text style={text.eyebrow}>TOP SET (lb) · last {topSets.length}</Text>
-                <Sparkline points={points} color={dayColor ?? colors.text} height={88} width={300} />
+                <SectionLabel style={s.chartLabel}>TOP SET (lb) · LAST {topSets.length}</SectionLabel>
+                <Sparkline points={points} color={dayColor ?? colors.text} height={88} />
               </View>
 
               <View style={s.chartSection}>
-                <Text style={text.eyebrow}>e1RM TREND · last {topSets.length}</Text>
-                <Sparkline points={e1rmPoints} color={colors.text} height={88} width={300} />
+                <SectionLabel style={s.chartLabel}>e1RM TREND · LAST {topSets.length}</SectionLabel>
+                <Sparkline points={e1rmPoints} color={colors.text} height={88} />
               </View>
 
               <View style={s.list}>
-                <Text style={[text.eyebrow, { marginBottom: spacing.xs }]}>SESSIONS</Text>
+                <SectionLabel style={s.chartLabel}>SESSIONS</SectionLabel>
                 {[...topSets].reverse().map(({ entry, session }, i) => (
                   <View key={i} style={s.row}>
                     <Text style={s.rowDate}>{formatDateShort(session.startedAt)}</Text>
@@ -114,24 +106,15 @@ const s = StyleSheet.create({
   emptySub: { ...text.bodySecondary, color: colors.textTertiary, textAlign: 'center', paddingHorizontal: spacing.md, lineHeight: 20 },
 
   statsGrid: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  stat: {
-    flex: 1, alignItems: 'center', gap: 2,
-    backgroundColor: colors.surfaceElevated, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    paddingVertical: spacing.md, paddingHorizontal: spacing.sm,
-  },
-  statValue: { ...text.monoNumber, fontSize: fontSize.title1 },
-  statLabel: { ...text.eyebrowSmall },
-  statSub: { ...text.monoCaption, color: colors.textSecondary, marginTop: 2 },
 
-  chartSection: { gap: spacing.sm, marginBottom: spacing.md },
+  chartSection: { gap: spacing.xs, marginBottom: spacing.md },
+  chartLabel: { marginBottom: 2 },
 
   list: { gap: 4 },
   row: {
+    ...surfaces.inset,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
-    backgroundColor: colors.surfaceElevated, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border,
   },
   rowDate: { ...text.monoCaption, color: colors.textSecondary, width: 56 },
   rowDay: { flex: 1, ...text.monoFootnote, color: colors.text, fontWeight: '600' },

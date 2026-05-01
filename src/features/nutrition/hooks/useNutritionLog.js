@@ -3,9 +3,7 @@ import { KEYS } from '../../../storage/keys';
 import { readJson, writeJson } from '../../../storage/asyncStore';
 import { ensureMigrated } from '../../../storage/migrate';
 import { roundInt, roundTenths } from '../../../utils/format';
-
-// Fiber: aim-for goal (≥30g daily is the typical recommendation).
-const DEFAULT_GOALS = { calories: 2000, protein: 150, carbs: 220, fat: 65, fiber: 30 };
+import { DEFAULT_GOALS } from '../../../constants/nutrition';
 
 export function formatDateKey(date) {
   const y = date.getFullYear();
@@ -16,6 +14,32 @@ export function formatDateKey(date) {
 
 function generateId() {
   return `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// Normalize the nutrition shape into integer calories + tenths-rounded
+// gram macros. Used identically for the top-level entry and each
+// component, so it lives once and gets called twice in addFood.
+function normalizeFood(it) {
+  return {
+    name: String(it?.name ?? 'Item'),
+    quantity: Number(it?.quantity ?? 1),
+    unit: String(it?.unit ?? 'serving'),
+    calories: roundInt(it?.calories),
+    protein: roundTenths(it?.protein),
+    carbs: roundTenths(it?.carbs),
+    fat: roundTenths(it?.fat),
+    fiber: roundTenths(it?.fiber),
+  };
+}
+
+// Compact macro line for food rows: "1 cup · 14P / 14C / 1F / 3Fb".
+// Fiber is suppressed when 0 so a stick of butter doesn't end with "/ 0Fb".
+export function formatFoodMeta(item) {
+  if (!item) return '';
+  const head = `${item.quantity} ${item.unit}`;
+  const macros = `${item.protein ?? 0}P / ${item.carbs ?? 0}C / ${item.fat ?? 0}F`;
+  const fb = item.fiber > 0 ? ` / ${item.fiber}Fb` : '';
+  return `${head} · ${macros}${fb}`;
 }
 
 export function totalsForDay(items) {
@@ -30,6 +54,19 @@ export function totalsForDay(items) {
   return totals;
 }
 
+/**
+ * Reads / writes the user's food log (per-day entries) and macro goals.
+ * Lazy-loaded on mount; mutations persist immediately.
+ *
+ * @returns {{
+ *   loaded: boolean,
+ *   logsByDate: { [yyyymmdd:string]: Array<object> },
+ *   goals: { calories:number, protein:number, carbs:number, fat:number, fiber:number },
+ *   addFood: (dateKey:string, item:object, photos?:Array<{uri:string}>) => void,
+ *   removeFood: (dateKey:string, itemId:string) => void,
+ *   setGoals: (next:object) => void,
+ * }}
+ */
 export function useNutritionLog() {
   const [logsByDate, setLogsByDate] = useState({});
   const [goals, setGoalsState] = useState(DEFAULT_GOALS);
@@ -58,27 +95,11 @@ export function useNutritionLog() {
   // get garbage-collected over time on iOS; we degrade gracefully in the UI.
   const addFood = useCallback((dateKey, item, photos = []) => {
     const components = Array.isArray(item.components) && item.components.length
-      ? item.components.map(c => ({
-          name: String(c.name ?? 'Item'),
-          quantity: Number(c.quantity ?? 1),
-          unit: String(c.unit ?? 'serving'),
-          calories: roundInt(c.calories),
-          protein: roundTenths(c.protein),
-          carbs: roundTenths(c.carbs),
-          fat: roundTenths(c.fat),
-          fiber: roundTenths(c.fiber),
-        }))
+      ? item.components.map(normalizeFood)
       : null;
     const entry = {
+      ...normalizeFood(item),
       id: generateId(),
-      name: item.name,
-      quantity: item.quantity ?? 1,
-      unit: item.unit ?? 'serving',
-      calories: roundInt(item.calories),
-      protein: roundTenths(item.protein),
-      carbs: roundTenths(item.carbs),
-      fat: roundTenths(item.fat),
-      fiber: roundTenths(item.fiber),
       addedAt: new Date().toISOString(),
       photos: Array.isArray(photos) ? photos.slice(0, 3).map(p => ({ uri: p.uri ?? p })) : [],
       source: item.source ?? null, // 'photo' | 'text' | 'manual' | null

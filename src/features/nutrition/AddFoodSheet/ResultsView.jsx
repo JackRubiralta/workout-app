@@ -4,6 +4,7 @@ import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../
 import { StatusPill } from '../../../components/primitives';
 import { roundInt, roundTenths } from '../../../utils/format';
 import { totalsForDay } from '../hooks/useNutritionLog';
+import { copy } from '../../../copy';
 
 function recomputeTotals(items) {
   const t = totalsForDay(items);
@@ -103,7 +104,7 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
       )}
 
       {results.items.length === 0 && (
-        <Text style={s.emptyText}>No items left. Start over to try again.</Text>
+        <Text style={s.emptyText}>{copy.empty.resultsRemoved.title}</Text>
       )}
 
       {results.items.map((it) => {

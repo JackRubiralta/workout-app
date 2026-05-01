@@ -1,25 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { Sheet } from '../primitives/Sheet';
 import { Toggle } from '../primitives/Toggle';
 import { ScrollPicker } from '../primitives/ScrollPicker';
-
-const WEIGHT_STEP = 2.5;
-const WEIGHT_MAX = 600;
-const REPS_MAX = 100;
+import { WEIGHT_STEP_LB, WEIGHT_MAX_LB, REPS_MAX } from '../../constants/workout';
 
 function formatWeight(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1);
 }
 
-const WEIGHT_VALUES = (() => {
-  const out = [];
-  for (let v = 0; v <= WEIGHT_MAX; v += WEIGHT_STEP) out.push(Math.round(v * 10) / 10);
-  return out;
-})();
-const REPS_VALUES = Array.from({ length: REPS_MAX + 1 }, (_, i) => i);
+const WEIGHT_VALUES = ScrollPicker.range(0, WEIGHT_MAX_LB, WEIGHT_STEP_LB);
+const REPS_VALUES = ScrollPicker.range(0, REPS_MAX, 1);
 
 export function SetLogSheet({
   visible,
@@ -155,15 +148,12 @@ const s = StyleSheet.create({
   skipText: { ...text.monoSubhead, color: colors.textSecondary, fontWeight: '500' },
 
   trend: {
+    ...surfaces.inset,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   trendLabel: { ...text.eyebrowSmall, color: colors.textTertiary },
   trendValue: { flex: 1, ...text.monoSubhead, color: colors.textSecondary, textAlign: 'right' },
@@ -182,10 +172,10 @@ const s = StyleSheet.create({
   noTrackText: { ...text.monoSubhead },
 
   failRow: {
+    ...surfaces.inset,
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated, justifyContent: 'space-between',
+    justifyContent: 'space-between',
   },
   failLabel: { ...text.monoSubhead, fontWeight: '600' },
 

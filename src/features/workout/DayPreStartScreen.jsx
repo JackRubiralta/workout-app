@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
-import { Button, DetailHeader, SectionLabel, StatCard } from '../../components/primitives';
+import { Button, Chip, DetailHeader, NumberedListRow, SectionLabel, StatCard } from '../../components/primitives';
 import { PencilIcon, PlusIcon } from '../../shell/icons';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { DayEditSheet } from './DayEditSheet';
@@ -150,10 +150,11 @@ export function DayPreStartScreen({ navigation, route }) {
           </View>
         }
         right={
-          <TouchableOpacity onPress={() => setDayEditOpen(true)} style={styles.editPill} activeOpacity={0.7}>
-            <PencilIcon color={colors.textSecondary} />
-            <Text style={styles.editPillText}>Edit day</Text>
-          </TouchableOpacity>
+          <Chip
+            label="Edit day"
+            icon={<PencilIcon color={colors.textSecondary} />}
+            onPress={() => setDayEditOpen(true)}
+          />
         }
       />
 
@@ -187,31 +188,28 @@ export function DayPreStartScreen({ navigation, route }) {
               : ex.tracksWeight === false && ex.tracksReps === false ? 'no tracking'
               : ex.tracksWeight === false ? 'bodyweight' : null;
             return (
-              <TouchableOpacity
+              <NumberedListRow
                 key={i}
+                number={i + 1}
+                accent={day.color}
+                name={ex.name}
+                meta={`${ex.warmup ? '1 warm-up + ' : ''}${ex.sets} sets · ${ex.reps}${tag ? ` · ${tag}` : ''}`}
                 style={styles.exerciseRow}
-                activeOpacity={0.75}
+                trailing={
+                  <View style={styles.trailingRow}>
+                    <View style={styles.dots}>
+                      {Array.from({ length: total }).map((_, di) => (
+                        <View key={di} style={[styles.dot, { backgroundColor: day.color + '50' }]} />
+                      ))}
+                    </View>
+                    <PencilIcon color={colors.textTertiary} size={14} />
+                  </View>
+                }
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
                   setEditingExIndex(i);
                 }}
-              >
-                <View style={[styles.exNumber, { borderColor: day.color }]}>
-                  <Text style={[styles.exNumberText, { color: day.color }]}>{i + 1}</Text>
-                </View>
-                <View style={{ flex: 1, gap: 1 }}>
-                  <Text style={styles.exName} numberOfLines={1}>{ex.name}</Text>
-                  <Text style={styles.exMeta} numberOfLines={1}>
-                    {ex.warmup ? '1 warm-up + ' : ''}{ex.sets} sets · {ex.reps}{tag ? ` · ${tag}` : ''}
-                  </Text>
-                </View>
-                <View style={styles.dots}>
-                  {Array.from({ length: total }).map((_, di) => (
-                    <View key={di} style={[styles.dot, { backgroundColor: day.color + '50' }]} />
-                  ))}
-                </View>
-                <PencilIcon color={colors.textTertiary} size={14} />
-              </TouchableOpacity>
+              />
             );
           })}
 
@@ -284,13 +282,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   dayDot: { width: 36, height: 36, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dayDotText: { fontSize: fontSize.subhead, fontWeight: '700', fontFamily: fonts.mono },
-  editPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: spacing.sm + 2, paddingVertical: 7,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-  },
-  editPillText: { ...text.buttonSmall, color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
 
   scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
   titleArea: { paddingTop: spacing.md, paddingBottom: spacing.lg, gap: spacing.xs },
@@ -311,13 +302,10 @@ const styles = StyleSheet.create({
   exerciseList: { gap: spacing.sm },
   exerciseRow: {
     ...surfaces.row,
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
+    gap: spacing.sm,
   },
-  exNumber: { width: 28, height: 28, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  exNumberText: { ...text.monoCaption, fontWeight: '700', color: colors.text },
-  exName: { ...text.title3, fontSize: 15, color: colors.text, fontWeight: '600' },
-  exMeta: { ...text.bodySecondary, fontSize: 12, color: colors.textSecondary },
+  trailingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dots: { flexDirection: 'row', gap: 3 },
   dot: { width: 5, height: 5, borderRadius: 3 },
 

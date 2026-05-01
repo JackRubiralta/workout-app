@@ -2,6 +2,7 @@ import { KEYS, LEGACY, SCHEMA_VERSION } from './keys';
 import { readJson, writeJson } from './asyncStore';
 import { migrateExercise } from '../utils/exercise';
 import { EXERCISE_REST_SECONDS, DAYS } from '../constants/workout';
+import { DEFAULT_GOALS } from '../constants/nutrition';
 
 function migrateDay(d) {
   return {
@@ -31,7 +32,7 @@ function migrateConfigV1(parsed) {
 
 // v1 nutrition could be either old-shape ({breakfast, lunch, …}) or already-flat array.
 function migrateNutritionV1(parsed) {
-  if (!parsed) return { logsByDate: {}, goals: { calories: 2000, protein: 150, carbs: 220, fat: 65 } };
+  if (!parsed) return { logsByDate: {}, goals: { ...DEFAULT_GOALS } };
   const out = {};
   for (const k of Object.keys(parsed.logsByDate ?? {})) {
     const day = parsed.logsByDate[k];
@@ -50,7 +51,7 @@ function migrateNutritionV1(parsed) {
   }
   return {
     logsByDate: out,
-    goals: { calories: 2000, protein: 150, carbs: 220, fat: 65, ...(parsed.goals ?? {}) },
+    goals: { ...DEFAULT_GOALS, ...(parsed.goals ?? {}) },
   };
 }
 

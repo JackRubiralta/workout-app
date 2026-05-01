@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, spacing, text } from '../../theme';
+import { colors, spacing, text } from '../../theme';
+import { Chip } from '../../components/primitives';
 import { CircularTimer } from '../../components/workout/CircularTimer';
 import { ExerciseHero, RestHero, CompletionHero } from './SessionHeroes';
 
@@ -10,7 +11,7 @@ import { ExerciseHero, RestHero, CompletionHero } from './SessionHeroes';
  *   1. Day complete       → <CompletionHero />
  *   2. Resting             → <RestHero />
  *   3. Set timer running   → exercise name + <CircularTimer label="WORK" />
- *   4. Working through a set → <ExerciseHero /> + last-set hint
+ *   4. Working through a set → <ExerciseHero /> + last-set hint + skip-this-exercise pill
  *
  * Pure presentational — every value comes from props. Keeps
  * ActiveSessionScreen focused on state + handlers.
@@ -31,6 +32,7 @@ export function SessionStage({
   timerSize,
   isSmall,
   nameFontSize,
+  onSkipExercise,
 }) {
   if (isDayDone) {
     return <CompletionHero day={day} doneSets={doneSets} />;
@@ -71,23 +73,21 @@ export function SessionStage({
           nameFontSize={nameFontSize}
           isSmall={isSmall}
         />
-        <LastSetHint recent={recentAvg} />
+        {recentAvg ? (
+          <Chip
+            variant="static"
+            eyebrow={`AVG · LAST ${recentAvg.count}`}
+            label={`${recentAvg.weight} lb × ${recentAvg.reps}`}
+            style={s.hintChip}
+          />
+        ) : null}
+        {onSkipExercise ? (
+          <Chip label="Skip this exercise" onPress={onSkipExercise} style={s.skipChip} />
+        ) : null}
       </View>
     );
   }
   return null;
-}
-
-// "AVG · LAST 5: 80 lb × 8" reference shown under the hero so the user has
-// a quick sense of where they're at without opening the history sheet.
-function LastSetHint({ recent }) {
-  if (!recent) return null;
-  return (
-    <View style={hint.row}>
-      <Text style={hint.label}>AVG · LAST {recent.count}</Text>
-      <Text style={hint.value}>{recent.weight} lb × {recent.reps}</Text>
-    </View>
-  );
 }
 
 const s = StyleSheet.create({
@@ -95,16 +95,10 @@ const s = StyleSheet.create({
   workingWrap: { alignItems: 'center', gap: spacing.sm },
   timedExName: { ...text.title2, fontSize: 22, textAlign: 'center', paddingHorizontal: spacing.lg },
   timedHint: { ...text.bodySecondary, color: colors.textTertiary, fontSize: 13, textAlign: 'center' },
-});
 
-const hint = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: spacing.md, paddingVertical: 6,
-    backgroundColor: colors.surface,
-    borderRadius: radius.full, borderWidth: 1, borderColor: colors.border,
-    alignSelf: 'center',
-  },
-  label: { ...text.eyebrowSmall, color: colors.textTertiary, letterSpacing: 1.6 },
-  value: { ...text.monoSubhead, fontWeight: '700', color: colors.text },
+  hintChip: { alignSelf: 'center' },
+  // A small extra top margin so the pill reads as "secondary action below
+  // the hero" rather than another stat row stacked tight against the AVG
+  // chip above it.
+  skipChip: { alignSelf: 'center', marginTop: spacing.xs },
 });

@@ -5,6 +5,17 @@
 export const REST_SECONDS = 90;
 export const SETS_PER_EXERCISE = 3;
 
+// SetLogSheet weight/rep picker bounds — gym dumbbells in 2.5 lb increments
+// up to 600 lb covers every realistic setup; 100 reps is a hard cap for the
+// rep ScrollPicker (anything higher rolls into AMRAP territory anyway).
+export const WEIGHT_STEP_LB = 2.5;
+export const WEIGHT_MAX_LB = 600;
+export const REPS_MAX = 100;
+
+// Newest-N session retention — older sessions get evicted from storage.
+// 200 = ~6 months at 2 sessions/day, plenty for trend math.
+export const MAX_SESSIONS = 200;
+
 // Must have exactly SETS_PER_EXERCISE entries
 export const SET_LABELS = ['Warm-up', 'Set 1', 'Set 2'];
 export const SET_REPS = ['Light weight, 12–15 reps', '6–10 reps', '6–10 reps'];

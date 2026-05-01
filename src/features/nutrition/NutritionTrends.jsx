@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, macroColors, spacing, surfaces, text } from '../../theme';
-import { BarChart, TrendChip } from '../../components/primitives';
+import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
 import { totalsForDay } from './hooks/useNutritionLog';
 
 const DAYS = 7;
@@ -62,9 +62,7 @@ export function NutritionTrends({ logsByDate, goals }) {
 
   return (
     <View style={s.wrap}>
-      <View style={s.headerRow}>
-        <Text style={text.eyebrow}>LAST 7 DAYS</Text>
-      </View>
+      <SectionLabel style={s.label}>LAST 7 DAYS</SectionLabel>
 
       <View style={s.card}>
         <View style={s.cardHeader}>
@@ -74,7 +72,7 @@ export function NutritionTrends({ logsByDate, goals }) {
           </View>
           <TrendChip delta={calDelta} downColor={colors.warning} />
         </View>
-        <BarChart bars={calBars} color={macroColors.calories} goal={goals.calories} height={120} width={320} />
+        <BarChart bars={calBars} color={macroColors.calories} goal={goals.calories} height={120} />
       </View>
 
       <View style={s.card}>
@@ -85,7 +83,7 @@ export function NutritionTrends({ logsByDate, goals }) {
           </View>
           <TrendChip delta={proDelta} downColor={colors.warning} />
         </View>
-        <BarChart bars={proteinBars} color={macroColors.protein} goal={goals.protein} height={110} width={320} />
+        <BarChart bars={proteinBars} color={macroColors.protein} goal={goals.protein} height={110} />
       </View>
     </View>
   );
@@ -93,7 +91,7 @@ export function NutritionTrends({ logsByDate, goals }) {
 
 const s = StyleSheet.create({
   wrap: { gap: spacing.sm },
-  headerRow: { paddingHorizontal: 2, marginTop: spacing.sm },
+  label: { marginTop: spacing.sm },
   card: {
     ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,

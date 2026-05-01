@@ -5,6 +5,8 @@ import { colors, fonts, radius, rowPadding, spacing, surfaces, text } from '../.
 import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { CameraIcon } from '../../shell/icons';
 import { formatTime } from '../../utils/date';
+import { copy } from '../../copy';
+import { formatFoodMeta } from './hooks/useNutritionLog';
 
 function FoodPill({ item, onPress }) {
   const photoCount = (item.photos ?? []).length;
@@ -30,9 +32,7 @@ function FoodPill({ item, onPress }) {
             </View>
           )}
         </View>
-        <Text style={s.meta} numberOfLines={1}>
-          {item.quantity} {item.unit} · {item.protein}P / {item.carbs}C / {item.fat}F{item.fiber > 0 ? ` / ${item.fiber}Fb` : ''}
-        </Text>
+        <Text style={s.meta} numberOfLines={1}>{formatFoodMeta(item)}</Text>
       </View>
       <Text style={s.kcal}>{item.calories}</Text>
     </TouchableOpacity>
@@ -48,8 +48,8 @@ export function FoodLog({ items, onPressItem }) {
       </View>
       {items.length === 0 ? (
         <View style={s.emptyBox}>
-          <Text style={s.emptyTitle}>Nothing logged yet</Text>
-          <Text style={s.emptySub}>Tap "Add food" above to record what you just ate.</Text>
+          <Text style={s.emptyTitle}>{copy.empty.foodLog.title}</Text>
+          <Text style={s.emptySub}>{copy.empty.foodLog.subtitle}</Text>
         </View>
       ) : (
         <View style={s.list}>

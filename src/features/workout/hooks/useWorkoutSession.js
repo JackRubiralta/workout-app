@@ -3,16 +3,36 @@ import { KEYS } from '../../../storage/keys';
 import { readJson, writeJson } from '../../../storage/asyncStore';
 import { ensureMigrated } from '../../../storage/migrate';
 import { activeSessionForDay } from '../logic/progress';
-
-const MAX_SESSIONS = 200;
+import { MAX_SESSIONS } from '../../../constants/workout';
 
 function generateId() {
   return `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// Single source of truth for active session + history.
-// State shape: { sessions: Session[], activeSessionId: string | null }
-// Newest sessions live at index 0.
+/**
+ * Single source of truth for the active workout session + completed history.
+ * State shape: `{ sessions: Session[], activeSessionId: string|null }`.
+ * Newest sessions live at index 0; older ones evicted past `MAX_SESSIONS`.
+ *
+ * @returns {{
+ *   loaded: boolean,
+ *   sessions: Array<object>,
+ *   activeSession: object|null,
+ *   activeSessionId: string|null,
+ *   startSession: (day:object, dayIndex:number) => string,
+ *   resumeSession: (sessionId:string) => void,
+ *   pauseSession: () => void,
+ *   completeSession: (sessionId?:string) => void,
+ *   abandonSession: () => void,
+ *   markSetDone: (entry:object) => void,
+ *   recordSetValues: (entry:object) => void,
+ *   skipExercise: (day:object, exIndex:number) => void,
+ *   pushUndo: (action:object) => void,
+ *   popUndo: () => object|null,
+ *   deleteSession: (sessionId:string) => void,
+ *   clearHistory: () => void,
+ * }}
+ */
 export function useWorkoutSession() {
   const [state, setState] = useState({ sessions: [], activeSessionId: null });
   const [loaded, setLoaded] = useState(false);

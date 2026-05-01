@@ -4,16 +4,9 @@ import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '../../theme';
 import { Sheet } from '../../components/primitives/Sheet';
 import { ScrollPicker } from '../../components/primitives/ScrollPicker';
+import { BODY_WEIGHT_MIN_LB, BODY_WEIGHT_MAX_LB, BODY_WEIGHT_STEP_LB } from '../../constants/history';
 
-const STEP = 0.5;
-const MIN = 60;
-const MAX = 400;
-
-const VALUES = (() => {
-  const out = [];
-  for (let v = MIN; v <= MAX; v += STEP) out.push(Math.round(v * 10) / 10);
-  return out;
-})();
+const VALUES = ScrollPicker.range(BODY_WEIGHT_MIN_LB, BODY_WEIGHT_MAX_LB, BODY_WEIGHT_STEP_LB);
 
 function formatWeight(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1);

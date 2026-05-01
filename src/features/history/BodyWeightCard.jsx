@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
+import { colors, fonts, fontSize, spacing, surfaces, text } from '../../theme';
+import { Chip } from '../../components/primitives';
 import { PlusIcon } from '../../shell/icons';
 import { formatTime, relativeDay } from '../../utils/date';
 
@@ -111,17 +111,12 @@ export function BodyWeightCard({ entries, latest, onLog }) {
           )}
         </View>
 
-        <TouchableOpacity
-          style={s.logBtn}
-          activeOpacity={0.85}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-            onLog();
-          }}
-        >
-          <PlusIcon color={colors.text} size={16} />
-          <Text style={s.logBtnText}>Log</Text>
-        </TouchableOpacity>
+        <Chip
+          label="Log"
+          icon={<PlusIcon color={colors.text} size={16} />}
+          onPress={onLog}
+          variant="strong"
+        />
       </View>
 
       {recent.length > 0 && (
@@ -145,15 +140,6 @@ const s = StyleSheet.create({
   relative: { ...text.bodySecondary, fontSize: 12 },
   empty: { ...text.bodySecondary, fontSize: fontSize.body, marginTop: 4 },
   delta: { ...text.monoFootnote, fontWeight: '700', marginTop: 2, letterSpacing: 0.2 },
-
-  logBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: spacing.sm + 2, paddingVertical: 7,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  logBtnText: { ...text.button, fontSize: fontSize.subhead, color: colors.text },
 
   chartWrap: { alignItems: 'center', marginTop: spacing.xs },
 });

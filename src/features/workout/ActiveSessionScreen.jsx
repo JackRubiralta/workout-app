@@ -230,6 +230,7 @@ export function ActiveSessionScreen({ navigation, route }) {
           timerSize={timerSize}
           isSmall={isSmall}
           nameFontSize={nameFontSize}
+          onSkipExercise={canShowSecondary ? handleSkipExercise : undefined}
         />
       </View>
 
@@ -238,8 +239,6 @@ export function ActiveSessionScreen({ navigation, route }) {
         totalSets={totalSets}
         dayColor={day.color}
         primary={primary}
-        canSkipExercise={canShowSecondary}
-        onSkipExercise={handleSkipExercise}
       />
 
       <ExerciseHistorySheet

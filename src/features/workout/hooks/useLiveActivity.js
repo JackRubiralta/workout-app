@@ -2,9 +2,23 @@ import { useCallback, useEffect, useRef } from 'react';
 import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../../../modules/liveActivity';
 import { exerciseTotalSets } from '../../../utils/exercise';
 
-// Wrap all live activity / dynamic island calls used during a session.
-// Auto-starts on mount, exposes commands for set-done, skip, and end.
-
+/**
+ * Wraps every iOS Live Activity / Dynamic Island call used during an
+ * active session. Auto-starts on first render and exposes imperative
+ * commands the screen calls when the user advances state.
+ *
+ * @param {object} args
+ * @param {object} args.day
+ * @param {object} args.session
+ * @param {boolean} args.isResting
+ * @param {boolean} args.isDayDone
+ * @param {{ e:number, s:number }|null} args.currentPos
+ * @returns {{
+ *   onSetDone: (ex:object, exIndex:number, setIndex:number, restSeconds:number, setLabel:string, doneCount:number) => void,
+ *   onSkipRest: () => void,
+ *   onEnd: () => void,
+ * }}
+ */
 export function useLiveActivity({ day, session, isResting, isDayDone, currentPos }) {
   const started = useRef(false);
   const prevResting = useRef(false);

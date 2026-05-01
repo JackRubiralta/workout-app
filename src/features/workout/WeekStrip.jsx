@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, radius, spacing, surfaces, text } from '../../theme';
 import { workoutsByDayLastN } from './logic/volume';
 
 // Compact 7-day activity strip: small dots for each day with the day label
@@ -46,9 +46,7 @@ export function WeekStrip({ sessions }) {
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     paddingHorizontal: spacing.md, paddingVertical: spacing.md,
     gap: 10,
   },

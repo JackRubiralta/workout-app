@@ -87,6 +87,17 @@ export function ScrollPicker({ values, value, onChange, format = String, accent 
 ScrollPicker.ITEM_H = ITEM_H;
 ScrollPicker.PICKER_H = PICKER_H;
 
+// Build a snapped-to-step numeric value array suitable for `values`. Rounds
+// each entry to one decimal place so floating-point drift from non-integer
+// steps (e.g. 2.5, 0.5) doesn't show up in the UI.
+//   ScrollPicker.range(0, 600, 2.5)  → [0, 2.5, 5, …, 600]
+//   ScrollPicker.range(60, 400, 0.5) → [60, 60.5, 61, …, 400]
+ScrollPicker.range = function range(min, max, step) {
+  const out = [];
+  for (let v = min; v <= max; v += step) out.push(Math.round(v * 10) / 10);
+  return out;
+};
+
 const s = StyleSheet.create({
   outer: {
     height: PICKER_H,

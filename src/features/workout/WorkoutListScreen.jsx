@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -7,11 +7,10 @@ import { useWorkoutData, useSessionData } from '../../shell/store';
 import { DayCard } from '../../components/workout/DayCard';
 import { ScreenHeader } from '../../components/primitives/ScreenHeader';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
-import { FlameIcon, PlusIcon } from '../../shell/icons';
+import { PlusIcon } from '../../shell/icons';
 import { WeekStrip } from './WeekStrip';
 import { dayProgress, isDayComplete, activeSessionForDay } from './logic/progress';
 import { exerciseTotalSets } from '../../utils/exercise';
-import { workoutsThisWeek, streakStats } from './logic/volume';
 import { confirm } from '../../utils/confirm';
 
 function todayLabel() {
@@ -21,11 +20,6 @@ function todayLabel() {
 export function WorkoutListScreen({ navigation }) {
   const { config, addDay, resetConfig } = useWorkoutData();
   const { sessions } = useSessionData();
-
-  const stats = useMemo(() => ({
-    week: workoutsThisWeek(sessions),
-    streak: streakStats(sessions).current,
-  }), [sessions]);
 
   const handleCardPress = useCallback((index) => {
     navigation.navigate('DayPreStart', { dayIndex: index });
@@ -54,23 +48,14 @@ export function WorkoutListScreen({ navigation }) {
           onActionPress={handleResetProgram}
         />
 
-        <View style={styles.statsRow}>
-          <View style={styles.statChip}>
-            <FlameIcon color={colors.warning} />
-            <Text style={styles.statValue}>{stats.streak}</Text>
-            <Text style={styles.statLabel}>day streak</Text>
-          </View>
-          <View style={styles.statChip}>
-            <Text style={[styles.statValue, { color: colors.success }]}>{stats.week}</Text>
-            <Text style={styles.statLabel}>this week</Text>
-          </View>
-        </View>
-
-        <View style={{ marginBottom: spacing.lg }}>
+        {/* WeekStrip already shows the count + per-day status, so the
+            standalone "streak / this week" chips that used to live here
+            were redundant noise. */}
+        <View style={styles.weekWrap}>
           <WeekStrip sessions={sessions} />
         </View>
 
-        <SectionLabel style={styles.sectionLabel}>Program</SectionLabel>
+        <SectionLabel style={styles.sectionLabel}>PROGRAM</SectionLabel>
         <View style={styles.list}>
           {config.days.map((day, index) => {
             const active = activeSessionForDay(sessions, index);
@@ -91,6 +76,8 @@ export function WorkoutListScreen({ navigation }) {
             );
           })}
 
+          {/* Dashed surface signals a non-primary action — visually quieter
+              than a real DayCard so the program list reads as the focus. */}
           <TouchableOpacity onPress={addDay} style={styles.addBtn} activeOpacity={0.7}>
             <View style={styles.addIconWrap}>
               <PlusIcon color={colors.textSecondary} />
@@ -98,8 +85,6 @@ export function WorkoutListScreen({ navigation }) {
             <Text style={styles.addText}>Add day</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.hint}>Tap a day to view exercises and start.</Text>
 
         <View style={{ height: layout.tabBarClearance }} />
       </ScrollView>
@@ -111,25 +96,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { paddingHorizontal: spacing.lg },
 
-  statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
-  statChip: {
-    ...surfaces.row,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 4,
-  },
-  statValue: { ...text.monoNumber, fontSize: 20 },
-  statLabel: { ...text.bodySecondary, fontSize: 13, color: colors.textSecondary, flex: 1 },
+  weekWrap: { marginBottom: spacing.lg },
 
   sectionLabel: { marginBottom: spacing.sm },
 
   list: { gap: spacing.sm },
 
   addBtn: {
-    ...surfaces.card,
+    ...surfaces.dashed,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -137,11 +111,9 @@ const styles = StyleSheet.create({
     minHeight: 64,
   },
   addIconWrap: {
-    width: 44, height: 44, borderRadius: radius.full,
+    width: 40, height: 40, borderRadius: radius.full,
     backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
   addText: { ...text.callout, color: colors.textSecondary, fontWeight: '600' },
-
-  hint: { ...text.monoCaption, textAlign: 'center', marginTop: spacing.md, color: colors.textMuted },
 });

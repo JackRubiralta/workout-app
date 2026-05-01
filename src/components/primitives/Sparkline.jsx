@@ -1,27 +1,41 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { colors, fonts, fontSize, spacing } from '../../theme';
+import { copy } from '../../copy';
 
-// Lightweight SVG sparkline. Pass an array of {value, label?} points (oldest → newest).
-// Renders an interior line with circle markers and an axis baseline at min.
+/**
+ * Lightweight SVG sparkline. Pass an array of {value, label?} points
+ * (oldest → newest). Renders an interior line with circle markers and an
+ * axis baseline at the minimum.
+ *
+ * Width auto-fills the parent. Pass `width` only for fixed-size renders
+ * (e.g. the inline mini-sparklines in TopExercises rows).
+ */
+export function Sparkline({ points, color, height = 80, width: fixedWidth, valueLabel = null }) {
+  const [measuredW, setMeasuredW] = useState(0);
+  const onLayout = useCallback((e) => setMeasuredW(e.nativeEvent.layout.width), []);
+  const width = fixedWidth ?? measuredW;
 
-export function Sparkline({ points, color, height = 80, width = 280, valueLabel = null }) {
   if (!points || points.length === 0) {
     return (
-      <View style={[styles.empty, { height, width }]}>
-        <Text style={styles.emptyText}>No data yet</Text>
+      <View style={[styles.empty, { height }]} onLayout={fixedWidth ? undefined : onLayout}>
+        <Text style={styles.emptyText}>{copy.empty.noData.titleLong}</Text>
       </View>
     );
   }
 
   if (points.length === 1) {
     return (
-      <View style={[styles.single, { height, width }]}>
+      <View style={[styles.single, { height }]} onLayout={fixedWidth ? undefined : onLayout}>
         <Text style={styles.singleValue}>{points[0].value}</Text>
         {valueLabel ? <Text style={styles.singleLabel}>{valueLabel}</Text> : null}
       </View>
     );
+  }
+
+  if (!width) {
+    return <View style={{ height }} onLayout={onLayout} />;
   }
 
   const padX = 12;
@@ -44,7 +58,10 @@ export function Sparkline({ points, color, height = 80, width = 280, valueLabel 
   const last = xy[xy.length - 1];
 
   return (
-    <View style={[styles.wrap, { height, width }]}>
+    <View
+      style={[styles.wrap, { height, width: fixedWidth ?? '100%' }]}
+      onLayout={fixedWidth ? undefined : onLayout}
+    >
       <Svg width={width} height={height}>
         <Line x1={padX} x2={width - padX} y1={height - padY + 0.5} y2={height - padY + 0.5} stroke={colors.border} strokeWidth={1} />
         <Polyline points={polylinePts} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -68,12 +85,12 @@ export function Sparkline({ points, color, height = 80, width = 280, valueLabel 
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignSelf: 'center' },
+  wrap: { alignSelf: 'stretch' },
   tag: { position: 'absolute' },
   tagText: { fontSize: fontSize.caption, fontWeight: '700', fontFamily: fonts.mono },
-  empty: { alignItems: 'center', justifyContent: 'center' },
+  empty: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   emptyText: { color: colors.textTertiary, fontFamily: fonts.mono, fontSize: fontSize.footnote },
-  single: { alignItems: 'center', justifyContent: 'center' },
+  single: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   singleValue: { fontSize: fontSize.title2, fontWeight: '700', color: colors.text, fontFamily: fonts.mono },
   singleLabel: { fontSize: fontSize.caption, color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 0.5 },
 });

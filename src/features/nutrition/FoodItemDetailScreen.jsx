@@ -3,11 +3,12 @@ import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, macroColors, radius, spacing, surfaces, text } from '../../theme';
 import { useNutritionData } from '../../shell/store';
-import { DetailHeader, IconButton, StatusPill } from '../../components/primitives';
+import { DetailHeader, IconButton, SectionLabel, StatusPill } from '../../components/primitives';
 import { TrashIcon } from '../../shell/icons';
 import { FoodSource, Confidence } from '../../constants/nutrition';
 import { formatDateTime } from '../../utils/date';
 import { confirm } from '../../utils/confirm';
+import { formatFoodMeta } from './hooks/useNutritionLog';
 
 function MacroCell({ label, value, unit, color }) {
   return (
@@ -94,7 +95,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
         </View>
 
         <View style={s.macroGrid}>
-          <View style={[s.macroBlock, { backgroundColor: macroColors.calories + '14', borderColor: macroColors.calories + '40' }]}>
+          <View style={s.macroBlock}>
             <Text style={[s.macroBig, { color: macroColors.calories }]}>{item.calories}</Text>
             <Text style={s.macroBigLabel}>CAL</Text>
           </View>
@@ -108,23 +109,21 @@ export function FoodItemDetailScreen({ navigation, route }) {
 
         {item.notes ? (
           <View style={s.notesCard}>
-            <Text style={[text.eyebrow, { color: colors.textTertiary }]}>NOTES</Text>
+            <SectionLabel style={s.subSectionLabel}>NOTES</SectionLabel>
             <Text style={s.notesText}>{item.notes}</Text>
           </View>
         ) : null}
 
         {Array.isArray(item.components) && item.components.length > 0 && (
           <View style={s.componentsSection}>
-            <Text style={[text.eyebrow, { marginLeft: 2, color: colors.textTertiary }]}>
+            <SectionLabel>
               BREAKDOWN · {item.components.length} ITEM{item.components.length === 1 ? '' : 'S'}
-            </Text>
+            </SectionLabel>
             {item.components.map((c, i) => (
               <View key={i} style={s.componentRow}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={s.componentName} numberOfLines={1}>{c.name}</Text>
-                  <Text style={s.componentMeta} numberOfLines={1}>
-                    {c.quantity} {c.unit} · {c.protein}P / {c.carbs}C / {c.fat}F{c.fiber > 0 ? ` / ${c.fiber}Fb` : ''}
-                  </Text>
+                  <Text style={s.componentMeta} numberOfLines={1}>{formatFoodMeta(c)}</Text>
                 </View>
                 <Text style={s.componentKcal}>{c.calories}</Text>
               </View>
@@ -134,7 +133,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
 
         {photos.length > 0 && (
           <View style={s.photosSection}>
-            <Text style={[text.eyebrow, { marginLeft: 2, color: colors.textTertiary }]}>PHOTOS</Text>
+            <SectionLabel>PHOTOS</SectionLabel>
             <View style={s.photosWrap}>
               {photos.map((p, i) => (
                 <View key={i} style={s.photoFrame}>
@@ -175,15 +174,17 @@ const s = StyleSheet.create({
   qtyUnit: { ...text.bodySecondary, fontSize: fontSize.body, color: colors.textSecondary },
 
   macroGrid: { gap: spacing.sm, marginBottom: spacing.md },
+  // Calorie hero cell — same neutral surface chrome as the protein/carb/
+  // fat/fiber cells below, just larger and with the calorie accent on the
+  // numeric value only. Avoids the "red box screams at you" feel.
   macroBlock: {
+    ...surfaces.card,
     paddingVertical: spacing.lg,
-    borderRadius: radius.xl,
-    borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
     gap: 4,
   },
   macroBig: { fontSize: 42, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: -0.5 },
-  macroBigLabel: { fontSize: 11, fontWeight: '800', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1.6 },
+  macroBigLabel: { ...text.eyebrowSmall, fontFamily: fonts.mono },
 
   macrosRow: { flexDirection: 'row', gap: spacing.xs + 2 },
   macroCell: {
@@ -196,18 +197,17 @@ const s = StyleSheet.create({
   macroLabel: { ...text.eyebrowSmall, fontFamily: fonts.mono },
 
   notesCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.row,
     padding: spacing.md, gap: 6, marginBottom: spacing.md,
   },
+  subSectionLabel: { marginLeft: 0 },
   notesText: { ...text.bodySecondary, fontSize: 14, lineHeight: 20, color: colors.textSecondary },
 
   componentsSection: { gap: spacing.sm, marginBottom: spacing.md },
   componentRow: {
+    ...surfaces.row,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
   },
   componentName: { ...text.title3, fontSize: 15, color: colors.text, fontWeight: '600' },
   componentMeta: { ...text.bodySecondary, fontSize: 12, color: colors.textSecondary, fontFamily: fonts.mono },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
-import { Sheet, SheetHeader } from '../../components/primitives';
+import { DetailSheet } from '../../components/primitives';
 import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
 
 const FIELDS = [
@@ -40,10 +40,18 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
     setValues(prev => ({ ...prev, [key]: val.replace(/[^0-9]/g, '').slice(0, 5) }));
   };
 
-  return (
-    <Sheet visible={visible} onClose={onClose} flex height="92%">
-      <SheetHeader title="Daily Goals" onClose={onClose} />
+  // Keyboard up → drop the footer so the inputs aren't hidden behind both
+  // a sticky footer and the soft keyboard.
+  const footer = kbVisible ? null : (
+    <View style={s.footerInner}>
+      <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.8}>
+        <Text style={s.saveBtnText}>Save Goals</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
+  return (
+    <DetailSheet visible={visible} onClose={onClose} title="Daily Goals" footer={footer}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={s.body}
@@ -78,15 +86,7 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
 
         <View style={{ height: spacing.md }} />
       </ScrollView>
-
-      {!kbVisible && (
-        <View style={s.footer}>
-          <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-            <Text style={s.saveBtnText}>Save Goals</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </Sheet>
+    </DetailSheet>
   );
 }
 
@@ -104,12 +104,10 @@ const s = StyleSheet.create({
   },
   unitLabel: { ...text.monoSubhead, fontWeight: '600', width: 40 },
 
-  footer: {
+  footerInner: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
   },
   saveBtn: { height: 52, backgroundColor: colors.success, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
   saveBtnText: { ...text.button, color: '#fff', letterSpacing: 0.3 },

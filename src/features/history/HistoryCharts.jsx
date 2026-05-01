@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fonts, fontSize, spacing, surfaces, text } from '../../theme';
-import { BarChart, TrendChip } from '../../components/primitives';
+import { colors, fonts, spacing, surfaces, text } from '../../theme';
+import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
 import {
   sessionVolume, workoutsByDayLastN, weeklyVolume, volumeTrend,
 } from '../workout/logic/volume';
@@ -36,17 +36,21 @@ export function HistoryCharts({ sessions }) {
 
   if (totalCount === 0 && perSession.length === 0 && trend.current === 0) return null;
 
+  // Filled days get a clear success-green; today is highlighted via the
+  // bold X-axis label (handled inside BarChart). Empty days fade out via
+  // the chart's built-in low-opacity rule for value=0 bars.
   const last7Bars = last7.map(d => ({
     value: d.volume,
     label: d.dayLabel,
-    accent: d.isToday ? colors.text : colors.textSecondary,
+    accent: colors.success,
+    isToday: d.isToday,
   }));
 
   const weeklyBars = weekly.map(w => ({ value: w.volume, label: w.label }));
 
   return (
     <View style={s.wrap}>
-      <Text style={[text.eyebrow, s.eyebrow]}>TRENDS</Text>
+      <SectionLabel>TRENDS</SectionLabel>
 
       <View style={s.card}>
         <View style={s.cardHeader}>
@@ -55,7 +59,7 @@ export function HistoryCharts({ sessions }) {
             <Text style={s.cardSub}>{totalCount} workout{totalCount === 1 ? '' : 's'}</Text>
           </View>
         </View>
-        <BarChart bars={last7Bars} color={colors.text} height={110} width={320} />
+        <BarChart bars={last7Bars} color={colors.success} height={110} />
       </View>
 
       <View style={s.card}>
@@ -68,7 +72,7 @@ export function HistoryCharts({ sessions }) {
           </View>
           <TrendChip delta={trend.deltaPercent} />
         </View>
-        <BarChart bars={weeklyBars} color={colors.success} height={110} width={320} />
+        <BarChart bars={weeklyBars} color={colors.success} height={110} />
       </View>
 
       {perSession.length > 0 && (
@@ -79,7 +83,7 @@ export function HistoryCharts({ sessions }) {
               <Text style={s.cardSub}>last {perSession.length} · color = day</Text>
             </View>
           </View>
-          <BarChart bars={perSession} color={colors.text} height={120} width={320} />
+          <BarChart bars={perSession} color={colors.text} height={120} />
         </View>
       )}
     </View>
@@ -88,7 +92,6 @@ export function HistoryCharts({ sessions }) {
 
 const s = StyleSheet.create({
   wrap: { gap: spacing.sm, marginTop: spacing.sm },
-  eyebrow: { color: colors.textTertiary, marginLeft: 2, marginBottom: 2 },
   card: {
     ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,

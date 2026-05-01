@@ -6,6 +6,21 @@ import { dayPalette } from '../../../theme';
 import { defaultExercise } from '../../../utils/exercise';
 import { EXERCISE_REST_SECONDS } from '../../../constants/workout';
 
+/**
+ * Reads / writes the user's workout-program config (the editable list of
+ * day templates). Lazy-loaded from AsyncStorage on mount; every mutation
+ * persists.
+ *
+ * @returns {{
+ *   config: { days: Array<{ day:number, title:string, focus:string, color:string, exerciseRestSeconds:number, exercises:Array<object> }> },
+ *   loaded: boolean,
+ *   updateDay: (dayIndex:number, updates:object) => void,
+ *   addDay: () => void,
+ *   deleteDay: (dayIndex:number) => void,
+ *   reorderDay: (from:number, to:number) => void,
+ *   resetConfig: () => void,
+ * }}
+ */
 export function useWorkoutConfig() {
   const [config, setConfig] = useState(defaultConfig);
   const [loaded, setLoaded] = useState(false);

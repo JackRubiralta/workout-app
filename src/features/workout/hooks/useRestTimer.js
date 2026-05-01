@@ -9,6 +9,19 @@ import * as Notifications from 'expo-notifications';
 // from stacking on top of the manual foreground haptic.
 const NOTIF_BUFFER_MS = 500;
 
+/**
+ * Wall-clock-based rest timer with iOS local-notification fallback so the
+ * "rest complete" cue still fires when the phone is locked / app
+ * backgrounded. Only one rest timer is active at a time per app instance.
+ *
+ * @returns {{
+ *   isResting: boolean,
+ *   secondsLeft: number,
+ *   totalSeconds: number,
+ *   startRest: (durationSeconds:number, exerciseName?:string) => void,
+ *   skipRest: () => void,
+ * }}
+ */
 export function useRestTimer() {
   const [isResting, setIsResting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);

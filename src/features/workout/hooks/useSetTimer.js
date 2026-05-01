@@ -2,10 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
-// Wall-clock-based countdown timer for the WORKING SET (e.g. plank, bike warmup).
-// Distinct from useRestTimer: this fires onComplete callback so caller can
-// auto-mark the set done with the actual elapsed time.
-
+/**
+ * Wall-clock-based countdown timer for the WORKING SET (e.g. plank, bike
+ * warmup). Distinct from `useRestTimer`: fires `onComplete(elapsedSeconds)`
+ * so the caller can auto-mark the set done with the actual elapsed time.
+ *
+ * @param {{ onComplete: (elapsedSeconds:number) => void }} args
+ * @returns {{
+ *   isRunning: boolean,
+ *   secondsLeft: number,
+ *   totalSeconds: number,
+ *   start: (durationSeconds:number) => void,
+ *   stopEarly: () => void,
+ *   cancel: () => void,
+ * }}
+ */
 export function useSetTimer({ onComplete } = {}) {
   const [isRunning, setIsRunning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);

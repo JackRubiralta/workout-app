@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../theme';
+import { colors, fonts, shadow, spacing, surfaces, text } from '../../theme';
 import { StatusPill } from '../../components/primitives';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatTime, relativeDay } from '../../utils/date';
@@ -25,7 +25,7 @@ export function SessionCard({ session, onPress }) {
       <View style={s.header}>
         <View style={s.titleArea}>
           <View style={s.titleRow}>
-            <Text style={s.title}>{session.dayTitle}</Text>
+            <Text style={[s.title, { color: session.dayColor }]}>{session.dayTitle}</Text>
             {session.dayFocus ? <Text style={s.focus}> · {session.dayFocus}</Text> : null}
           </View>
           <View style={s.metaRow}>
@@ -68,8 +68,10 @@ const s = StyleSheet.create({
     padding: spacing.md, paddingTop: spacing.sm + 2, gap: spacing.sm,
   },
   titleArea: { flex: 1, gap: 3 },
-  titleRow: { flexDirection: 'row', alignItems: 'baseline' },
-  title: { ...text.title3, fontSize: 17, color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.3 },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
+  // Title in the day's accent colour so the eye picks up the kind of
+  // workout (PUSH / PULL / CORE) before reading anything else.
+  title: { ...text.title3, fontSize: 18, fontFamily: fonts.mono, fontWeight: '800', letterSpacing: 0.3 },
   focus: { ...text.monoSubhead },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { ...text.monoCaption },
@@ -80,10 +82,9 @@ const s = StyleSheet.create({
     paddingBottom: spacing.md, gap: spacing.sm,
   },
   chip: {
+    ...surfaces.inset,
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.sm, paddingVertical: 4,
-    borderRadius: radius.md, borderWidth: 1, borderColor: colors.border,
   },
   chipVal: { ...text.monoCaption, fontWeight: '700', color: colors.text },
   chipLabel: { fontSize: 10, color: colors.textTertiary, fontFamily: fonts.mono, fontWeight: '500' },

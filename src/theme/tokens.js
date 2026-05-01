@@ -106,11 +106,11 @@ export const shadow = {
 // ─── Layout constants ───────────────────────────────────────────────────────
 // Centralised so we change them in one place. `tabBarClearance` is the
 // bottom spacer that every tabbed scroll view ends with so its content
-// doesn't get hidden behind the tab bar. `sectionIndent` is the small
-// 2px nudge applied to section eyebrows to optically align them with the
-// rounded card edges below.
+// doesn't get hidden behind the tab bar (iOS bar = 76px + 12px breath).
+// `sectionIndent` is the small 2px nudge applied to section eyebrows to
+// optically align them with the rounded card edges below.
 export const layout = {
-  tabBarClearance: 100,
+  tabBarClearance: 88,
   sectionIndent: 2,
 };
 
