@@ -25,7 +25,11 @@ export function NoFoodView({ notes, source, onStartOver }) {
         <NoFoodIcon color={colors.textTertiary} />
       </View>
       <Text style={s.title}>{subtitle}</Text>
-      {notes ? <Text style={s.notes}>{notes}</Text> : null}
+      {notes ? (
+        <View style={s.notesBox}>
+          <Text style={s.notesText}>{notes}</Text>
+        </View>
+      ) : null}
       <Text style={s.hint}>
         {source === 'photo'
           ? 'Try retaking with the meal centred and well lit, or use the Describe / Manual tabs above.'
@@ -46,11 +50,14 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginTop: spacing.md, marginBottom: spacing.xs,
   },
   title: { ...text.title3, fontSize: fontSize.headline, color: colors.text, textAlign: 'center' },
-  notes: {
+  notesBox: {
     ...surfaces.inset,
-    fontSize: fontSize.footnote, color: colors.textSecondary, fontFamily: fonts.mono, lineHeight: 18,
     paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md,
-    textAlign: 'center', alignSelf: 'stretch',
+    alignSelf: 'stretch',
+  },
+  notesText: {
+    fontSize: fontSize.footnote, color: colors.textSecondary, fontFamily: fonts.mono,
+    lineHeight: 18, textAlign: 'center',
   },
   hint: {
     ...text.bodySecondary, fontSize: 13, color: colors.textTertiary,

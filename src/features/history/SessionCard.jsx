@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../theme';
+import { StatusPill } from '../../components/primitives';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatTime, relativeDay } from '../../utils/date';
 import { compactNumber, formatDurationISO } from '../../utils/format';
@@ -34,19 +35,9 @@ export function SessionCard({ session, onPress }) {
             {duration && <><Text style={s.metaDot}>·</Text><Text style={s.meta}>{duration}</Text></>}
           </View>
         </View>
-        {status === 'done' ? (
-          <View style={[s.statusPill, { backgroundColor: colors.successBg, borderColor: colors.success + '40' }]}>
-            <Text style={[s.statusText, { color: colors.success }]}>DONE</Text>
-          </View>
-        ) : status === 'abandoned' ? (
-          <View style={[s.statusPill, { backgroundColor: colors.dangerBg, borderColor: colors.danger + '40' }]}>
-            <Text style={[s.statusText, { color: colors.danger }]}>ABANDONED</Text>
-          </View>
-        ) : (
-          <View style={[s.statusPill, { borderColor: session.dayColor }]}>
-            <Text style={[s.statusText, { color: session.dayColor }]}>IN PROGRESS</Text>
-          </View>
-        )}
+        {status === 'done' ? <StatusPill label="DONE" color={colors.success} />
+          : status === 'abandoned' ? <StatusPill label="ABANDONED" color={colors.danger} />
+          : <StatusPill label="IN PROGRESS" color={session.dayColor} />}
       </View>
 
       <View style={s.chips}>
@@ -83,9 +74,6 @@ const s = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { ...text.monoCaption },
   metaDot: { ...text.monoCaption },
-
-  statusPill: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.full, borderWidth: 1 },
-  statusText: { fontSize: 10, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: 1 },
 
   chips: {
     flexDirection: 'row', paddingHorizontal: spacing.md,

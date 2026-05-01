@@ -3,9 +3,10 @@ import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, macroColors, radius, spacing, surfaces, text } from '../../theme';
 import { useNutritionData } from '../../shell/store';
-import { DetailHeader, IconButton } from '../../components/primitives';
+import { DetailHeader, IconButton, StatusPill } from '../../components/primitives';
 import { TrashIcon } from '../../shell/icons';
 import { FoodSource, Confidence } from '../../constants/nutrition';
+import { formatDateTime } from '../../utils/date';
 import { confirm } from '../../utils/confirm';
 
 function MacroCell({ label, value, unit, color }) {
@@ -17,13 +18,6 @@ function MacroCell({ label, value, unit, color }) {
   );
 }
 
-function formatLong(iso) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    + ' · '
-    + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
 
 export function FoodItemDetailScreen({ navigation, route }) {
   const { dateKey, itemId } = route.params || {};
@@ -78,7 +72,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
       <DetailHeader
         onBack={() => navigation.goBack()}
         right={
-          <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
+          <IconButton onPress={handleDelete} variant="danger">
             <TrashIcon color={colors.danger} />
           </IconButton>
         }
@@ -88,17 +82,9 @@ export function FoodItemDetailScreen({ navigation, route }) {
         <View style={s.titleArea}>
           <Text style={text.hero} numberOfLines={3}>{item.name}</Text>
           <View style={s.tagRow}>
-            <Text style={s.dateText}>{formatLong(item.addedAt)}</Text>
-            {sourceLabel && (
-              <View style={s.sourceTag}>
-                <Text style={s.sourceText}>{sourceLabel}</Text>
-              </View>
-            )}
-            {confColor && (
-              <View style={[s.sourceTag, { borderColor: confColor + '50', backgroundColor: confColor + '15' }]}>
-                <Text style={[s.sourceText, { color: confColor }]}>{(item.confidence ?? '').toUpperCase()}</Text>
-              </View>
-            )}
+            <Text style={s.dateText}>{formatDateTime(item.addedAt)}</Text>
+            {sourceLabel && <StatusPill label={sourceLabel} color={colors.textSecondary} />}
+            {confColor && <StatusPill label={(item.confidence ?? '').toUpperCase()} color={confColor} />}
           </View>
         </View>
 
@@ -177,12 +163,6 @@ const s = StyleSheet.create({
   titleArea: { paddingTop: spacing.md, paddingBottom: spacing.lg, gap: spacing.sm },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   dateText: { ...text.monoSubhead, fontSize: 13, color: colors.textSecondary },
-  sourceTag: {
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border,
-  },
-  sourceText: { fontSize: 10, fontWeight: '800', color: colors.textSecondary, fontFamily: fonts.mono, letterSpacing: 1 },
 
   qtyCard: {
     flexDirection: 'row',

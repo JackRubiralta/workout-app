@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
-import { BarChart } from '../../components/primitives/BarChart';
+import { colors, fonts, fontSize, spacing, surfaces, text } from '../../theme';
+import { BarChart, TrendChip } from '../../components/primitives';
 import {
   sessionVolume, workoutsByDayLastN, weeklyVolume, volumeTrend,
 } from '../workout/logic/volume';
@@ -19,48 +18,6 @@ function compactNum(v) {
   return String(Math.round(v));
 }
 
-function ArrowUp({ color, size = 12 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12l7-7 7 7" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function ArrowDown({ color, size = 12 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12l7 7 7-7" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function TrendChip({ deltaPercent }) {
-  if (deltaPercent == null) return null;
-  const flat = Math.abs(deltaPercent) < 3;
-  const up = deltaPercent > 0;
-  const accent = flat ? colors.textSecondary : up ? colors.success : colors.danger;
-  const bg = flat ? colors.surfaceElevated : (up ? colors.success : colors.danger) + '22';
-  const border = flat ? colors.border : accent + '50';
-  return (
-    <View style={[chip.wrap, { borderColor: border, backgroundColor: bg }]}>
-      {!flat && (up
-        ? <ArrowUp color={accent} />
-        : <ArrowDown color={accent} />)}
-      <Text style={[chip.text, { color: accent }]}>
-        {up && !flat ? '+' : ''}{deltaPercent}%
-      </Text>
-    </View>
-  );
-}
-
-const chip = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: radius.full, borderWidth: 1,
-  },
-  text: { fontSize: 11, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: 0.4 },
-});
 
 export function HistoryCharts({ sessions }) {
   const last7 = useMemo(() => workoutsByDayLastN(sessions, 7), [sessions]);
@@ -109,7 +66,7 @@ export function HistoryCharts({ sessions }) {
               <Text style={s.cardSubVal}>{compactNum(trend.current)}</Text> lb · last 4 weeks
             </Text>
           </View>
-          <TrendChip deltaPercent={trend.deltaPercent} />
+          <TrendChip delta={trend.deltaPercent} />
         </View>
         <BarChart bars={weeklyBars} color={colors.success} height={110} width={320} />
       </View>

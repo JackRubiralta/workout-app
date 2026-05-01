@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, macroColors, radius, spacing, surfaces, text } from '../../theme';
-import { BarChart } from '../../components/primitives/BarChart';
+import { colors, macroColors, spacing, surfaces, text } from '../../theme';
+import { BarChart, TrendChip } from '../../components/primitives';
 import { totalsForDay } from './hooks/useNutritionLog';
 
 const DAYS = 7;
@@ -31,47 +30,6 @@ function buildSeries(logsByDate, days = DAYS) {
   return out;
 }
 
-function ArrowUp({ color, size = 12 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12l7-7 7 7" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function ArrowDown({ color, size = 12 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12l7 7 7-7" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function TrendChip({ delta, suffix = '%' }) {
-  if (delta == null) return null;
-  const flat = Math.abs(delta) < 3;
-  const up = delta > 0;
-  const accent = flat ? colors.textSecondary : up ? colors.success : colors.warning;
-  const bg = flat ? colors.surfaceElevated : (up ? colors.success : colors.warning) + '22';
-  const border = flat ? colors.border : accent + '50';
-  return (
-    <View style={chip.wrap}>
-      <View style={[chip.inner, { backgroundColor: bg, borderColor: border }]}>
-        {!flat && (up ? <ArrowUp color={accent} /> : <ArrowDown color={accent} />)}
-        <Text style={[chip.text, { color: accent }]}>{up && !flat ? '+' : ''}{delta}{suffix}</Text>
-      </View>
-    </View>
-  );
-}
-
-const chip = StyleSheet.create({
-  wrap: { alignSelf: 'flex-start' },
-  inner: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: radius.full, borderWidth: 1,
-  },
-  text: { fontSize: 11, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: 0.4 },
-});
 
 function avgVs(prev, recent) {
   if (!prev || prev <= 0) return null;
@@ -114,7 +72,7 @@ export function NutritionTrends({ logsByDate, goals }) {
             <Text style={s.cardTitle}>Calories</Text>
             <Text style={s.cardSub}>avg <Text style={s.cardSubVal}>{avg7Cal}</Text> · goal {goals.calories}</Text>
           </View>
-          <TrendChip delta={calDelta} />
+          <TrendChip delta={calDelta} downColor={colors.warning} />
         </View>
         <BarChart bars={calBars} color={macroColors.calories} goal={goals.calories} height={120} width={320} />
       </View>
@@ -125,7 +83,7 @@ export function NutritionTrends({ logsByDate, goals }) {
             <Text style={s.cardTitle}>Protein</Text>
             <Text style={s.cardSub}>avg <Text style={s.cardSubVal}>{avg7Pro}g</Text> · goal {goals.protein}g</Text>
           </View>
-          <TrendChip delta={proDelta} />
+          <TrendChip delta={proDelta} downColor={colors.warning} />
         </View>
         <BarChart bars={proteinBars} color={macroColors.protein} goal={goals.protein} height={110} width={320} />
       </View>

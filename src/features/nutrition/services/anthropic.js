@@ -5,7 +5,7 @@
 
 import { roundInt, roundTenths } from '../../../utils/format';
 
-const ANTHROPIC_API_KEY = "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"; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
+const ANTHROPIC_API_KEY = ""; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';

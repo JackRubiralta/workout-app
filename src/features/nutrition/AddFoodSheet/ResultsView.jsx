@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../theme';
+import { StatusPill } from '../../../components/primitives';
 import { roundInt, roundTenths } from '../../../utils/format';
 import { totalsForDay } from '../hooks/useNutritionLog';
 
@@ -93,10 +94,7 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
 
   return (
     <ScrollView contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-      <View style={[s.confPill, { borderColor: confColor + '50', backgroundColor: confColor + '15' }]}>
-        <View style={[s.confDot, { backgroundColor: confColor }]} />
-        <Text style={[s.confText, { color: confColor }]}>{conf.toUpperCase()} CONFIDENCE</Text>
-      </View>
+      <StatusPill label={`${conf.toUpperCase()} CONFIDENCE`} color={confColor} />
 
       {!!results.notes && (
         <View style={s.noteBox}>
@@ -182,14 +180,6 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
 const s = StyleSheet.create({
   pad: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xxl },
   emptyText: { color: colors.textTertiary, fontFamily: fonts.mono, fontSize: fontSize.footnote, textAlign: 'center', paddingVertical: spacing.md },
-
-  confPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'flex-start', paddingHorizontal: spacing.sm + 2, paddingVertical: 4,
-    borderRadius: radius.full, borderWidth: 1,
-  },
-  confDot: { width: 6, height: 6, borderRadius: 3 },
-  confText: { fontSize: 10, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: 1 },
 
   noteBox: {
     backgroundColor: colors.surfaceElevated, borderRadius: radius.md,

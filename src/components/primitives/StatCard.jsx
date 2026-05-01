@@ -2,12 +2,22 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize, spacing, surfaces, text } from '../../theme';
 
-// Vertical stat cell — big mono number stacked over a small uppercase
-// label, optionally with a sub line below. Used in stat rows across
-// DayPreStartScreen, SessionDetailScreen, ExerciseHistorySheet.
-//
-//   <StatCard value={count} label="EXERCISES" />
-//   <StatCard value="42" label="VOLUME (lb)" sub="× 8 reps" />
+/**
+ * Vertical stat cell — big mono number stacked over a small uppercase
+ * label, optionally with a sub line below. Used in stat rows across
+ * DayPreStartScreen, SessionDetailScreen, ExerciseHistorySheet.
+ *
+ * @param {object} props
+ * @param {string|number} props.value - The headline value (rendered in `text.monoNumber`).
+ * @param {string} props.label - Uppercase caption below the value.
+ * @param {string} [props.sub] - Optional sub-line below the label (e.g. "× 8 reps").
+ * @param {string} [props.valueColor] - Override the value colour (defaults to `colors.text`).
+ * @param {import('react-native').StyleProp<import('react-native').ViewStyle>} [props.style] - Style override on the outer cell.
+ *
+ * @example
+ *   <StatCard value={count} label="EXERCISES" />
+ *   <StatCard value="42" label="VOLUME (lb)" sub="× 8 reps" />
+ */
 export function StatCard({ value, label, sub, valueColor, style }) {
   return (
     <View style={[styles.cell, style]}>

@@ -8,6 +8,7 @@ import { TrashIcon } from '../../shell/icons';
 import { ExerciseHistorySheet } from '../workout/ExerciseHistorySheet';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatDurationISO } from '../../utils/format';
+import { formatDateHeading } from '../../utils/date';
 import { confirm } from '../../utils/confirm';
 
 function groupByExercise(entries) {
@@ -24,10 +25,6 @@ function groupByExercise(entries) {
   return out;
 }
 
-function formatLong(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 export function SessionDetailScreen({ navigation, route }) {
   const { sessions, deleteSession } = useSessionData();
@@ -71,7 +68,7 @@ export function SessionDetailScreen({ navigation, route }) {
         onBack={handleBack}
         center={<View style={[s.dayDot, { backgroundColor: session.dayColor + '20', borderColor: session.dayColor + '40' }]} />}
         right={
-          <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
+          <IconButton onPress={handleDelete} variant="danger">
             <TrashIcon color={colors.danger} />
           </IconButton>
         }
@@ -81,7 +78,7 @@ export function SessionDetailScreen({ navigation, route }) {
         <View style={s.titleArea}>
           <Text style={[text.largeTitle, { color: session.dayColor }]}>{session.dayTitle}</Text>
           {session.dayFocus ? <Text style={s.focus}>{session.dayFocus}</Text> : null}
-          <Text style={s.date}>{formatLong(session.startedAt)}</Text>
+          <Text style={s.date}>{formatDateHeading(session.startedAt)}</Text>
         </View>
 
         <View style={s.statsRow}>

@@ -1,5 +1,17 @@
 import { exerciseTotalSets } from '../../../utils/exercise';
 
+// Resolve the rest duration for a freshly-completed set. The last set of
+// every exercise (except the very last) uses the longer between-exercise
+// rest, falling back through exercise-specific → day-level → 180s default.
+export function restDurationFor(day, exercise, exIndex, setIndex) {
+  const isLastSet = setIndex === exerciseTotalSets(exercise) - 1;
+  const isLastEx = exIndex === day.exercises.length - 1;
+  if (isLastSet && !isLastEx) {
+    return exercise.nextRestSeconds ?? day.exerciseRestSeconds ?? 180;
+  }
+  return exercise.restSeconds;
+}
+
 export function isSetDone(session, exIndex, setIndex) {
   if (!session) return false;
   return session.entries.some(e => e.exerciseIndex === exIndex && e.setIndex === setIndex);

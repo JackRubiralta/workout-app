@@ -25,6 +25,23 @@ export function formatDateLong(d) {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+// Short-weekday heading with year: "Mon, Jan 5, 2026". Used on detail
+// screens that span multiple years (session detail).
+export function formatDateHeading(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Short-weekday + clock time: "Mon, Jan 5 · 8:00 AM". Used where the
+// time-of-day matters (food log entries — when did you eat this?).
+export function formatDateTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    + ' · '
+    + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 // Short form for compact metadata: "Jan 5" — appends the year only when
 // it differs from the current calendar year.
 export function formatDateShort(iso) {
