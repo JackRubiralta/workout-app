@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, surfaces, text } from '../../theme';
-import { ChevronLeft, ChevronRight } from '../../shell/icons';
+import { ChevronLeft, ChevronRight } from '../../ui/icons';
 import { addDays, formatDateLong, isSameDay, startOfDay } from '../../utils/date';
 
 // Centered pill with prev/next chevrons. Tapping the label jumps back to

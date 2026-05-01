@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { fonts, radius, spacing } from '../../theme';
+import { fonts, radius, spacing } from '../theme';
 
 /**
  * Small uppercase pill with a colored border and tinted background.

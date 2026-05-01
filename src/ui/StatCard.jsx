@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, spacing, surfaces, text } from '../../theme';
+import { colors, fontSize, spacing, surfaces, text } from '../theme';
 
 /**
  * Vertical stat cell — big mono number stacked over a small uppercase

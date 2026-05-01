@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, text } from '../../theme';
-import { Button, ScrollPicker, Sheet, SheetHeader } from '../../components/primitives';
+import { Button, ScrollPicker, Sheet, SheetHeader } from '../../ui';
 import { useSettingsData } from '../../shell/store';
 import { BODY_WEIGHT_PICKER, fromLb, toLb, unitLabel } from '../../utils/units';
 

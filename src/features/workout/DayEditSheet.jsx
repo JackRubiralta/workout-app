@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Button, Sheet, SheetHeader } from '../../components/primitives';
-import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
+import { Button, Sheet, SheetHeader } from '../../ui';
+import { FieldLabel, SheetInput } from '../../ui/SheetInput';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
-import { defaultExercise } from '../../utils/exercise';
+import { defaultExercise } from './logic/exercise';
 import { confirm } from '../../utils/confirm';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 

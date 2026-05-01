@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, radius, shadow, text } from '../../theme';
+import { colors, radius, shadow, text } from '../theme';
 
 /**
  * Primary single-tap button used for the main action on a screen

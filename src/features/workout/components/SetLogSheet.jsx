@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, surfaces, text } from '../../../theme';
-import { Button, ScrollPicker, Sheet, Toggle } from '../../../components/primitives';
+import { Button, ScrollPicker, Sheet, Toggle } from '../../../ui';
 import { useSettingsData } from '../../../shell/store';
 import { fromLb, toLb, unitLabel, WEIGHT_PICKER } from '../../../utils/units';
 import { REPS_MAX } from '../../../constants/workout';

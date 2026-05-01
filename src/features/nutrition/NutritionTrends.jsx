@@ -1,17 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, macroColors, spacing, surfaces, text } from '../../theme';
-import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
-import { totalsForDay } from './nutritionMath';
+import { BarChart, SectionLabel, TrendChip } from '../../ui';
+import { formatDateKey, totalsForDay } from './nutritionMath';
 
 const DAYS = 7;
 
-function dateKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 function shortDay(d) {
   return d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1);
 }
@@ -23,7 +17,7 @@ function buildSeries(logsByDate, days = DAYS) {
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const items = logsByDate[dateKey(d)] ?? [];
+    const items = logsByDate[formatDateKey(d)] ?? [];
     const t = totalsForDay(items);
     out.push({ d, calories: t.calories, protein: t.protein, isToday: i === 0 });
   }
@@ -44,7 +38,7 @@ export function NutritionTrends({ logsByDate, goals }) {
     for (let i = 13; i >= 7; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const items = logsByDate[dateKey(d)] ?? [];
+      const items = logsByDate[formatDateKey(d)] ?? [];
       const t = totalsForDay(items);
       out.push({ calories: t.calories, protein: t.protein });
     }

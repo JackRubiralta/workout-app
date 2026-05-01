@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Polyline, Circle } from 'react-native-svg';
 import { colors, fonts, spacing, surfaces, text } from '../../theme';
-import { SectionLabel } from '../../components/primitives/SectionLabel';
+import { SectionLabel } from '../../ui/SectionLabel';
 import { useSettingsData } from '../../shell/store';
 import { fromLb, unitLabel } from '../../utils/units';
 import { topExercises, topSetPerSession, epley } from '../workout/logic/suggestions';

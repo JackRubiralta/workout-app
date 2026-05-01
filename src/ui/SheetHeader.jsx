@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fontSize, radius, spacing, text } from '../theme';
 
 /**
  * Top row inside a Sheet: optional `left` badge + (optional eyebrow over)

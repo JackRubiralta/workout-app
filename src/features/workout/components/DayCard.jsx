@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../../theme';
-import { CheckCircle, ChevronRight } from '../../../shell/icons';
+import { CheckCircle, ChevronRight } from '../../../ui/icons';
 
 export function DayCard({ day, doneSets, totalSets, exerciseCount, isDone, isInProgress, onPress }) {
   const accent = isDone ? colors.success : day.color;

@@ -15,7 +15,7 @@ import { SessionStage } from './SessionStage';
 import { SessionFooter } from './SessionFooter';
 import { findNextSet, isDayComplete, dayProgress, restDurationFor } from './logic/progress';
 import { lastTwoWorkingSets, averageOfLastN } from './logic/suggestions';
-import { exerciseTotalSets, getSetLabel, formatDuration } from '../../utils/exercise';
+import { exerciseTotalSets, getSetLabel, formatDuration } from './logic/exercise';
 import { fromLb, unitLabel } from '../../utils/units';
 import { confirm } from '../../utils/confirm';
 

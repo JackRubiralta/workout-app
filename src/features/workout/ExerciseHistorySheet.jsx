@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { colors, fontSize, spacing, surfaces, text } from '../../theme';
-import { Sheet, SectionLabel, Sparkline, StatCard } from '../../components/primitives';
+import { Sheet, SectionLabel, Sparkline, StatCard } from '../../ui';
 import { useSessionData, useSettingsData } from '../../shell/store';
 import { topSetPerSession, personalRecords, epley } from './logic/suggestions';
 import { formatDateShort } from '../../utils/date';

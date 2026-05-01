@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { colors, layout, text } from '../../theme';
+import { colors, layout, text } from '../theme';
 
 /**
  * Small uppercase label above a section of content (FOOD LOG, SESSIONS,

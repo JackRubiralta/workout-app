@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../theme';
-import { StatusPill } from '../../../components/primitives';
+import { StatusPill } from '../../../ui';
 import { roundInt, roundTenths } from '../../../utils/format';
 import { totalsForDay } from '../nutritionMath';
 import { copy } from '../../../copy';

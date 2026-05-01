@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius, spacing, surfaces } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces } from '../theme';
 
 /**
  * iOS-style segmented control. Pass an array of `{ value, label }` and

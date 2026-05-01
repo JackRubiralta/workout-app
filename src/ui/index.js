@@ -1,5 +1,11 @@
-// Re-export so feature code can import any primitive from one path:
-//   import { Button, IconButton, Sheet, ScreenHeader } from '../../components/primitives';
+// Barrel export for the design-system primitives. Feature code pulls any
+// primitive from a single path:
+//
+//   import { Button, IconButton, Sheet, ScreenHeader } from '../../ui';
+//
+// Icons live in the same folder but are intentionally NOT re-exported here:
+// they're a different shape (per-icon SVG components) and consumers import
+// them directly from '../../ui/icons' so tree-shaking stays granular.
 export { Button, IconButton } from './Button';
 export { Chip } from './Chip';
 export { DetailHeader } from './DetailHeader';

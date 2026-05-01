@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../../../modules/liveActivity';
-import { exerciseTotalSets } from '../../../utils/exercise';
+import { startLiveActivity, updateLiveActivity, endLiveActivity } from '../../../native/liveActivity';
+import { exerciseTotalSets } from '../logic/exercise';
 
 /**
  * Wraps every iOS Live Activity / Dynamic Island call used during an

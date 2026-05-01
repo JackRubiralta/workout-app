@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { colors, fonts, fontSize, spacing } from '../../theme';
-import { copy } from '../../copy';
+import { colors, fonts, fontSize, spacing } from '../theme';
+import { copy } from '../copy';
 
 /**
  * Lightweight SVG sparkline. Pass an array of {value, label?} points

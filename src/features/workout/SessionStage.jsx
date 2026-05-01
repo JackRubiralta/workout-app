@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, text } from '../../theme';
-import { Chip } from '../../components/primitives';
+import { Chip } from '../../ui';
 import { CircularTimer } from './components/CircularTimer';
 import { ExerciseHero, RestHero, CompletionHero } from './SessionHeroes';
 

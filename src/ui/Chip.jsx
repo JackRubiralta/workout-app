@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../theme';
 
 /**
  * Small rounded pill — `[icon?] [label]` — used wherever the app needs a

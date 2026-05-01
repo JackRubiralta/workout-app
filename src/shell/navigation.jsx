@@ -11,7 +11,7 @@ import { NutritionScreen } from '../features/nutrition/NutritionScreen';
 import { FoodItemDetailScreen } from '../features/nutrition/FoodItemDetailScreen';
 import { TrackingScreen } from '../features/tracking/TrackingScreen';
 import { SessionDetailScreen } from '../features/tracking/SessionDetailScreen';
-import { DumbbellIcon, AppleIcon, ClockIcon } from './icons';
+import { DumbbellIcon, AppleIcon, ClockIcon } from '../ui/icons';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 // Tab-bar dimensions tuned for a compact bar — no active-state pill, just

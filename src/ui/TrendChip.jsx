@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fonts, radius } from '../../theme';
-import { ArrowUp, ArrowDown } from '../../shell/icons';
+import { colors, fonts, radius } from '../theme';
+import { ArrowUp, ArrowDown } from './icons';
 
 /**
  * Up/down/flat trend pill. Pass a numeric `delta` and the chip picks

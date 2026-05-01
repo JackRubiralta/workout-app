@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize, spacing, text } from '../../theme';
-import { IconButton } from '../../components/primitives';
-import { ChevronLeft, UndoIcon } from '../../shell/icons';
+import { IconButton } from '../../ui';
+import { ChevronLeft, UndoIcon } from '../../ui/icons';
 
 /**
  * Top bar of the active session screen — back chevron, centered day title

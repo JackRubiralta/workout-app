@@ -3,8 +3,8 @@ import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, macroColors, radius, spacing, surfaces, text } from '../../theme';
 import { useNutritionData } from '../../shell/store';
-import { DetailHeader, IconButton, SectionLabel, StatusPill } from '../../components/primitives';
-import { TrashIcon } from '../../shell/icons';
+import { DetailHeader, IconButton, SectionLabel, StatusPill } from '../../ui';
+import { TrashIcon } from '../../ui/icons';
 import { FoodSource, Confidence } from '../../constants/nutrition';
 import { formatDateTime } from '../../utils/date';
 import { confirm } from '../../utils/confirm';

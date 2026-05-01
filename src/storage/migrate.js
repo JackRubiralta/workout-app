@@ -1,6 +1,6 @@
 import { KEYS, LEGACY, SCHEMA_VERSION } from './keys';
 import { readJson, writeJson } from './asyncStore';
-import { migrateExercise } from '../utils/exercise';
+import { migrateExercise } from '../features/workout/logic/exercise';
 import { EXERCISE_REST_SECONDS, DAYS } from '../constants/workout';
 import { DEFAULT_GOALS } from '../constants/nutrition';
 

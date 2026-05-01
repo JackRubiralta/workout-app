@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
-import { colors, fonts, fontSize } from '../../theme';
-import { copy } from '../../copy';
+import { colors, fonts, fontSize } from '../theme';
+import { copy } from '../copy';
 
 /**
  * Vertical bar chart. Pass `bars` = [{ value, label?, accent? }].

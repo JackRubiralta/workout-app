@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, layout, macroColors, spacing } from '../../theme';
 import { useNutritionData } from '../../shell/store';
 import { CalorieRing, MacroRing } from './components/MacroRing';
-import { ScreenHeader } from '../../components/primitives/ScreenHeader';
+import { ScreenHeader } from '../../ui/ScreenHeader';
 import { GoalsSheet } from './GoalsSheet';
 import { AddFoodSheet } from './AddFoodSheet/AddFoodSheet';
 import { FoodLog } from './FoodLog';

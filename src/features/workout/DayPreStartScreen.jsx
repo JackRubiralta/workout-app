@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
-import { Button, Chip, DetailHeader, NumberedListRow, SectionLabel, StatCard } from '../../components/primitives';
-import { PencilIcon, PlusIcon } from '../../shell/icons';
+import { Button, Chip, DetailHeader, NumberedListRow, SectionLabel, StatCard } from '../../ui';
+import { PencilIcon, PlusIcon } from '../../ui/icons';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { DayEditSheet } from './DayEditSheet';
 import { activeSessionForDay, dayProgress, isDayComplete } from './logic/progress';
-import { defaultExercise, exerciseTotalSets } from '../../utils/exercise';
+import { defaultExercise, exerciseTotalSets } from './logic/exercise';
 import { confirm } from '../../utils/confirm';
 
 const PER_SET_WORK_SECONDS = 45;
@@ -179,7 +179,7 @@ export function DayPreStartScreen({ navigation, route }) {
           </View>
         )}
 
-        <SectionLabel style={styles.sectionLabel}>EXERCISES · TAP TO EDIT</SectionLabel>
+        <SectionLabel style={styles.sectionLabel}>EXERCISES</SectionLabel>
         <View style={styles.exerciseList}>
           {day.exercises.map((ex, i) => {
             const total = exerciseTotalSets(ex);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fonts, radius, spacing } from '../../theme';
-import { Button } from '../../components/primitives';
+import { Button } from '../../ui';
 
 /**
  * Bottom of the active session screen — progress bar + count, primary CTA

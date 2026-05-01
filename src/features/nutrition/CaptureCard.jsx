@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fontSize, radius, shadow, spacing, surfaces, text } from '../../theme';
-import { CameraIcon } from '../../shell/icons';
+import { CameraIcon } from '../../ui/icons';
 
 // Big "Add food" call-to-action card at the top of the Nutrition tab.
 // Single tap opens the AddFoodSheet.

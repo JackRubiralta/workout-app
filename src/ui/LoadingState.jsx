@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Text } from 'react-native';
-import { colors, fontSize, fonts, spacing } from '../../theme';
+import { colors, fontSize, fonts, spacing } from '../theme';
 
 // Three pulsing dots — opacity bounces between 30% and 100%, staggered
 // 150ms apart. Used as the visual heartbeat under any "we're working on

@@ -8,7 +8,7 @@ import {
   PanResponder,
   useWindowDimensions,
 } from 'react-native';
-import { colors, radius, spacing } from '../../theme';
+import { colors, radius, spacing } from '../theme';
 
 // Bottom sheet with drag-to-dismiss handle.
 //

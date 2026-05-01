@@ -3,7 +3,7 @@ import { KEYS } from '../../../storage/keys';
 import { usePersistedState } from '../../../storage/usePersistedState';
 import { defaultConfig } from '../../../storage/migrate';
 import { dayPalette } from '../../../theme';
-import { defaultExercise } from '../../../utils/exercise';
+import { defaultExercise } from '../logic/exercise';
 import { EXERCISE_REST_SECONDS } from '../../../constants/workout';
 
 /**

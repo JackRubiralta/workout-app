@@ -5,7 +5,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts, fontSize, radius, shadow, spacing, surfaces, text } from '../../../theme';
-import { Button, LoadingState } from '../../../components/primitives';
+import { Button, LoadingState } from '../../../ui';
 import { analyzeFood } from '../services/anthropic';
 import { ResultsView } from './ResultsView';
 import { NoFoodView } from './NoFoodView';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors } from '../../theme';
+import { colors } from '../theme';
 
 /**
  * iOS-style on/off switch (44 × 26). Tap anywhere on the track to flip;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { colors, radius, spacing } from '../../../theme';
-import { NumberedListRow } from '../../../components/primitives';
-import { exerciseTotalSets } from '../../../utils/exercise';
+import { NumberedListRow } from '../../../ui';
+import { exerciseTotalSets } from '../logic/exercise';
 import { isSetDone } from '../logic/progress';
 
 // Compact ordered list of exercises shown above the active session stage.

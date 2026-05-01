@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius } from '../../theme';
+import { colors, fonts, fontSize, radius } from '../theme';
 
 /**
  * Horizontal `−  N  +` numeric stepper. Each tap fires a selection

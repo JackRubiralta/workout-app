@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import { RootNavigation } from './src/shell/navigation';
 import { StoreProvider } from './src/shell/store';
-import { endLiveActivity } from './src/modules/liveActivity';
+import { endLiveActivity } from './src/native/liveActivity';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

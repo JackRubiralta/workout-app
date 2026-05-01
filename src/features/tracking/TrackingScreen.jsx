@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, layout, spacing } from '../../theme';
 import { useSessionData, useBodyWeightData } from '../../shell/store';
-import { Chip, ScreenHeader, SectionLabel } from '../../components/primitives';
+import { Chip, EmptyState, ScreenHeader, SectionLabel } from '../../ui';
+import { DumbbellIcon } from '../../ui/icons';
 import { SummaryCard } from './SummaryCard';
 import { SessionCard } from './SessionCard';
 import { TrackingCharts } from './TrackingCharts';
@@ -58,13 +59,23 @@ export function TrackingScreen({ navigation }) {
     [navigation, sessions],
   );
 
+  const goToWorkout = useCallback(() => {
+    navigation.getParent()?.navigate('Workout');
+  }, [navigation]);
+
+  const hasSessions = sessions.length > 0;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerWrap}>
         <ScreenHeader
-          eyebrow={sessions.length > 0
+          // The standalone "TRACKING" eyebrow above a "Tracking" title was
+          // visually redundant. When there's history we surface the count;
+          // pre-history we omit the eyebrow entirely so the title stands
+          // alone and the empty-state card below carries the narrative.
+          eyebrow={hasSessions
             ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
-            : 'TRACKING'}
+            : undefined}
           title="Tracking"
         />
       </View>
@@ -72,7 +83,9 @@ export function TrackingScreen({ navigation }) {
       {/* Single rendering path — the scaffolding always renders. Cards
           render their own zero/empty states (e.g. SummaryCard with 0/0/0,
           BodyWeightCard with "No entries yet"). TrackingCharts and
-          TopExercises gate themselves on having enough data. */}
+          TopExercises gate themselves on having enough data; for
+          first-launch users we surface an EmptyState card to give the
+          screen a clear next action instead of a long dark void. */}
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         <SummaryCard
           thisWeek={summary.thisWeek}
@@ -87,13 +100,22 @@ export function TrackingScreen({ navigation }) {
           onLog={() => setBwOpen(true)}
         />
 
-        {sessions.length > 0 && <TrackingCharts sessions={sessions} />}
+        {!hasSessions && (
+          <EmptyState
+            icon={<DumbbellIcon color={colors.textSecondary} size={28} />}
+            title="Track your first workout"
+            subtitle={'Complete a session to see streaks,\ncharts and personal records here.'}
+            action={<Chip label="Start a workout" variant="strong" onPress={goToWorkout} />}
+          />
+        )}
+
+        {hasSessions && <TrackingCharts sessions={sessions} />}
 
         {sessions.length > 1 && (
           <TopExercises sessions={sessions} onPressExercise={handleOpenExercise} />
         )}
 
-        {sessions.length > 0 && (
+        {hasSessions && (
           <>
             <SectionLabel style={styles.sessionsLabel}>
               SESSIONS · {sessions.length}

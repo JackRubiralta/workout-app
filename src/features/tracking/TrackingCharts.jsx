@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fonts, spacing, surfaces, text } from '../../theme';
-import { BarChart, SectionLabel, TrendChip } from '../../components/primitives';
+import { BarChart, SectionLabel, TrendChip } from '../../ui';
 import { useSettingsData } from '../../shell/store';
 import { fromLb, unitLabel } from '../../utils/units';
 import {

@@ -48,7 +48,7 @@ export const SET_REPS = ['Light weight, 12–15 reps', '6–10 reps', '6–10 re
 export const EXERCISE_REST_SECONDS = 150;
 
 // Small helper so each exercise row stays readable. Any field not passed
-// falls back to the defaults defined in src/utils/exercise.js.
+// falls back to the defaults defined in src/features/workout/logic/exercise.js.
 function ex({
   name,
   sets = 3,

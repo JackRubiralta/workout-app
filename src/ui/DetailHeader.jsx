@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme';
+import { colors, spacing } from '../theme';
 import { IconButton } from './Button';
-import { ChevronLeft } from '../../shell/icons';
+import { ChevronLeft } from './icons';
 
 /**
  * Top chrome row for detail screens (DayPreStart, SessionDetail,

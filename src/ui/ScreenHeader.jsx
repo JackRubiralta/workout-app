@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing, text } from '../../theme';
+import { colors, spacing, text } from '../theme';
 
 /**
  * Shared header for the top-level tab screens (Workout / Nutrition / Tracking).

@@ -5,14 +5,14 @@ import * as Haptics from 'expo-haptics';
 import { colors, layout, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData, useSettingsData } from '../../shell/store';
 import { DayCard } from './components/DayCard';
-import { ScreenHeader } from '../../components/primitives/ScreenHeader';
-import { SectionLabel } from '../../components/primitives/SectionLabel';
-import { SegmentedControl } from '../../components/primitives/SegmentedControl';
-import { PlusIcon } from '../../shell/icons';
+import { ScreenHeader } from '../../ui/ScreenHeader';
+import { SectionLabel } from '../../ui/SectionLabel';
+import { SegmentedControl } from '../../ui/SegmentedControl';
+import { PlusIcon } from '../../ui/icons';
 import { UnitSystem } from '../../utils/units';
 import { WeekStrip } from './WeekStrip';
 import { dayProgress, isDayComplete, activeSessionForDay } from './logic/progress';
-import { exerciseTotalSets } from '../../utils/exercise';
+import { exerciseTotalSets } from './logic/exercise';
 import { confirm } from '../../utils/confirm';
 
 function todayLabel() {

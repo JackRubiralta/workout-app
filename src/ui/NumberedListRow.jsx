@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, fonts, fontSize, radius, text } from '../../theme';
+import { colors, fonts, fontSize, radius, text } from '../theme';
 
 /**
  * Shared structural backbone for the numbered exercise rows in

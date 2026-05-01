@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
-import { Button, DetailSheet } from '../../components/primitives';
+import { Button, DetailSheet } from '../../ui';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
 const FIELDS = [

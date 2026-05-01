@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
-import { DetailSheet } from '../../../components/primitives';
+import { DetailSheet } from '../../../ui';
 import { confirm } from '../../../utils/confirm';
 import { AnalyzeFoodForm } from './AnalyzeFoodForm';
 

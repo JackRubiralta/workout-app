@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextInput, StyleSheet } from 'react-native';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, text } from '../theme';
 
 export function FieldLabel({ children, style }) {
   return <Text style={[text.eyebrow, { marginBottom: spacing.xs }, style]}>{children}</Text>;

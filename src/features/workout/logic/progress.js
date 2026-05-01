@@ -1,4 +1,4 @@
-import { exerciseTotalSets } from '../../../utils/exercise';
+import { exerciseTotalSets } from '../logic/exercise';
 
 // Resolve the rest duration for a freshly-completed set. The last set of
 // every exercise (except the very last) uses the longer between-exercise

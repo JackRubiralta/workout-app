@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, shadow, spacing, surfaces, text } from '../../theme';
-import { StatusPill } from '../../components/primitives';
+import { StatusPill } from '../../ui';
 import { useSettingsData } from '../../shell/store';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatTime, relativeDay } from '../../utils/date';

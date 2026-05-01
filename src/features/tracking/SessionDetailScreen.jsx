@@ -3,8 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { useSessionData, useSettingsData } from '../../shell/store';
-import { DetailHeader, IconButton, StatCard, StatusPill } from '../../components/primitives';
-import { TrashIcon } from '../../shell/icons';
+import { DetailHeader, IconButton, StatCard, StatusPill } from '../../ui';
+import { TrashIcon } from '../../ui/icons';
 import { ExerciseHistorySheet } from '../workout/ExerciseHistorySheet';
 import { sessionVolume } from '../workout/logic/volume';
 import { formatDurationISO } from '../../utils/format';

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize, radius, spacing, fonts, text } from '../../theme';
 import { CircularTimer } from './components/CircularTimer';
-import { getRepsGuide, getSetLabel } from '../../utils/exercise';
+import { getRepsGuide, getSetLabel } from './logic/exercise';
 
 export function ExerciseHero({ day, exIndex, setIndex, nameFontSize, isSmall }) {
   const exercise = day.exercises[exIndex];

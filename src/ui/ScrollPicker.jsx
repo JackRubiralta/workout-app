@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius } from '../../theme';
+import { colors, fonts, fontSize, radius } from '../theme';
 
 const ITEM_H = 44;
 const VISIBLE = 5;

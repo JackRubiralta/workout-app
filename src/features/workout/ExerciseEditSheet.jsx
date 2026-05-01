@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, text } from '../../theme';
-import { Button, Sheet, SheetHeader } from '../../components/primitives';
-import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
-import { Stepper } from '../../components/primitives/Stepper';
-import { Toggle } from '../../components/primitives/Toggle';
+import { Button, Sheet, SheetHeader } from '../../ui';
+import { FieldLabel, SheetInput } from '../../ui/SheetInput';
+import { Stepper } from '../../ui/Stepper';
+import { Toggle } from '../../ui/Toggle';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
 export function ExerciseEditSheet({ visible, exercise, exIndex, dayColor, onSave, onClose, onDelete, canDelete }) {

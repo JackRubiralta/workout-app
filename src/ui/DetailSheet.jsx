@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors } from '../../theme';
+import { colors } from '../theme';
 import { Sheet } from './Sheet';
 import { SheetHeader } from './SheetHeader';
 
