@@ -1,95 +1,19 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { colors, fontSize, layout, macroColors, radius, shadow, spacing, surfaces, text } from '../../theme';
+import { colors, layout, macroColors, spacing } from '../../theme';
 import { useNutritionData } from '../../shell/store';
 import { CalorieRing, MacroRing } from '../../components/nutrition/MacroRing';
 import { ScreenHeader } from '../../components/primitives/ScreenHeader';
-import { CameraIcon, ChevronLeft, ChevronRight } from '../../shell/icons';
 import { GoalsSheet } from './GoalsSheet';
 import { AddFoodSheet } from './AddFoodSheet/AddFoodSheet';
 import { FoodLog } from './FoodLog';
 import { NutritionTrends } from './NutritionTrends';
+import { DateStrip } from './DateStrip';
+import { CaptureCard } from './CaptureCard';
 import { formatDateKey, totalsForDay } from './hooks/useNutritionLog';
-
-function startOfDay(d) {
-  const c = new Date(d); c.setHours(0, 0, 0, 0); return c;
-}
-function addDays(d, n) {
-  const c = new Date(d); c.setDate(c.getDate() + n); return c;
-}
-function isSameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-function formatDateLong(d) {
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-}
-
-
-function DateStrip({ date, onChange }) {
-  const today = startOfDay(new Date());
-  const isToday = isSameDay(date, today);
-  const goPrev = () => { Haptics.selectionAsync().catch(() => {}); onChange(addDays(date, -1)); };
-  const goNext = () => { if (isToday) return; Haptics.selectionAsync().catch(() => {}); onChange(addDays(date, 1)); };
-  const goToday = () => { if (isToday) return; Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); onChange(today); };
-
-  return (
-    <View style={ds.row}>
-      <TouchableOpacity onPress={goPrev} hitSlop={8} style={ds.arrow} activeOpacity={0.6}>
-        <ChevronLeft color={colors.textSecondary} size={18} strokeWidth={2.2} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={goToday} activeOpacity={0.7} style={ds.center}>
-        <Text style={ds.label}>{isToday ? 'Today' : formatDateLong(date)}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={goNext} hitSlop={8} style={[ds.arrow, isToday && { opacity: 0.3 }]} activeOpacity={0.6} disabled={isToday}>
-        <ChevronRight color={colors.textSecondary} size={18} strokeWidth={2.2} />
-      </TouchableOpacity>
-    </View>
-  );
-}
-const ds = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.full,
-    paddingHorizontal: 4, paddingVertical: 4,
-    alignSelf: 'center',
-  },
-  arrow: { width: 32, height: 32, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
-  center: { paddingHorizontal: spacing.md, minWidth: 140, alignItems: 'center' },
-  label: { ...text.callout, fontWeight: '700', color: colors.text },
-});
-
-function CaptureCard({ onScan }) {
-  return (
-    <TouchableOpacity style={cap.primary} onPress={onScan} activeOpacity={0.85}>
-      <View style={cap.iconCircle}>
-        <CameraIcon color={colors.text} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={cap.title}>Add food</Text>
-        <Text style={cap.sub}>Photo, describe, or enter manually</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-const cap = StyleSheet.create({
-  primary: {
-    ...surfaces.card,
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...shadow.sm,
-  },
-  iconCircle: {
-    width: 44, height: 44, borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  title: { ...text.title3, fontSize: 17 },
-  sub: { ...text.bodySecondary, fontSize: 13, marginTop: 2 },
-});
+import { startOfDay } from '../../utils/date';
 
 function RingsBlock({ totals, goals }) {
   return (
@@ -140,34 +64,18 @@ export function NutritionScreen({ navigation }) {
     } else {
       // Multi-component meal — collapse into ONE entry with a components
       // breakdown. Tapping the food log row reveals each part's nutrition.
-      const totals = newItems.reduce((acc, it) => ({
-        calories: acc.calories + (it.calories ?? 0),
-        protein: acc.protein + (it.protein ?? 0),
-        carbs: acc.carbs + (it.carbs ?? 0),
-        fat: acc.fat + (it.fat ?? 0),
-        fiber: acc.fiber + (it.fiber ?? 0),
-      }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
-
       const fallbackName = newItems.slice(0, 2).map(i => i.name).join(', ')
         + (newItems.length > 2 ? ` +${newItems.length - 2}` : '');
-
       const meal = {
         name: meta?.mealName || fallbackName,
         quantity: newItems.length,
-        unit: newItems.length === 1 ? 'item' : 'items',
-        ...totals,
+        unit: 'items',
+        ...totalsForDay(newItems),
         source: newItems[0]?.source ?? null,
         notes: newItems[0]?.notes ?? null,
         confidence: newItems[0]?.confidence ?? null,
-        components: newItems.map(it => ({
-          name: it.name,
-          quantity: it.quantity,
-          unit: it.unit,
-          calories: it.calories,
-          protein: it.protein,
-          carbs: it.carbs,
-          fat: it.fat,
-          fiber: it.fiber,
+        components: newItems.map(({ name, quantity, unit, calories, protein, carbs, fat, fiber }) => ({
+          name, quantity, unit, calories, protein, carbs, fat, fiber,
         })),
       };
       addFood(dateKey, meal, photos);

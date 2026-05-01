@@ -4,9 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
-import { Button, IconButton } from '../../components/primitives/Button';
-import { SectionLabel } from '../../components/primitives/SectionLabel';
-import { ChevronLeft, PencilIcon, PlusIcon } from '../../shell/icons';
+import { Button, DetailHeader, SectionLabel, StatCard } from '../../components/primitives';
+import { PencilIcon, PlusIcon } from '../../shell/icons';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { DayEditSheet } from './DayEditSheet';
 import { activeSessionForDay, dayProgress, isDayComplete } from './logic/progress';
@@ -143,19 +142,20 @@ export function DayPreStartScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <IconButton onPress={() => navigation.goBack()}>
-          <ChevronLeft color={colors.text} size={20} />
-        </IconButton>
-        <View style={[styles.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
-          <Text style={[styles.dayDotText, { color: day.color }]}>{day.day}</Text>
-        </View>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity onPress={() => setDayEditOpen(true)} style={styles.editPill} activeOpacity={0.7}>
-          <PencilIcon color={colors.textSecondary} />
-          <Text style={styles.editPillText}>Edit day</Text>
-        </TouchableOpacity>
-      </View>
+      <DetailHeader
+        onBack={() => navigation.goBack()}
+        center={
+          <View style={[styles.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
+            <Text style={[styles.dayDotText, { color: day.color }]}>{day.day}</Text>
+          </View>
+        }
+        right={
+          <TouchableOpacity onPress={() => setDayEditOpen(true)} style={styles.editPill} activeOpacity={0.7}>
+            <PencilIcon color={colors.textSecondary} />
+            <Text style={styles.editPillText}>Edit day</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.titleArea}>
@@ -164,18 +164,9 @@ export function DayPreStartScreen({ navigation, route }) {
         </View>
 
         <View style={styles.metaRow}>
-          <View style={styles.metaCard}>
-            <Text style={styles.metaValue}>{day.exercises.length}</Text>
-            <Text style={styles.metaLabel}>EXERCISES</Text>
-          </View>
-          <View style={styles.metaCard}>
-            <Text style={styles.metaValue}>{progress.total}</Text>
-            <Text style={styles.metaLabel}>SETS</Text>
-          </View>
-          <View style={styles.metaCard}>
-            <Text style={styles.metaValue}>~{totalMins}</Text>
-            <Text style={styles.metaLabel}>MINUTES</Text>
-          </View>
+          <StatCard value={day.exercises.length} label="EXERCISES" />
+          <StatCard value={progress.total} label="SETS" />
+          <StatCard value={`~${totalMins}`} label="MINUTES" />
         </View>
 
         {canResume && (
@@ -291,14 +282,6 @@ export function DayPreStartScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
   dayDot: { width: 36, height: 36, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dayDotText: { fontSize: fontSize.subhead, fontWeight: '700', fontFamily: fonts.mono },
   editPill: {
@@ -314,13 +297,6 @@ const styles = StyleSheet.create({
   focusLine: { ...text.bodySecondary, color: colors.textSecondary, letterSpacing: 0.3 },
 
   metaRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
-  metaCard: {
-    ...surfaces.row,
-    flex: 1, alignItems: 'center', gap: 2,
-    paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.sm,
-  },
-  metaValue: { ...text.monoNumber, fontSize: fontSize.title2, fontWeight: '700' },
-  metaLabel: { ...text.eyebrowSmall },
 
   resumeBanner: {
     ...surfaces.row,

@@ -3,40 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, radius, shadow, spacing, surfaces, text } from '../../theme';
 import { sessionVolume } from '../workout/logic/volume';
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now - d;
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
-}
-
-function formatTime(iso) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatDuration(start, end) {
-  if (!start || !end) return null;
-  const mins = Math.round((new Date(end) - new Date(start)) / 60000);
-  if (mins < 1) return '<1m';
-  if (mins < 60) return `${mins}m`;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function formatVolume(v) {
-  if (v >= 10000) return `${(v / 1000).toFixed(1)}k`;
-  if (v >= 1000) return v.toLocaleString();
-  return String(v);
-}
+import { formatTime, relativeDay } from '../../utils/date';
+import { compactNumber, formatDurationISO } from '../../utils/format';
 
 export function SessionCard({ session, onPress }) {
-  const duration = formatDuration(session.startedAt, session.completedAt);
+  const duration = formatDurationISO(session.startedAt, session.completedAt);
   const volume = sessionVolume(session);
   const status = session.completedAt ? 'done' : session.abandonedAt ? 'abandoned' : 'in-progress';
 
@@ -57,7 +28,7 @@ export function SessionCard({ session, onPress }) {
             {session.dayFocus ? <Text style={s.focus}> · {session.dayFocus}</Text> : null}
           </View>
           <View style={s.metaRow}>
-            <Text style={s.meta}>{formatDate(session.startedAt)}</Text>
+            <Text style={s.meta}>{relativeDay(session.startedAt)}</Text>
             <Text style={s.metaDot}>·</Text>
             <Text style={s.meta}>{formatTime(session.startedAt)}</Text>
             {duration && <><Text style={s.metaDot}>·</Text><Text style={s.meta}>{duration}</Text></>}
@@ -85,7 +56,7 @@ export function SessionCard({ session, onPress }) {
         </View>
         {volume > 0 && (
           <View style={s.chip}>
-            <Text style={s.chipVal}>{formatVolume(volume)}</Text>
+            <Text style={s.chipVal}>{compactNumber(volume)}</Text>
             <Text style={s.chipLabel}>lb vol</Text>
           </View>
         )}

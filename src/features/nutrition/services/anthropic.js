@@ -3,7 +3,9 @@
 // acceptable for a personal build, replace with a backend proxy before any
 // public release.
 
-const ANTHROPIC_API_KEY = ""; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
+import { roundInt, roundTenths } from '../../../utils/format';
+
+const ANTHROPIC_API_KEY = "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"; //"process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''";
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
@@ -78,11 +80,11 @@ function normalizeFinal(parsed) {
     name: String(i.name ?? 'Unknown'),
     quantity: Number(i.quantity ?? 1),
     unit: String(i.unit ?? 'serving'),
-    calories: Math.round(Number(i.calories ?? 0)),
-    protein: Math.round(Number(i.protein ?? 0) * 10) / 10,
-    carbs: Math.round(Number(i.carbs ?? 0) * 10) / 10,
-    fat: Math.round(Number(i.fat ?? 0) * 10) / 10,
-    fiber: Math.round(Number(i.fiber ?? 0) * 10) / 10,
+    calories: roundInt(i.calories),
+    protein: roundTenths(i.protein),
+    carbs: roundTenths(i.carbs),
+    fat: roundTenths(i.fat),
+    fiber: roundTenths(i.fiber),
   }));
   // Recompute totals so they always match items even if Claude's math drifted.
   const totals = items.reduce(
@@ -95,10 +97,10 @@ function normalizeFinal(parsed) {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
   );
-  totals.protein = Math.round(totals.protein * 10) / 10;
-  totals.carbs = Math.round(totals.carbs * 10) / 10;
-  totals.fat = Math.round(totals.fat * 10) / 10;
-  totals.fiber = Math.round(totals.fiber * 10) / 10;
+  totals.protein = roundTenths(totals.protein);
+  totals.carbs = roundTenths(totals.carbs);
+  totals.fat = roundTenths(totals.fat);
+  totals.fiber = roundTenths(totals.fiber);
 
   // food_detected explicit, OR fall back to "is there at least one item with
   // calories?" — Claude sometimes forgets the flag but never invents food

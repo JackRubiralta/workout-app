@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Sheet } from '../../components/primitives/Sheet';
+import { Sheet, SheetHeader } from '../../components/primitives';
 import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { defaultExercise } from '../../utils/exercise';
@@ -81,15 +81,15 @@ export function DayEditSheet({ visible, day, dayIndex, onSave, onDelete, onClose
   return (
     <>
       <Sheet visible={visible && editingExIndex === null} onClose={onClose} flex height="92%">
-        <View style={s.header}>
-          <View style={[s.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
-            <Text style={[s.dayDotText, { color: day.color }]}>{day.day}</Text>
-          </View>
-          <Text style={[text.title3, { fontSize: fontSize.headline, flex: 1 }]}>Edit Day {day.day}</Text>
-          <TouchableOpacity onPress={onClose} style={s.closeBtn} hitSlop={12}>
-            <Text style={s.closeBtnText}>✕</Text>
-          </TouchableOpacity>
-        </View>
+        <SheetHeader
+          left={
+            <View style={[s.dayDot, { backgroundColor: day.color + '20', borderColor: day.color + '40' }]}>
+              <Text style={[s.dayDotText, { color: day.color }]}>{day.day}</Text>
+            </View>
+          }
+          title={`Edit Day ${day.day}`}
+          onClose={onClose}
+        />
 
         <ScrollView
           style={{ flex: 1 }}
@@ -178,19 +178,8 @@ export function DayEditSheet({ visible, day, dayIndex, onSave, onDelete, onClose
 }
 
 const s = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
   dayDot: { width: 28, height: 28, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dayDotText: { ...text.eyebrowSmall, color: colors.text, fontSize: fontSize.footnote, fontWeight: '700' },
-  closeBtn: { width: 28, height: 28, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   content: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
   inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   unit: { ...text.monoSubhead, fontWeight: '600', width: 28 },

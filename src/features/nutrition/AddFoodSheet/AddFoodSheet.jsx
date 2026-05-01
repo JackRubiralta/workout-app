@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '../../../theme';
-import { Sheet } from '../../../components/primitives/Sheet';
+import { Sheet, SheetHeader } from '../../../components/primitives';
 import { confirm } from '../../../utils/confirm';
 import { ScanTab } from './ScanTab';
 import { SearchTab } from './SearchTab';
@@ -100,12 +100,7 @@ export function AddFoodSheet({ visible, initialTab = 'scan', onClose, onLogItems
 
   return (
     <Sheet visible={visible} onClose={requestClose} height="88%" flex dismissable={!busy}>
-      <View style={s.header}>
-        <Text style={[text.title3, { fontSize: fontSize.headline, flex: 1 }]}>Add Food</Text>
-        <TouchableOpacity onPress={requestClose} style={s.closeBtn} hitSlop={12}>
-          <Text style={s.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-      </View>
+      <SheetHeader title="Add Food" onClose={requestClose} />
 
       <TabSwitcher tab={tab} onChange={setTab} />
 
@@ -136,16 +131,3 @@ export function AddFoodSheet({ visible, initialTab = 'scan', onClose, onLogItems
   );
 }
 
-const s = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  closeBtn: { width: 28, height: 28, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
-});

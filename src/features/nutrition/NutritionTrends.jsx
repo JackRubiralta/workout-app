@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, macroColors, radius, spacing, text } from '../../theme';
+import { colors, fonts, macroColors, radius, spacing, surfaces, text } from '../../theme';
 import { BarChart } from '../../components/primitives/BarChart';
 import { totalsForDay } from './hooks/useNutritionLog';
 
@@ -137,8 +137,7 @@ const s = StyleSheet.create({
   wrap: { gap: spacing.sm },
   headerRow: { paddingHorizontal: 2, marginTop: spacing.sm },
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },

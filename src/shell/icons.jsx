@@ -95,3 +95,20 @@ export function CameraIcon({ color, size = 22, strokeWidth = 1.7 }) {
     </Svg>
   );
 }
+
+export function FlameIcon({ color, size = 14 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 2c2 4 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 1-5 0 2 2 3 4 0 0-2 0-3 0-5z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function CheckCircle({ color, size = 22 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M22 4L12 14.01l-3-3" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}

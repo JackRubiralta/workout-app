@@ -58,31 +58,21 @@ export function CalorieRing({ value = 0, goal = 2000, color = colors.text, size 
   );
 }
 
-// `polarity` controls how the bottom delta reads. `more-is-better` (default)
-// shows "X left" / "+X over" — matching protein/carbs/fat/fiber where you
-// want to hit the target. `less-is-better` is for sugar/sodium where the
-// number is a ceiling: "X under" / "+X over".
-export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size = 70, polarity = 'more-is-better' }) {
+// More-is-better hit-the-goal ring (protein, carbs, fat, fiber). Going
+// over the goal isn't a problem — the ring fills, the colour stays the
+// macro accent, and the sub-line reads "+N over" instead of "N left".
+export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size = 70 }) {
   const STROKE = 6;
   const { r, c, cx } = geometry(size, STROKE);
   const targetPct = goal > 0 ? Math.min(value / goal, 1.5) : 0;
   const animated = useMountedValue(targetPct);
   const offset = c * (1 - Math.min(animated, 1));
   const over = goal > 0 && value > goal;
-  const remaining = Math.max(Math.round(goal - value), 0);
-  const overAmount = Math.round(value - goal);
-  const lessIsBetter = polarity === 'less-is-better';
   const deltaText = goal <= 0
     ? ''
     : over
-      ? `+${overAmount} over`
-      : lessIsBetter
-        ? `${remaining} under`
-        : `${remaining} left`;
-  // For less-is-better metrics, "over" is the bad state — keep danger.
-  // For more-is-better, "over" just means you hit the goal — show the
-  // accent colour, not danger.
-  const overColor = lessIsBetter ? colors.danger : color;
+      ? `+${Math.round(value - goal)} over`
+      : `${Math.max(Math.round(goal - value), 0)} left`;
   return (
     <View style={s.macroOuter}>
       <View style={{ width: size, height: size }}>
@@ -92,7 +82,7 @@ export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size 
             cx={cx}
             cy={cx}
             r={r}
-            stroke={over ? overColor : color}
+            stroke={color}
             strokeWidth={STROKE}
             fill="none"
             strokeDasharray={`${c} ${c}`}
@@ -102,12 +92,12 @@ export function MacroRing({ label, value = 0, goal = 0, unit = 'g', color, size 
           />
         </Svg>
         <View style={[StyleSheet.absoluteFill, s.center]} pointerEvents="none">
-          <Text style={[s.macroValue, { color: over && lessIsBetter ? colors.danger : colors.text }]}>{Math.round(value)}</Text>
+          <Text style={s.macroValue}>{Math.round(value)}</Text>
           <Text style={s.macroUnit}>{unit}</Text>
         </View>
       </View>
       <Text style={[s.macroLabel, { color }]}>{label}</Text>
-      <Text style={[s.macroGoal, over && lessIsBetter && { color: colors.danger }]}>{deltaText}</Text>
+      <Text style={s.macroGoal}>{deltaText}</Text>
     </View>
   );
 }
@@ -118,7 +108,7 @@ const s = StyleSheet.create({
   bigUnit: { fontSize: fontSize.caption, fontWeight: '600', color: colors.textSecondary, fontFamily: fonts.mono, letterSpacing: 0.5, marginTop: 2 },
   bigSub: { marginTop: 4, fontSize: fontSize.micro, fontWeight: '700', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1, textTransform: 'uppercase' },
   macroOuter: { alignItems: 'center', gap: 4 },
-  macroValue: { fontSize: 17, fontWeight: '700', fontFamily: fonts.mono, includeFontPadding: false },
+  macroValue: { fontSize: 17, fontWeight: '700', fontFamily: fonts.mono, color: colors.text, includeFontPadding: false },
   macroUnit: { fontSize: 9, color: colors.textTertiary, fontFamily: fonts.mono, fontWeight: '500', marginTop: 1 },
   macroLabel: { fontSize: fontSize.micro, fontWeight: '700', fontFamily: fonts.mono, letterSpacing: 1, textTransform: 'uppercase' },
   macroGoal: { fontSize: 9, color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 0.3 },

@@ -1,5 +1,7 @@
 // Volume = Σ weight × reps for non-warmup, non-placeholder sets.
 
+import { startOfDay } from '../../../utils/date';
+
 export function sessionVolume(session) {
   if (!session) return 0;
   let v = 0;
@@ -8,12 +10,6 @@ export function sessionVolume(session) {
     v += (e.weight || 0) * (e.reps || 0);
   }
   return v;
-}
-
-function startOfDay(d) {
-  const c = new Date(d);
-  c.setHours(0, 0, 0, 0);
-  return c;
 }
 
 function dateKey(d) {

@@ -3,10 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
 import { useSessionData } from '../../shell/store';
-import { IconButton } from '../../components/primitives/Button';
-import { ChevronLeft, TrashIcon } from '../../shell/icons';
+import { DetailHeader, IconButton, StatCard } from '../../components/primitives';
+import { TrashIcon } from '../../shell/icons';
 import { ExerciseHistorySheet } from '../workout/ExerciseHistorySheet';
 import { sessionVolume } from '../workout/logic/volume';
+import { formatDurationISO } from '../../utils/format';
 import { confirm } from '../../utils/confirm';
 
 function groupByExercise(entries) {
@@ -26,14 +27,6 @@ function groupByExercise(entries) {
 function formatLong(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatDuration(start, end) {
-  if (!start || !end) return '—';
-  const mins = Math.round((new Date(end) - new Date(start)) / 60000);
-  if (mins < 1) return '<1m';
-  if (mins < 60) return `${mins} min`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
 export function SessionDetailScreen({ navigation, route }) {
@@ -64,12 +57,7 @@ export function SessionDetailScreen({ navigation, route }) {
   if (!session) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
-        <View style={s.header}>
-          <IconButton onPress={handleBack}>
-            <ChevronLeft color={colors.text} />
-          </IconButton>
-          <View style={{ flex: 1 }} />
-        </View>
+        <DetailHeader onBack={handleBack} />
         <Text style={[text.title3, { padding: spacing.lg, color: colors.textSecondary }]}>Session not found</Text>
       </SafeAreaView>
     );
@@ -79,16 +67,15 @@ export function SessionDetailScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
-      <View style={s.header}>
-        <IconButton onPress={handleBack}>
-          <ChevronLeft color={colors.text} />
-        </IconButton>
-        <View style={[s.dayDot, { backgroundColor: session.dayColor + '20', borderColor: session.dayColor + '40' }]} />
-        <View style={{ flex: 1 }} />
-        <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
-          <TrashIcon color={colors.danger} />
-        </IconButton>
-      </View>
+      <DetailHeader
+        onBack={handleBack}
+        center={<View style={[s.dayDot, { backgroundColor: session.dayColor + '20', borderColor: session.dayColor + '40' }]} />}
+        right={
+          <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
+            <TrashIcon color={colors.danger} />
+          </IconButton>
+        }
+      />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.titleArea}>
@@ -98,22 +85,10 @@ export function SessionDetailScreen({ navigation, route }) {
         </View>
 
         <View style={s.statsRow}>
-          <View style={s.stat}>
-            <Text style={s.statValue}>{groups.length}</Text>
-            <Text style={s.statLabel}>EXERCISES</Text>
-          </View>
-          <View style={s.stat}>
-            <Text style={s.statValue}>{session.entries.filter(e => !e.isPlaceholder).length}</Text>
-            <Text style={s.statLabel}>SETS</Text>
-          </View>
-          <View style={s.stat}>
-            <Text style={s.statValue}>{volume > 0 ? volume.toLocaleString() : '—'}</Text>
-            <Text style={s.statLabel}>VOLUME (lb)</Text>
-          </View>
-          <View style={s.stat}>
-            <Text style={s.statValue}>{formatDuration(session.startedAt, session.completedAt)}</Text>
-            <Text style={s.statLabel}>DURATION</Text>
-          </View>
+          <StatCard value={groups.length} label="EXERCISES" />
+          <StatCard value={session.entries.filter(e => !e.isPlaceholder).length} label="SETS" />
+          <StatCard value={volume > 0 ? volume.toLocaleString() : '—'} label="VOLUME (lb)" />
+          <StatCard value={formatDurationISO(session.startedAt, session.completedAt) ?? '—'} label="DURATION" />
         </View>
 
         <Text style={s.statusBadge}>{status}</Text>
@@ -192,14 +167,6 @@ export function SessionDetailScreen({ navigation, route }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
   dayDot: { width: 28, height: 28, borderRadius: radius.full, borderWidth: 1, marginLeft: 4 },
 
   scroll: { paddingHorizontal: spacing.lg },
@@ -208,14 +175,6 @@ const s = StyleSheet.create({
   date: { ...text.monoCaption, color: colors.textTertiary, marginTop: 4 },
 
   statsRow: { flexDirection: 'row', gap: spacing.xs },
-  stat: {
-    flex: 1, alignItems: 'center', gap: 2,
-    paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.xs,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  statValue: { ...text.monoNumber, fontSize: fontSize.title3 },
-  statLabel: { ...text.eyebrowSmall },
 
   statusBadge: {
     alignSelf: 'flex-start',

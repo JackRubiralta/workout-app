@@ -5,8 +5,7 @@ import Svg, { Path, Polyline, Circle } from 'react-native-svg';
 import { colors, fonts, spacing, surfaces, text } from '../../theme';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { topExercises, topSetPerSession, epley } from '../workout/logic/suggestions';
-
-const MAX_POINTS = 10;
+import { TOP_EXERCISES_COUNT, TOP_EXERCISES_POINTS } from '../../constants/history';
 
 function MiniSparkline({ points, color, width = 90, height = 32 }) {
   if (points.length < 2) {
@@ -52,10 +51,10 @@ function ChevronIcon({ color, size = 16 }) {
 }
 
 export function TopExercises({ sessions, onPressExercise }) {
-  const tops = useMemo(() => topExercises(sessions, 4), [sessions]);
+  const tops = useMemo(() => topExercises(sessions, TOP_EXERCISES_COUNT), [sessions]);
 
   const rows = useMemo(() => tops.map(({ name, sessionCount }) => {
-    const series = topSetPerSession(sessions, name).slice(0, MAX_POINTS).reverse();
+    const series = topSetPerSession(sessions, name).slice(0, TOP_EXERCISES_POINTS).reverse();
     const weights = series.map(({ entry }) => entry.weight);
     const e1rms = series.map(({ entry }) => Math.round(epley(entry.weight, entry.reps)));
     const last = series[series.length - 1]?.entry;

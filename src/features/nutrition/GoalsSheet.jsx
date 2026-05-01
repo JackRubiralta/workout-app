@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
-import { Sheet } from '../../components/primitives/Sheet';
+import { Sheet, SheetHeader } from '../../components/primitives';
 import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
 
 const FIELDS = [
@@ -42,12 +42,7 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
 
   return (
     <Sheet visible={visible} onClose={onClose} flex height="92%">
-      <View style={s.header}>
-        <Text style={[text.title3, { fontSize: fontSize.headline, flex: 1 }]}>Daily Goals</Text>
-        <TouchableOpacity onPress={onClose} style={s.closeBtn} hitSlop={12}>
-          <Text style={s.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-      </View>
+      <SheetHeader title="Daily Goals" onClose={onClose} />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -96,18 +91,6 @@ export function GoalsSheet({ visible, goals, onSave, onClose }) {
 }
 
 const s = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  closeBtn: { width: 28, height: 28, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
-
   body: { paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: spacing.md },
   hint: { ...text.monoFootnote, lineHeight: 18, marginBottom: spacing.xs },
   field: { gap: spacing.xs },

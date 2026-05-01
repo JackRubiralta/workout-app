@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert,
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, fontSize, radius, spacing } from '../../../theme';
 import { analyzeFoodText } from '../services/anthropic';
-import { LoadingState } from './PulseDots';
+import { LoadingState } from '../../../components/primitives';
 import { ResultsView } from './ResultsView';
 import { NoFoodView } from './NoFoodView';
 

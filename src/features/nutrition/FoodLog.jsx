@@ -4,13 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, fonts, radius, rowPadding, spacing, surfaces, text } from '../../theme';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
 import { CameraIcon } from '../../shell/icons';
-
-function formatTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
+import { formatTime } from '../../utils/date';
 
 function FoodPill({ item, onPress }) {
   const photoCount = (item.photos ?? []).length;
@@ -37,7 +31,7 @@ function FoodPill({ item, onPress }) {
           )}
         </View>
         <Text style={s.meta} numberOfLines={1}>
-          {item.quantity} {item.unit} · {item.protein}P / {item.carbs}C / {item.fat}F
+          {item.quantity} {item.unit} · {item.protein}P / {item.carbs}C / {item.fat}F{item.fiber > 0 ? ` / ${item.fiber}Fb` : ''}
         </Text>
       </View>
       <Text style={s.kcal}>{item.calories}</Text>

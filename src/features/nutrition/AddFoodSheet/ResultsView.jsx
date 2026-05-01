@@ -1,21 +1,17 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing } from '../../../theme';
+import { roundInt, roundTenths } from '../../../utils/format';
+import { totalsForDay } from '../hooks/useNutritionLog';
 
 function recomputeTotals(items) {
-  const t = items.reduce((acc, it) => ({
-    calories: acc.calories + (Number(it.calories) || 0),
-    protein: acc.protein + (Number(it.protein) || 0),
-    carbs: acc.carbs + (Number(it.carbs) || 0),
-    fat: acc.fat + (Number(it.fat) || 0),
-    fiber: acc.fiber + (Number(it.fiber) || 0),
-  }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  const t = totalsForDay(items);
   return {
-    calories: Math.round(t.calories),
-    protein: Math.round(t.protein * 10) / 10,
-    carbs: Math.round(t.carbs * 10) / 10,
-    fat: Math.round(t.fat * 10) / 10,
-    fiber: Math.round(t.fiber * 10) / 10,
+    calories: roundInt(t.calories),
+    protein: roundTenths(t.protein),
+    carbs: roundTenths(t.carbs),
+    fat: roundTenths(t.fat),
+    fiber: roundTenths(t.fiber),
   };
 }
 
@@ -61,11 +57,11 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
         return {
           ...it,
           quantity: newQty,
-          calories: Math.round((it.calories || 0) * ratio),
-          protein: Math.round((it.protein || 0) * ratio * 10) / 10,
-          carbs: Math.round((it.carbs || 0) * ratio * 10) / 10,
-          fat: Math.round((it.fat || 0) * ratio * 10) / 10,
-          fiber: Math.round((it.fiber || 0) * ratio * 10) / 10,
+          calories: roundInt((it.calories || 0) * ratio),
+          protein: roundTenths((it.protein || 0) * ratio),
+          carbs: roundTenths((it.carbs || 0) * ratio),
+          fat: roundTenths((it.fat || 0) * ratio),
+          fiber: roundTenths((it.fiber || 0) * ratio),
         };
       });
       return { ...prev, items, totals: recomputeTotals(items) };
@@ -151,6 +147,7 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
               <MacroCell v={it.protein} u="P" c={macroColors.protein} />
               <MacroCell v={it.carbs} u="C" c={macroColors.carbs} />
               <MacroCell v={it.fat} u="F" c={macroColors.fat} />
+              {it.fiber > 0 ? <MacroCell v={it.fiber} u="Fb" c={macroColors.fiber} /> : null}
             </View>
           </View>
         );
@@ -163,6 +160,7 @@ export function ResultsView({ results, setResults, onLog, onStartOver, photos, s
           <TotalCell label="Protein" value={`${results.totals.protein}g`} color={macroColors.protein} />
           <TotalCell label="Carbs" value={`${results.totals.carbs}g`} color={macroColors.carbs} />
           <TotalCell label="Fat" value={`${results.totals.fat}g`} color={macroColors.fat} />
+          <TotalCell label="Fiber" value={`${results.totals.fiber}g`} color={macroColors.fiber} />
         </View>
       </View>
 

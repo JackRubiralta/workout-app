@@ -2,26 +2,17 @@ import React, { useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path } from 'react-native-svg';
 import { colors, layout, radius, spacing, surfaces, text } from '../../theme';
 import { useWorkoutData, useSessionData } from '../../shell/store';
 import { DayCard } from '../../components/workout/DayCard';
 import { ScreenHeader } from '../../components/primitives/ScreenHeader';
 import { SectionLabel } from '../../components/primitives/SectionLabel';
-import { PlusIcon } from '../../shell/icons';
+import { FlameIcon, PlusIcon } from '../../shell/icons';
 import { WeekStrip } from './WeekStrip';
 import { dayProgress, isDayComplete, activeSessionForDay } from './logic/progress';
 import { exerciseTotalSets } from '../../utils/exercise';
 import { workoutsThisWeek, streakStats } from './logic/volume';
 import { confirm } from '../../utils/confirm';
-
-function FlameIcon({ color, size = 14 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 2c2 4 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 1-5 0 2 2 3 4 0 0-2 0-3 0-5z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
-    </Svg>
-  );
-}
 
 function todayLabel() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });

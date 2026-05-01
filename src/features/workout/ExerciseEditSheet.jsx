@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fontSize, radius, spacing, text } from '../../theme';
-import { Sheet } from '../../components/primitives/Sheet';
+import { colors, radius, spacing, text } from '../../theme';
+import { Sheet, SheetHeader } from '../../components/primitives';
 import { FieldLabel, SheetInput } from '../../components/primitives/SheetInput';
 import { Stepper } from '../../components/primitives/Stepper';
 import { Toggle } from '../../components/primitives/Toggle';
@@ -68,17 +68,11 @@ export function ExerciseEditSheet({ visible, exercise, exIndex, dayColor, onSave
 
   return (
     <Sheet visible={visible} onClose={onClose} flex height="92%">
-      <View style={s.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.eyebrow}>EXERCISE {exIndex + 1}</Text>
-          <Text style={[text.title3, { fontSize: fontSize.headline }]} numberOfLines={1}>
-            {name || exercise.name}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={onClose} style={s.closeBtn} hitSlop={12}>
-          <Text style={s.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-      </View>
+      <SheetHeader
+        eyebrow={`EXERCISE ${exIndex + 1}`}
+        title={name || exercise.name}
+        onClose={onClose}
+      />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={s.content}
@@ -181,18 +175,6 @@ export function ExerciseEditSheet({ visible, exercise, exIndex, dayColor, onSave
 }
 
 const s = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  closeBtn: { width: 28, height: 28, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
-  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 2 },
   content: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
   inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   unit: { ...text.monoSubhead, fontWeight: '600', width: 28 },

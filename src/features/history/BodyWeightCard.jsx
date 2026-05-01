@@ -4,25 +4,7 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { PlusIcon } from '../../shell/icons';
-
-function relativeDay(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const that = new Date(d);
-  that.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((today - that) / 86400000);
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.round(diffDays / 7)}w ago`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function formatTime(iso) {
-  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
+import { formatTime, relativeDay } from '../../utils/date';
 
 // Weight chart: draws an SVG line over the entries with a guide line at the
 // minimum and a filled dot at the latest point. Tries to be informative even
@@ -117,7 +99,7 @@ export function BodyWeightCard({ entries, latest, onLog }) {
             <View style={s.valueRow}>
               <Text style={s.value}>{latest.weight}</Text>
               <Text style={s.unit}>{latest.unit ?? 'lb'}</Text>
-              <Text style={s.relative}>· {relativeDay(latest.recordedAt)} · {formatTime(latest.recordedAt)}</Text>
+              <Text style={s.relative}>· {relativeDay(latest.recordedAt, { lowercase: true })} · {formatTime(latest.recordedAt)}</Text>
             </View>
           ) : (
             <Text style={s.empty}>No entries yet</Text>

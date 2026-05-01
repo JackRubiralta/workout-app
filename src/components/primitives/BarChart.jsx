@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
-import { colors, fonts, fontSize, spacing } from '../../theme';
+import { colors, fonts, fontSize } from '../../theme';
 
 // Vertical bar chart. Pass `bars` = [{ value, label?, accent? }].
 // If `goal` is set, draws a horizontal goal line and tints over-goal bars.

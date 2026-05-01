@@ -5,21 +5,16 @@ import { Sheet } from '../../components/primitives/Sheet';
 import { Sparkline } from '../../components/primitives/Sparkline';
 import { useSessionData } from '../../shell/store';
 import { topSetPerSession, personalRecords, epley } from './logic/suggestions';
-
-const MAX_POINTS = 12;
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { formatDateShort } from '../../utils/date';
+import { MAX_HISTORY_POINTS } from '../../constants/history';
 
 export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose }) {
   const { sessions } = useSessionData();
 
   const topSets = useMemo(() => {
     if (!exerciseName) return [];
-    // newest first → oldest first for charting, capped at MAX_POINTS
-    return topSetPerSession(sessions, exerciseName).slice(0, MAX_POINTS).reverse();
+    // newest first → oldest first for charting, capped at MAX_HISTORY_POINTS
+    return topSetPerSession(sessions, exerciseName).slice(0, MAX_HISTORY_POINTS).reverse();
   }, [sessions, exerciseName]);
 
   const prs = useMemo(() => {
@@ -89,7 +84,7 @@ export function ExerciseHistorySheet({ visible, exerciseName, dayColor, onClose 
                 <Text style={[text.eyebrow, { marginBottom: spacing.xs }]}>SESSIONS</Text>
                 {[...topSets].reverse().map(({ entry, session }, i) => (
                   <View key={i} style={s.row}>
-                    <Text style={s.rowDate}>{formatDate(session.startedAt)}</Text>
+                    <Text style={s.rowDate}>{formatDateShort(session.startedAt)}</Text>
                     <Text style={s.rowDay} numberOfLines={1}>{session.dayTitle}</Text>
                     <Text style={s.rowValue}>
                       {entry.weight}<Text style={s.rowUnit}> lb</Text> × {entry.reps}

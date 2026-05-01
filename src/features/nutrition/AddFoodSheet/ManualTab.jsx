@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../../theme';
+import { colors, fonts, fontSize, radius, spacing } from '../../../theme';
 import { FieldLabel, SheetInput } from '../../../components/primitives/SheetInput';
+import { FoodSource } from '../../../constants/nutrition';
 
 export function ManualTab({ onLog }) {
   const [name, setName] = useState('');
@@ -28,7 +29,7 @@ export function ManualTab({ onLog }) {
       carbs: parseFloat(carbs) || 0,
       fat: parseFloat(fat) || 0,
       fiber: parseFloat(fiber) || 0,
-      source: 'manual',
+      source: FoodSource.MANUAL,
     }], []);
   };
 

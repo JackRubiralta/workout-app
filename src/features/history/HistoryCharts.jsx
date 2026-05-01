@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { colors, fonts, fontSize, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '../../theme';
 import { BarChart } from '../../components/primitives/BarChart';
 import {
   sessionVolume, workoutsByDayLastN, weeklyVolume, volumeTrend,
@@ -133,8 +133,7 @@ const s = StyleSheet.create({
   wrap: { gap: spacing.sm, marginTop: spacing.sm },
   eyebrow: { color: colors.textTertiary, marginLeft: 2, marginBottom: 2 },
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: colors.border,
+    ...surfaces.card,
     padding: spacing.md, gap: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { KEYS } from '../../../storage/keys';
 import { readJson, writeJson } from '../../../storage/asyncStore';
 import { ensureMigrated } from '../../../storage/migrate';
+import { roundInt, roundTenths } from '../../../utils/format';
 
 // Fiber: aim-for goal (≥30g daily is the typical recommendation).
 const DEFAULT_GOALS = { calories: 2000, protein: 150, carbs: 220, fat: 65, fiber: 30 };
@@ -61,11 +62,11 @@ export function useNutritionLog() {
           name: String(c.name ?? 'Item'),
           quantity: Number(c.quantity ?? 1),
           unit: String(c.unit ?? 'serving'),
-          calories: Math.round(Number(c.calories ?? 0)),
-          protein: Math.round(Number(c.protein ?? 0) * 10) / 10,
-          carbs: Math.round(Number(c.carbs ?? 0) * 10) / 10,
-          fat: Math.round(Number(c.fat ?? 0) * 10) / 10,
-          fiber: Math.round(Number(c.fiber ?? 0) * 10) / 10,
+          calories: roundInt(c.calories),
+          protein: roundTenths(c.protein),
+          carbs: roundTenths(c.carbs),
+          fat: roundTenths(c.fat),
+          fiber: roundTenths(c.fiber),
         }))
       : null;
     const entry = {
@@ -73,11 +74,11 @@ export function useNutritionLog() {
       name: item.name,
       quantity: item.quantity ?? 1,
       unit: item.unit ?? 'serving',
-      calories: Math.round(item.calories ?? 0),
-      protein: Math.round((item.protein ?? 0) * 10) / 10,
-      carbs: Math.round((item.carbs ?? 0) * 10) / 10,
-      fat: Math.round((item.fat ?? 0) * 10) / 10,
-      fiber: Math.round((item.fiber ?? 0) * 10) / 10,
+      calories: roundInt(item.calories),
+      protein: roundTenths(item.protein),
+      carbs: roundTenths(item.carbs),
+      fat: roundTenths(item.fat),
+      fiber: roundTenths(item.fiber),
       addedAt: new Date().toISOString(),
       photos: Array.isArray(photos) ? photos.slice(0, 3).map(p => ({ uri: p.uri ?? p })) : [],
       source: item.source ?? null, // 'photo' | 'text' | 'manual' | null

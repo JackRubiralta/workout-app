@@ -4,11 +4,10 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts, fontSize, radius, shadow, spacing } from '../../../theme';
 import { analyzeFoodPhotos } from '../services/anthropic';
-import { LoadingState } from './PulseDots';
+import { LoadingState } from '../../../components/primitives';
 import { ResultsView } from './ResultsView';
 import { NoFoodView } from './NoFoodView';
-
-const MAX_PHOTOS = 3;
+import { MAX_PHOTOS, PHOTO_QUALITY } from '../../../constants/nutrition';
 
 export function ScanTab({
   photos, setPhotos, results, setResults, onLog,
@@ -24,7 +23,7 @@ export function ScanTab({
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       base64: true,
-      quality: 0.6,
+      quality: PHOTO_QUALITY,
       allowsMultipleSelection: true,
       selectionLimit: MAX_PHOTOS - photos.length,
     });
@@ -40,7 +39,7 @@ export function ScanTab({
       Alert.alert('Permission needed', 'Allow camera access to take meal photos.');
       return;
     }
-    const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], base64: true, quality: 0.6 });
+    const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], base64: true, quality: PHOTO_QUALITY });
     if (res.canceled) return;
     const a = res.assets[0];
     setPhotos(prev => [...prev, { uri: a.uri, base64: a.base64, mediaType: a.mimeType ?? 'image/jpeg' }].slice(0, MAX_PHOTOS));

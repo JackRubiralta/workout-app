@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '../../theme';
+import { colors, fonts, fontSize, macroColors, radius, spacing, surfaces, text } from '../../theme';
 import { useNutritionData } from '../../shell/store';
-import { IconButton } from '../../components/primitives/Button';
-import { ChevronLeft, TrashIcon } from '../../shell/icons';
+import { DetailHeader, IconButton } from '../../components/primitives';
+import { TrashIcon } from '../../shell/icons';
+import { FoodSource, Confidence } from '../../constants/nutrition';
 import { confirm } from '../../utils/confirm';
 
 function MacroCell({ label, value, unit, color }) {
@@ -63,22 +64,25 @@ export function FoodItemDetailScreen({ navigation, route }) {
   }
 
   const photos = item.photos ?? [];
-  const sourceLabel = item.source === 'photo' ? 'PHOTO' : item.source === 'text' ? 'DESCRIBED' : item.source === 'manual' ? 'MANUAL' : null;
-  const confColor = item.confidence === 'high' ? colors.success
-                  : item.confidence === 'low' ? colors.danger
-                  : item.confidence === 'medium' ? colors.warning : null;
+  const sourceLabel = item.source === FoodSource.PHOTO ? 'PHOTO'
+                    : item.source === FoodSource.TEXT ? 'DESCRIBED'
+                    : item.source === FoodSource.MANUAL ? 'MANUAL'
+                    : null;
+  const confColor = item.confidence === Confidence.HIGH ? colors.success
+                  : item.confidence === Confidence.LOW ? colors.danger
+                  : item.confidence === Confidence.MEDIUM ? colors.warning
+                  : null;
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
-      <View style={s.header}>
-        <IconButton onPress={() => navigation.goBack()}>
-          <ChevronLeft color={colors.text} />
-        </IconButton>
-        <View style={{ flex: 1 }} />
-        <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
-          <TrashIcon color={colors.danger} />
-        </IconButton>
-      </View>
+      <DetailHeader
+        onBack={() => navigation.goBack()}
+        right={
+          <IconButton onPress={handleDelete} style={{ borderColor: colors.danger + '70', backgroundColor: colors.dangerBg }}>
+            <TrashIcon color={colors.danger} />
+          </IconButton>
+        }
+      />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.titleArea}>
@@ -112,7 +116,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
             <MacroCell label="PROTEIN" value={item.protein} unit="g" color={macroColors.protein} />
             <MacroCell label="CARBS" value={item.carbs} unit="g" color={macroColors.carbs} />
             <MacroCell label="FAT" value={item.fat} unit="g" color={macroColors.fat} />
-            <MacroCell label="FIBER" value={item.fiber ?? 0} unit="g" color={colors.textSecondary} />
+            <MacroCell label="FIBER" value={item.fiber ?? 0} unit="g" color={macroColors.fiber} />
           </View>
         </View>
 
@@ -133,7 +137,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={s.componentName} numberOfLines={1}>{c.name}</Text>
                   <Text style={s.componentMeta} numberOfLines={1}>
-                    {c.quantity} {c.unit} · {c.protein}P / {c.carbs}C / {c.fat}F{c.fiber > 0 ? ` / ${c.fiber}fib` : ''}
+                    {c.quantity} {c.unit} · {c.protein}P / {c.carbs}C / {c.fat}F{c.fiber > 0 ? ` / ${c.fiber}Fb` : ''}
                   </Text>
                 </View>
                 <Text style={s.componentKcal}>{c.calories}</Text>
@@ -168,14 +172,6 @@ export function FoodItemDetailScreen({ navigation, route }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
   scroll: { paddingHorizontal: spacing.lg },
 
   titleArea: { paddingTop: spacing.md, paddingBottom: spacing.lg, gap: spacing.sm },
@@ -209,17 +205,15 @@ const s = StyleSheet.create({
   macroBig: { fontSize: 42, fontWeight: '800', fontFamily: fonts.mono, letterSpacing: -0.5 },
   macroBigLabel: { fontSize: 11, fontWeight: '800', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1.6 },
 
-  macrosRow: { flexDirection: 'row', gap: spacing.sm },
+  macrosRow: { flexDirection: 'row', gap: spacing.xs + 2 },
   macroCell: {
+    ...surfaces.row,
     flex: 1, alignItems: 'center', gap: 2,
-    backgroundColor: colors.surface,
     paddingVertical: spacing.md, paddingHorizontal: spacing.xs,
-    borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
   },
-  macroValue: { fontSize: 20, fontWeight: '700', fontFamily: fonts.mono },
-  macroUnit: { fontSize: 11, color: colors.textTertiary, fontWeight: '600' },
-  macroLabel: { fontSize: 10, fontWeight: '800', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1.2 },
+  macroValue: { ...text.monoNumber, fontSize: fontSize.title3 },
+  macroUnit: { fontSize: fontSize.caption, color: colors.textTertiary, fontWeight: '600' },
+  macroLabel: { ...text.eyebrowSmall, fontFamily: fonts.mono },
 
   notesCard: {
     backgroundColor: colors.surface, borderRadius: radius.lg,
