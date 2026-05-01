@@ -1,13 +1,7 @@
 # Workout Tracker
 
- eas env:create \                                                                                                               
-    --environment preview \                                                                                                      
-    --name EXPO_PUBLIC_ANTHROPIC_API_KEY \                                                                                       
-    --value "6f8zT3adlGaIdDjK57pcbfEDZ3KwhibRLavyMFUYzDyeE7vEdOc6MROkkFpWF8-7wV8PhPkgE01vpD2EqSF0vw-A6QslgAA" \                                                                                                       
-    --visibility plaintext     
-
-Personal Expo app: workout programming + logging, rest-timer Live Activity, and an
-AI-powered nutrition tracker (photo or text → macros, via Claude).
+Expo + React Native app, TypeScript end-to-end, file-based routing via
+Expo Router.
 
 ## Local dev
 
@@ -15,9 +9,41 @@ AI-powered nutrition tracker (photo or text → macros, via Claude).
 npm install
 cp .env.example .env   # then paste your Anthropic key
 npx expo start -c      # -c clears Metro cache so EXPO_PUBLIC_* changes take effect
+npm run typecheck      # tsc --noEmit
 ```
 
 `.env` is gitignored. The only required variable is `EXPO_PUBLIC_ANTHROPIC_API_KEY`.
+
+## Architecture
+
+```
+app/                              # Expo Router routes ONLY (thin re-exports)
+  _layout.tsx                       Root stack with providers + active-session modal
+  index.tsx                         Redirects "/" → /(tabs)/workout
+  active-session.tsx                Modal route over the tab bar
+  (tabs)/_layout.tsx                Bottom tab bar
+  (tabs)/{nutrition,workout,tracking}/
+    _layout.tsx                     Per-tab Stack
+    index.tsx                       Tab landing screen
+    <detail>.tsx                    Detail screens
+
+src/
+  features/
+    nutrition/                      Macro logging + AI photo analysis
+    workouts/                       Programs, sessions, timers, Live Activity
+    tracking/                       Body weight + workout history
+  shared/
+    components/                     Cross-feature design-system primitives
+    hooks/                          App-wide hooks (useSettings, useKeyboardVisible)
+    state/store.tsx                 Composes feature hooks into context providers
+    theme/                          Tokens, typography, surfaces
+    utils/                          Pure helpers (date, format, ids, units, confirm)
+    copy/                           User-facing strings
+    types/                          App-wide types (settings)
+  storage/                          AsyncStorage wrapper, keys, v1→v2 migration
+```
+
+Path alias `@/*` resolves to `src/*`.
 
 ## Building for iOS (preview)
 

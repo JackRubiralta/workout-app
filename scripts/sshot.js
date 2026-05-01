@@ -203,7 +203,7 @@ async function main() {
   page.on('pageerror', e => console.error('[pageerror]', e.message));
   page.on('console', m => { if (m.type() === 'error') console.error('[console.error]', m.text()); });
 
-  await page.goto('http://localhost:8765/', { waitUntil: 'networkidle2', timeout: 30000 });
+  await page.goto(`http://localhost:${process.env.SSHOT_PORT || 8765}/`, { waitUntil: 'networkidle2', timeout: 30000 });
   await sleep(wait);
 
   for (const needle of taps) {

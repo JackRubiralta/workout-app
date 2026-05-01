@@ -2,6 +2,7 @@
   "expo": {
     "name": "Workout Tracker",
     "slug": "workout-tracker",
+    "scheme": "workouttracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,9 +30,11 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
+      "expo-router",
       [
         "expo-notifications",
         {
@@ -61,6 +64,9 @@
     "extra": {
       "eas": {
         "projectId": "72f050b5-abec-495d-b46f-7c0b986c2313"
+      },
+      "router": {
+        "origin": false
       }
     }
   }

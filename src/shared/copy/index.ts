@@ -1,0 +1,13 @@
+// Single import surface for all user-facing strings.
+//
+//   import { copy } from '@/shared/copy';
+//   <Text>{copy.empty.foodLog.title}</Text>
+//
+// Group strings by *intent* (empty states, error states, action labels)
+// rather than by where they happen to render — that way a refactor that
+// relocates a screen doesn't fragment the translations.
+import { emptyCopy } from './empty';
+
+export const copy = {
+  empty: emptyCopy,
+} as const;
