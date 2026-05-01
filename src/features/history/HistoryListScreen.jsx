@@ -57,16 +57,16 @@ export function HistoryListScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <View>
-          <Text style={text.largeTitle}>Tracking</Text>
-          <Text style={text.bodySecondary}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.eyebrow}>
             {sessions.length > 0
-              ? `${sessions.length} workout${sessions.length !== 1 ? 's' : ''} logged`
-              : 'Log workouts and weight'}
+              ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
+              : 'TRACKING'}
           </Text>
+          <Text style={text.hero}>Tracking</Text>
         </View>
         {sessions.length > 0 && (
-          <TouchableOpacity onPress={handleClear} hitSlop={10} activeOpacity={0.6}>
+          <TouchableOpacity onPress={handleClear} hitSlop={10} activeOpacity={0.6} style={styles.clearBtn}>
             <Text style={styles.clearText}>Clear</Text>
           </TouchableOpacity>
         )}
@@ -147,6 +147,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  clearText: { ...text.bodySecondary, color: colors.textTertiary, paddingHorizontal: spacing.xs, fontWeight: '600' },
-  list: { paddingHorizontal: spacing.md, gap: spacing.sm },
+  eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 4 },
+  clearBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
+  clearText: { ...text.buttonSmall, color: colors.textSecondary, fontWeight: '600' },
+  list: { paddingHorizontal: spacing.lg, gap: spacing.sm },
 });

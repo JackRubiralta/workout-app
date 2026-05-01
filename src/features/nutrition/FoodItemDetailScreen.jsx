@@ -135,7 +135,7 @@ export function FoodItemDetailScreen({ navigation, route }) {
 
         {item.notes ? (
           <View style={s.notesCard}>
-            <Text style={text.eyebrow}>NOTES</Text>
+            <Text style={[text.eyebrow, { color: colors.textTertiary }]}>NOTES</Text>
             <Text style={s.notesText}>{item.notes}</Text>
           </View>
         ) : null}

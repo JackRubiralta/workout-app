@@ -43,6 +43,6 @@ const s = StyleSheet.create({
   cell: { alignItems: 'center', flex: 1, gap: 2 },
   val: { ...text.monoNumber, fontSize: fontSize.title3 },
   unit: { fontSize: fontSize.footnote, fontWeight: '600', color: colors.textTertiary },
-  label: { fontSize: 10, fontWeight: '700', color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 1, textTransform: 'uppercase' },
-  remaining: { fontSize: 9, color: colors.textTertiary, fontFamily: fonts.mono, letterSpacing: 0.3 },
+  label: { ...text.eyebrowSmall, fontFamily: fonts.mono },
+  remaining: { ...text.monoCaption, fontSize: 10, color: colors.textTertiary, letterSpacing: 0.2 },
 });

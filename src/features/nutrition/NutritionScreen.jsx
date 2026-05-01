@@ -215,11 +215,11 @@ export function NutritionScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <DateStrip date={date} onChange={setDate} />
-
         <View style={s.captureWrap}>
           <CaptureCard onScan={() => openAdd('scan')} />
         </View>
+
+        <DateStrip date={date} onChange={setDate} />
 
         <View key={dateKey}>
           <RingsBlock totals={totals} goals={goals} />
@@ -246,7 +246,7 @@ export function NutritionScreen({ navigation }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  scroll: { paddingHorizontal: spacing.lg },
   header: {
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
@@ -255,7 +255,7 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
   },
   eyebrow: { ...text.eyebrowSmall, color: colors.textTertiary, marginBottom: 4 },
-  editGoalsBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm, marginBottom: 4 },
+  editGoalsBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
   editGoalsText: { ...text.buttonSmall, color: colors.textSecondary, fontWeight: '600' },
 
   captureWrap: { marginTop: spacing.md, marginBottom: spacing.md },

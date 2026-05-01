@@ -62,7 +62,7 @@ export function FoodLog({ items, onPressItem }) {
       {items.length === 0 ? (
         <View style={s.emptyBox}>
           <Text style={s.emptyTitle}>Nothing logged yet</Text>
-          <Text style={s.emptySub}>Tap "Snap a photo" above to record what you just ate.</Text>
+          <Text style={s.emptySub}>Tap "Add food" above to record what you just ate.</Text>
         </View>
       ) : (
         <View style={s.list}>

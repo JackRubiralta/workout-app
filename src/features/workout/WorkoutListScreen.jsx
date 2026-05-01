@@ -126,7 +126,7 @@ export function WorkoutListScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  scroll: { paddingHorizontal: spacing.lg },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-end',
