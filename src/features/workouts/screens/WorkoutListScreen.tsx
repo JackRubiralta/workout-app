@@ -7,6 +7,7 @@ import { colors, layout, radius, spacing, surfaces, text } from '@/shared/theme'
 import { useWorkoutData, useSessionData, useSettingsData } from '@/shared/state/store';
 import { DayCard } from '../components/DayCard';
 import {
+  DragList,
   ScreenHeader,
   SectionLabel,
   SegmentedControl,
@@ -32,10 +33,11 @@ const UNIT_OPTIONS: ReadonlyArray<SegmentedOption<UnitSystemValue>> = [
 
 export function WorkoutListScreen() {
   const router = useRouter();
-  const { config, addDay, resetConfig } = useWorkoutData();
+  const { config, addDay, reorderDay, resetConfig } = useWorkoutData();
   const { sessions } = useSessionData();
   const { unitSystem, setUnitSystem } = useSettingsData();
   const [assistantVisible, setAssistantVisible] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const handleCardPress = useCallback(
     (index: number) => {
@@ -43,6 +45,11 @@ export function WorkoutListScreen() {
     },
     [router],
   );
+
+  const toggleEditing = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setEditing(prev => !prev);
+  }, []);
 
   const handleResetProgram = useCallback(() => {
     confirm({
@@ -53,9 +60,11 @@ export function WorkoutListScreen() {
       onConfirm: () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
         resetConfig();
+        setEditing(false);
       },
     });
   }, [resetConfig]);
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -63,8 +72,8 @@ export function WorkoutListScreen() {
         <ScreenHeader
           eyebrow={todayLabel().toUpperCase()}
           title="Workout"
-          actionLabel="Reset"
-          onActionPress={handleResetProgram}
+          actionLabel={editing ? 'Done' : 'Edit'}
+          onActionPress={toggleEditing}
         />
 
         <View style={styles.weekWrap}>
@@ -72,8 +81,13 @@ export function WorkoutListScreen() {
         </View>
 
         <SectionLabel style={styles.sectionLabel}>PROGRAM</SectionLabel>
-        <View style={styles.list}>
-          {config.days.map((day, index) => {
+        <DragList
+          data={config.days}
+          enabled={editing}
+          itemSpacing={spacing.sm}
+          keyExtractor={(_, i) => `day-${i}`}
+          onReorder={reorderDay}
+          renderItem={({ item: day, index, handle }) => {
             const active = activeSessionForDay(sessions, index);
             const { done, total } = dayProgress(active, day);
             const isDone = active ? isDayComplete(active, day) : false;
@@ -81,25 +95,40 @@ export function WorkoutListScreen() {
               total || day.exercises.reduce((acc, ex) => acc + exerciseTotalSets(ex), 0);
             return (
               <DayCard
-                key={`${day.day}-${index}`}
                 day={day}
                 doneSets={done}
                 totalSets={totalSets}
                 exerciseCount={day.exercises.length}
                 isDone={isDone}
                 isInProgress={!!active && !isDone}
-                onPress={() => handleCardPress(index)}
+                onPress={editing ? undefined : () => handleCardPress(index)}
+                disabled={editing}
+                rightSlot={editing ? handle : undefined}
               />
             );
-          })}
+          }}
+        />
 
-          <TouchableOpacity onPress={addDay} style={styles.addBtn} activeOpacity={0.7}>
+        {editing ? (
+          <TouchableOpacity
+            onPress={handleResetProgram}
+            style={styles.resetBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.resetText}>Reset program</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={addDay}
+            style={[styles.addBtn, { marginTop: spacing.sm }]}
+            activeOpacity={0.7}
+          >
             <View style={styles.addIconWrap}>
               <PlusIcon color={colors.textSecondary} />
             </View>
             <Text style={styles.addText}>Add day</Text>
           </TouchableOpacity>
-        </View>
+        )}
 
         <SectionLabel style={styles.assistantLabel}>ASSISTANT</SectionLabel>
         <WorkoutAssistantTrigger onPress={() => setAssistantVisible(true)} />
@@ -132,7 +161,13 @@ const styles = StyleSheet.create({
   assistantLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
   unitsLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
 
-  list: { gap: spacing.sm },
+  resetBtn: {
+    alignSelf: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  resetText: { ...(text.buttonSmall as TextStyle), color: colors.danger, fontWeight: '600' },
 
   addBtn: {
     ...surfaces.dashed,

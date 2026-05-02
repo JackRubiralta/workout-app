@@ -14,6 +14,7 @@ export type UseWorkoutConfig = {
   addDay: () => void;
   deleteDay: (dayIndex: number) => void;
   reorderDay: (from: number, to: number) => void;
+  reorderExercise: (dayIndex: number, from: number, to: number) => void;
   resetConfig: () => void;
   /**
    * Replace the entire program in one shot. Used by the workout assistant
@@ -90,6 +91,27 @@ export function useWorkoutConfig(): UseWorkoutConfig {
     [setConfig],
   );
 
+  const reorderExercise = useCallback(
+    (dayIndex: number, from: number, to: number) => {
+      setConfig(prev => {
+        if (from === to) return prev;
+        const day = prev.days[dayIndex];
+        if (!day) return prev;
+        const exercises = [...day.exercises];
+        if (from < 0 || from >= exercises.length || to < 0 || to >= exercises.length) {
+          return prev;
+        }
+        const [moved] = exercises.splice(from, 1);
+        exercises.splice(to, 0, moved);
+        return {
+          ...prev,
+          days: prev.days.map((d, i) => (i === dayIndex ? { ...d, exercises } : d)),
+        };
+      });
+    },
+    [setConfig],
+  );
+
   const resetConfig = useCallback(() => setConfig(defaultConfig()), [setConfig]);
 
   const replaceConfig = useCallback(
@@ -102,5 +124,15 @@ export function useWorkoutConfig(): UseWorkoutConfig {
     [setConfig],
   );
 
-  return { config, loaded, updateDay, addDay, deleteDay, reorderDay, resetConfig, replaceConfig };
+  return {
+    config,
+    loaded,
+    updateDay,
+    addDay,
+    deleteDay,
+    reorderDay,
+    reorderExercise,
+    resetConfig,
+    replaceConfig,
+  };
 }

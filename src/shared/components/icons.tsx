@@ -80,6 +80,19 @@ export function PencilIcon({ color, size = 16 }: IconProps) {
   );
 }
 
+export function GripIcon({ color, size = 18 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={9} cy={6} r={1.4} fill={color} />
+      <Circle cx={15} cy={6} r={1.4} fill={color} />
+      <Circle cx={9} cy={12} r={1.4} fill={color} />
+      <Circle cx={15} cy={12} r={1.4} fill={color} />
+      <Circle cx={9} cy={18} r={1.4} fill={color} />
+      <Circle cx={15} cy={18} r={1.4} fill={color} />
+    </Svg>
+  );
+}
+
 export function TrashIcon({ color, size = 18 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

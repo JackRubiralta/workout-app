@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fonts, radius, shadow, spacing, surfaces, text } from '@/shared/theme';
@@ -12,7 +12,14 @@ export type DayCardProps = {
   exerciseCount: number;
   isDone: boolean;
   isInProgress: boolean;
-  onPress: () => void;
+  onPress?: () => void;
+  /**
+   * Replaces the trailing chevron / check icon. Used by the workout list to
+   * inject a drag handle when the program is in edit mode.
+   */
+  rightSlot?: ReactNode;
+  /** Disables the press handler (keeps the visual unchanged). */
+  disabled?: boolean;
 };
 
 export function DayCard({
@@ -23,6 +30,8 @@ export function DayCard({
   isDone,
   isInProgress,
   onPress,
+  rightSlot,
+  disabled = false,
 }: DayCardProps) {
   const accent = isDone ? colors.success : day.color;
   const pct = totalSets > 0 ? doneSets / totalSets : 0;
@@ -31,9 +40,11 @@ export function DayCard({
     <TouchableOpacity
       style={[styles.card, isInProgress && { borderColor: day.color, ...shadow.glow(day.color, 0.4) }]}
       onPress={() => {
+        if (disabled || !onPress) return;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         onPress();
       }}
+      disabled={disabled || !onPress}
       activeOpacity={0.85}
     >
       <View style={[styles.tint, { backgroundColor: accent + '12' }]} pointerEvents="none" />
@@ -72,11 +83,11 @@ export function DayCard({
       </View>
 
       <View style={styles.right}>
-        {isDone ? (
+        {rightSlot ?? (isDone ? (
           <CheckCircle color={colors.success} />
         ) : (
           <ChevronRight color={colors.textSecondary} size={20} />
-        )}
+        ))}
       </View>
     </TouchableOpacity>
   );

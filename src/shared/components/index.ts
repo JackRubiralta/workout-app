@@ -12,6 +12,8 @@ export { Chip } from './Chip';
 export type { ChipProps, ChipVariant } from './Chip';
 export { DetailHeader } from './DetailHeader';
 export type { DetailHeaderProps } from './DetailHeader';
+export { DragList } from './DragList';
+export type { DragListProps, DragListRenderInfo } from './DragList';
 export { DetailSheet } from './DetailSheet';
 export type { DetailSheetProps } from './DetailSheet';
 export { EmptyState } from './EmptyState';

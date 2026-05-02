@@ -9,6 +9,7 @@ import {
   Button,
   Chip,
   DetailHeader,
+  DragList,
   NumberedListRow,
   SectionLabel,
   StatCard,
@@ -28,12 +29,23 @@ export function DayPreStartScreen() {
   const dayIndexParam = Array.isArray(params.dayIndex) ? params.dayIndex[0] : params.dayIndex;
   const dayIndex = Number.parseInt(dayIndexParam ?? '0', 10) || 0;
 
-  const { config, updateDay, deleteDay } = useWorkoutData();
+  const { config, updateDay, deleteDay, reorderExercise } = useWorkoutData();
   const { sessions, startSession, resumeSession, abandonSession, finishSession } = useSessionData();
   const day = config.days[dayIndex];
 
   const [editingExIndex, setEditingExIndex] = useState<number | null>(null);
   const [dayEditOpen, setDayEditOpen] = useState(false);
+  const [editingList, setEditingList] = useState(false);
+
+  const toggleListEditing = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setEditingList(prev => !prev);
+  }, []);
+
+  const handleReorderExercise = useCallback(
+    (from: number, to: number) => reorderExercise(dayIndex, from, to),
+    [dayIndex, reorderExercise],
+  );
 
   const active = useMemo(() => activeSessionForDay(sessions, dayIndex), [sessions, dayIndex]);
   const progress = useMemo(
@@ -192,9 +204,21 @@ export function DayPreStartScreen() {
           </View>
         )}
 
-        <SectionLabel style={styles.sectionLabel}>EXERCISES</SectionLabel>
-        <View style={styles.exerciseList}>
-          {day.exercises.map((ex, i) => {
+        <View style={styles.exercisesHeader}>
+          <SectionLabel style={styles.sectionLabel}>EXERCISES</SectionLabel>
+          {day.exercises.length > 1 ? (
+            <TouchableOpacity onPress={toggleListEditing} hitSlop={10} style={styles.editToggle}>
+              <Text style={styles.editToggleText}>{editingList ? 'Done' : 'Edit'}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <DragList
+          data={day.exercises}
+          enabled={editingList}
+          itemSpacing={spacing.sm}
+          keyExtractor={(_, i) => `ex-${i}`}
+          onReorder={handleReorderExercise}
+          renderItem={({ item: ex, index: i, handle }) => {
             const total = exerciseTotalSets(ex);
             const tag = ex.tracksTime
               ? `${Math.floor(ex.durationSeconds / 60)}:${String(ex.durationSeconds % 60).padStart(2, '0')} timed`
@@ -205,37 +229,50 @@ export function DayPreStartScreen() {
                   : null;
             return (
               <NumberedListRow
-                key={i}
                 number={i + 1}
                 accent={day.color}
                 name={ex.name}
                 meta={`${ex.warmup ? '1 warm-up + ' : ''}${ex.sets} sets · ${ex.reps}${tag ? ` · ${tag}` : ''}`}
                 style={styles.exerciseRow}
                 trailing={
-                  <View style={styles.trailingRow}>
-                    <View style={styles.dots}>
-                      {Array.from({ length: total }).map((_, di) => (
-                        <View key={di} style={[styles.dot, { backgroundColor: day.color + '50' }]} />
-                      ))}
+                  editingList ? (
+                    handle
+                  ) : (
+                    <View style={styles.trailingRow}>
+                      <View style={styles.dots}>
+                        {Array.from({ length: total }).map((_, di) => (
+                          <View key={di} style={[styles.dot, { backgroundColor: day.color + '50' }]} />
+                        ))}
+                      </View>
+                      <PencilIcon color={colors.textTertiary} size={14} />
                     </View>
-                    <PencilIcon color={colors.textTertiary} size={14} />
-                  </View>
+                  )
                 }
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                  setEditingExIndex(i);
-                }}
+                onPress={
+                  editingList
+                    ? undefined
+                    : () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                        setEditingExIndex(i);
+                      }
+                }
               />
             );
-          })}
+          }}
+        />
 
-          <TouchableOpacity onPress={handleAddExercise} style={styles.addRow} activeOpacity={0.75}>
+        {!editingList && (
+          <TouchableOpacity
+            onPress={handleAddExercise}
+            style={[styles.addRow, { marginTop: spacing.sm }]}
+            activeOpacity={0.75}
+          >
             <View style={styles.addIcon}>
               <PlusIcon color={colors.textSecondary} />
             </View>
             <Text style={styles.addText}>Add exercise</Text>
           </TouchableOpacity>
-        </View>
+        )}
       </ScrollView>
 
       <View style={styles.cta}>
@@ -330,7 +367,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  sectionLabel: { marginBottom: spacing.sm, marginTop: spacing.xs },
+  sectionLabel: { marginBottom: 0, marginTop: 0 },
+  exercisesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  editToggle: { paddingVertical: 4, paddingHorizontal: spacing.sm },
+  editToggleText: { ...(text.buttonSmall as TextStyle), color: colors.textSecondary, fontWeight: '600' },
   exerciseList: { gap: spacing.sm },
   exerciseRow: {
     ...surfaces.row,
