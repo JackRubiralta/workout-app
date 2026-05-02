@@ -19,10 +19,6 @@ export const DEFAULT_GOALS: MacroGoals = {
   fiber: 40,
 };
 
-// Image quality passed to expo-image-picker. 0.6 is roughly visually
-// indistinguishable for nutrition analysis but ~3× smaller payload than 1.0.
-export const PHOTO_QUALITY = 0.6;
-
 export const FoodSource = {
   PHOTO: 'photo',
   TEXT: 'text',

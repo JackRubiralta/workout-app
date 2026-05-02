@@ -14,17 +14,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts, fontSize, radius, shadow, spacing, surfaces, text } from '@/shared/theme';
 import { Button, LoadingState } from '@/shared/components';
 import { analyzeFood } from '../../services/nutritionAiService';
+import { prepareFoodImage } from '../../utils/prepareFoodImage';
 import { ResultsView, type AnalyzeResultsState } from './ResultsView';
 import { NoFoodView } from './NoFoodView';
-import { FoodSource, MAX_PHOTOS, PHOTO_QUALITY } from '../../constants/nutritionConstants';
-import type {
-  FoodPhoto,
-  FoodSourceValue,
-} from '../../types/nutritionTypes';
+import { FoodSource, MAX_PHOTOS } from '../../constants/nutritionConstants';
+import type { FoodSourceValue } from '../../types/nutritionTypes';
+import type { CapturedPhoto } from './AddFoodSheet';
 
 const QUERY_MAX_CHARS = 500;
-
-type CapturedPhoto = FoodPhoto & { base64: string };
 
 type LogItemsArg = Parameters<React.ComponentProps<typeof ResultsView>['onLog']>;
 
@@ -70,11 +67,16 @@ export function AnalyzeFoodForm({
 
   const appendPhotos = useCallback(
     (assets: ImagePicker.ImagePickerAsset[]) => {
-      const next: CapturedPhoto[] = assets.map(a => ({
-        uri: a.uri,
-        base64: a.base64 ?? '',
-        mediaType: a.mimeType ?? 'image/jpeg',
-      }));
+      // Capture URI + native dimensions only. The expensive base64 + resize
+      // step is deferred to `handleAnalyze` so picking stays instant and we
+      // don't hold multi-MB base64 strings in React state.
+      const next: CapturedPhoto[] = assets
+        .filter(a => a.uri)
+        .map(a => ({
+          uri: a.uri,
+          width: a.width ?? 0,
+          height: a.height ?? 0,
+        }));
       setPhotos(prev => [...prev, ...next].slice(0, MAX_PHOTOS));
     },
     [setPhotos],
@@ -87,10 +89,13 @@ export function AnalyzeFoodForm({
       Alert.alert('Permission needed', 'Allow photo library access to attach meal photos.');
       return;
     }
+    // `quality: 1` and `base64: false` skip an unnecessary recompression
+    // pass — `prepareFoodImage` does a single resize + JPEG encode at
+    // analyze time.
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      base64: true,
-      quality: PHOTO_QUALITY,
+      base64: false,
+      quality: 1,
       allowsMultipleSelection: true,
       selectionLimit: remainingPhotoSlots,
     });
@@ -107,8 +112,8 @@ export function AnalyzeFoodForm({
     }
     const res = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
-      base64: true,
-      quality: PHOTO_QUALITY,
+      base64: false,
+      quality: 1,
     });
     if (res.canceled) return;
     appendPhotos(res.assets);
@@ -126,13 +131,25 @@ export function AnalyzeFoodForm({
     if (!canAnalyze || busy) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setBusy(true);
-    setStatus('Analyzing…');
     setResults(null);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
+      // Prep all photos in parallel before sending. Resize + JPEG encode is
+      // CPU-bound and can take a second or two per image on older phones —
+      // running them concurrently means the wall-clock cost is bounded by
+      // the slowest image, not the sum.
+      let preparedImages: Array<{ base64: string; mediaType: string }> = [];
+      if (photos.length > 0) {
+        setStatus(photos.length > 1 ? `Preparing ${photos.length} photos…` : 'Preparing photo…');
+        const prepared = await Promise.all(photos.map(p => prepareFoodImage(p)));
+        if (ctrl.signal.aborted) return;
+        preparedImages = prepared.map(p => ({ base64: p.base64, mediaType: p.mediaType ?? 'image/jpeg' }));
+      }
+
+      setStatus('Analyzing…');
       const result = await analyzeFood({
-        images: photos.map(p => ({ base64: p.base64, mediaType: p.mediaType })),
+        images: preparedImages,
         query: trimmedQuery,
         signal: ctrl.signal,
         onProgress: msg => setStatus(msg),
@@ -145,7 +162,7 @@ export function AnalyzeFoodForm({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
       const e = err as Error;
-      if (e.name !== 'AbortError') {
+      if (e.name !== 'AbortError' && !ctrl.signal.aborted) {
         Alert.alert('Analysis failed', e.message);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       }

@@ -11,7 +11,18 @@ import type {
   FoodSourceValue,
 } from '../../types/nutritionTypes';
 
-type CapturedPhoto = FoodPhoto & { base64: string };
+/**
+ * In-memory representation of a photo the user has selected but not yet
+ * sent to the AI. We capture only the URI + native dimensions here — the
+ * base64 payload is generated lazily by `prepareFoodImage` at analyze
+ * time so the picker UI stays instant and we never hold large strings in
+ * React state. Exported so `AnalyzeFoodForm` consumes the same shape.
+ */
+export type CapturedPhoto = {
+  uri: string;
+  width: number;
+  height: number;
+};
 
 type LogMeta = { mealName: string | null };
 

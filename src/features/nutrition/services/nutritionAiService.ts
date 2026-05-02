@@ -16,20 +16,71 @@ import type {
 const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+// Haiku 4.5 — cheapest model with vision. Food analysis is a bounded
+// extraction task (identify components → estimate macros) that doesn't
+// need Sonnet-tier reasoning, and `prepareFoodImage` already caps each
+// photo at ~1k input tokens so the per-call cost lives in the floor of
+// Haiku pricing ($1/$5 per 1M). If accuracy on portion estimation
+// regresses against real meals, swap to `claude-sonnet-4-6` here — the
+// rest of the request shape is identical.
+const CLAUDE_MODEL = 'claude-haiku-4-5';
 
-// ─── Prompts ────────────────────────────────────────────────────────────────
+// ─── Output schema ──────────────────────────────────────────────────────────
+// Mirrors `RawAnalyzeResponse` below and (after `normalizeFinal`)
+// `AnalyzeFoodResult`. Anthropic's structured-outputs JSON Schema subset
+// requires `additionalProperties: false` on every object and rejects
+// numeric/string constraints (`minimum`, `maxLength`, etc.) — those are
+// enforced in `normalizeFinal` instead.
+//
+// Keeping the schema next to the prompt is deliberate: the two are a
+// single contract with the model. If a field changes here, the prompt
+// guidance and the normaliser must both be updated in lockstep.
 
-const JSON_SHAPE = `{
-  "food_detected": boolean,
-  "meal_name": string,
-  "items": [{ "name": string, "quantity": number, "unit": string, "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number }],
-  "totals": { "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number },
-  "confidence": "high" | "medium" | "low",
-  "notes": string
-}
+const MACRO_PROPERTIES = {
+  calories: { type: 'number' },
+  protein: { type: 'number' },
+  carbs: { type: 'number' },
+  fat: { type: 'number' },
+  fiber: { type: 'number' },
+} as const;
+const MACRO_REQUIRED = ['calories', 'protein', 'carbs', 'fat', 'fiber'] as const;
 
-If neither the photo(s) nor the text describes food (e.g. a person, an object, a screenshot, a blank/blurry image, an animal not being eaten, an empty string), set "food_detected": false, leave "items" and "totals" empty/zero, and put a one-sentence description of what the input actually shows in "notes" (e.g. "Photo shows a dog on a couch — no food in frame."). Do not invent food in this case.`;
+const NUTRITION_OUTPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    food_detected: { type: 'boolean' },
+    meal_name: { type: 'string' },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          quantity: { type: 'number' },
+          unit: { type: 'string' },
+          ...MACRO_PROPERTIES,
+        },
+        required: ['name', 'quantity', 'unit', ...MACRO_REQUIRED],
+        additionalProperties: false,
+      },
+    },
+    totals: {
+      type: 'object',
+      properties: { ...MACRO_PROPERTIES },
+      required: [...MACRO_REQUIRED],
+      additionalProperties: false,
+    },
+    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    notes: { type: 'string' },
+  },
+  required: ['food_detected', 'meal_name', 'items', 'totals', 'confidence', 'notes'],
+  additionalProperties: false,
+} as const;
+
+// ─── Prompt ─────────────────────────────────────────────────────────────────
+// The schema above guarantees the response *shape*. The system prompt only
+// needs to describe *behaviour* — when to fill what, how to reconcile
+// signals, and the confidence rubric. No more inline schema literal.
 
 const SYSTEM_PROMPT = `You are a precise nutrition analyst. Identify each distinct food component the user is logging and estimate its calories + macros using your training knowledge of standard nutrition databases (USDA / common food databases).
 
@@ -44,19 +95,14 @@ When BOTH a photo and text are provided:
   • The photo is authoritative for VISUAL IDENTIFICATION of components (what's actually on the plate).
   • Never silently ignore either input. If they conflict beyond reconciliation, prefer the text and add a short caveat in "notes".
 
-Return a final JSON object with this exact shape:
-${JSON_SHAPE}
+If neither the photo(s) nor the text describes food (e.g. a person, an object, a screenshot, a blank/blurry image, an animal not being eaten, an empty string), set "food_detected": false, leave "items" empty and every "totals" macro at 0, and put a one-sentence description of what the input actually shows in "notes" (e.g. "Photo shows a dog on a couch — no food in frame."). Do not invent food in this case.
 
-"meal_name" is a short, descriptive name for the whole plate/meal as a single phrase (e.g. "Sushi platter", "Chicken & rice bowl", "Greek yogurt with berries", "Avocado toast"). Keep it under 32 characters. If only one component is shown, use its name.
-
-Confidence rubric:
-  • "high" — items clearly identifiable AND portions are well-anchored (clear text quantity, multiple photo angles, utensils/plate for scale)
-  • "medium" — items identified but portion is partly inferred
-  • "low" — ambiguous, partially obscured, hard to identify, or vague text
-
-Use the "notes" field for short caveats (e.g. "Assumed olive oil; could be butter", "Trusted user's '3 eggs' over the 2 visible in frame"). Keep notes under 200 characters.
-
-Return ONLY the JSON object — no prose, no markdown fences. Use grams or common household units (cup, tbsp, slice, piece, oz, medium, large) as appropriate.`;
+Field guidance:
+  • "meal_name" — a short, descriptive name for the whole plate/meal as a single phrase (e.g. "Sushi platter", "Chicken & rice bowl", "Greek yogurt with berries", "Avocado toast"). Keep it under 32 characters. If only one component is shown, use its name.
+  • "items[].unit" — grams or common household units ("cup", "tbsp", "slice", "piece", "oz", "medium", "large") as appropriate.
+  • "totals" — sum of all items. The app recomputes these defensively, but emit accurate values.
+  • "confidence" — "high" when items are clearly identifiable AND portions are well-anchored (clear text quantity, multiple photo angles, utensils/plate for scale); "medium" when items are identified but portion is partly inferred; "low" when ambiguous, partially obscured, hard to identify, or vague text.
+  • "notes" — short caveats only (e.g. "Assumed olive oil; could be butter", "Trusted user's '3 eggs' over the 2 visible in frame"). Keep under 200 characters. Empty string is fine when no caveat applies.`;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -68,16 +114,36 @@ function assertAnthropicKey(): void {
   }
 }
 
+/**
+ * Parse the model's text response into JSON.
+ *
+ * Structured outputs (`output_config.format`) guarantees the response is
+ * valid JSON matching `NUTRITION_OUTPUT_SCHEMA` when the model produces
+ * a normal turn — so the body is just `JSON.parse`. We still strip
+ * stray markdown fences and recover the first object literal as a
+ * defence-in-depth fallback for two cases the API doesn't shield us
+ * from: a refusal (`stop_reason: "refusal"`), and a truncated response
+ * (`stop_reason: "max_tokens"`). Both produce non-conforming text; a
+ * loud parse error is the right outcome.
+ */
 function extractJson(text: string): unknown {
   const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   try {
     return JSON.parse(stripped);
   } catch {
-    /* fall through */
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        /* fall through to the thrown error below */
+      }
+    }
+    throw new Error(
+      'Nutrition assistant did not return parseable JSON. First 200 chars: ' +
+        stripped.slice(0, 200),
+    );
   }
-  const match = stripped.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('Claude did not return parseable JSON. Got: ' + stripped.slice(0, 200));
-  return JSON.parse(match[0]);
 }
 
 type RawAnalyzedItem = {
@@ -174,6 +240,12 @@ async function callAnthropic({ system, messages, signal }: AnthropicCallArgs): P
       max_tokens: 2048,
       system,
       messages,
+      // Structured outputs — the model is constrained to emit JSON that
+      // validates against NUTRITION_OUTPUT_SCHEMA. Replaces the inline
+      // schema literal we used to embed in the system prompt.
+      output_config: {
+        format: { type: 'json_schema', schema: NUTRITION_OUTPUT_SCHEMA },
+      },
     }),
   });
   if (!res.ok) {
