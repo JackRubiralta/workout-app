@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,8 @@ import {
 import { PlusIcon } from '@/shared/components/icons';
 import { UnitSystem, type UnitSystemValue } from '@/shared/utils/units';
 import { WeekStrip } from '../components/WeekStrip';
+import { WorkoutAssistantTrigger } from '../components/WorkoutAssistantTrigger';
+import { WorkoutAssistantSheet } from '../components/WorkoutAssistantSheet';
 import { activeSessionForDay, dayProgress, isDayComplete } from '../utils/progressUtils';
 import { exerciseTotalSets } from '../constants/exerciseDefaults';
 import { confirm } from '@/shared/utils/confirm';
@@ -33,6 +35,7 @@ export function WorkoutListScreen() {
   const { config, addDay, resetConfig } = useWorkoutData();
   const { sessions } = useSessionData();
   const { unitSystem, setUnitSystem } = useSettingsData();
+  const [assistantVisible, setAssistantVisible] = useState(false);
 
   const handleCardPress = useCallback(
     (index: number) => {
@@ -98,6 +101,9 @@ export function WorkoutListScreen() {
           </TouchableOpacity>
         </View>
 
+        <SectionLabel style={styles.assistantLabel}>ASSISTANT</SectionLabel>
+        <WorkoutAssistantTrigger onPress={() => setAssistantVisible(true)} />
+
         <SectionLabel style={styles.unitsLabel}>UNITS</SectionLabel>
         <SegmentedControl
           value={unitSystem}
@@ -107,6 +113,11 @@ export function WorkoutListScreen() {
 
         <View style={{ height: layout.tabBarClearance }} />
       </ScrollView>
+
+      <WorkoutAssistantSheet
+        visible={assistantVisible}
+        onClose={() => setAssistantVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -118,6 +129,7 @@ const styles = StyleSheet.create({
   weekWrap: { marginBottom: spacing.lg },
 
   sectionLabel: { marginBottom: spacing.sm },
+  assistantLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
   unitsLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
 
   list: { gap: spacing.sm },

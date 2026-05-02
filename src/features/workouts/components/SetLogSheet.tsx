@@ -38,6 +38,12 @@ export type SetLogSheetProps = {
   dayColor: string;
   defaultWeight: number;
   defaultReps: number;
+  /**
+   * Number of working sets that contributed to `defaultWeight`/`defaultReps`.
+   * 0 means no history; 1..5 means the picker is seeded from that many
+   * recent working sets. Drives the "FROM N-SET AVG" eyebrow above the picker.
+   */
+  defaultsSampleSize?: number;
   tracksWeight?: boolean;
   tracksReps?: boolean;
   trendHint?: string | null;
@@ -53,6 +59,7 @@ export function SetLogSheet({
   dayColor,
   defaultWeight,
   defaultReps,
+  defaultsSampleSize = 0,
   tracksWeight = true,
   tracksReps = true,
   trendHint,
@@ -104,10 +111,30 @@ export function SetLogSheet({
           </TouchableOpacity>
         </View>
 
-        {trendHint ? (
-          <View style={s.trend}>
-            <Text style={s.trendLabel}>TREND</Text>
-            <Text style={s.trendValue}>{trendHint}</Text>
+        {(defaultsSampleSize > 0 || trendHint) ? (
+          <View style={s.contextStack}>
+            {defaultsSampleSize > 0 ? (
+              <View style={s.contextRow}>
+                <Text style={s.contextLabel}>
+                  {defaultsSampleSize >= 5
+                    ? 'AVG · LAST 5'
+                    : `AVG · LAST ${defaultsSampleSize}`}
+                </Text>
+                <Text style={[s.contextValue, { color: colors.text }]}>
+                  {tracksWeight
+                    ? `${formatWeight(Math.round(fromLb(defaultWeight, unitSystem) * 10) / 10)} ${unitLabel(unitSystem)}`
+                    : ''}
+                  {tracksWeight && tracksReps ? ' × ' : ''}
+                  {tracksReps ? `${defaultReps}` : ''}
+                </Text>
+              </View>
+            ) : null}
+            {trendHint ? (
+              <View style={s.contextRow}>
+                <Text style={s.contextLabel}>LAST</Text>
+                <Text style={s.contextValue}>{trendHint.replace(/^last\s+/i, '')}</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -180,16 +207,29 @@ const s = StyleSheet.create({
   skipBtn: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
   skipText: { ...(text.monoSubhead as TextStyle), color: colors.textSecondary, fontWeight: '500' },
 
-  trend: {
+  contextStack: {
     ...surfaces.inset,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    gap: 2,
+  },
+  contextRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 4,
   },
-  trendLabel: { ...(text.eyebrowSmall as TextStyle), color: colors.textTertiary },
-  trendValue: { flex: 1, ...(text.monoSubhead as TextStyle), color: colors.textSecondary, textAlign: 'right' },
+  contextLabel: {
+    ...(text.eyebrowSmall as TextStyle),
+    color: colors.textTertiary,
+    minWidth: 76,
+  },
+  contextValue: {
+    flex: 1,
+    ...(text.monoSubhead as TextStyle),
+    color: colors.textSecondary,
+    textAlign: 'right',
+  },
 
   controls: { flexDirection: 'row', gap: spacing.md },
   col: { flex: 1, gap: spacing.xs },

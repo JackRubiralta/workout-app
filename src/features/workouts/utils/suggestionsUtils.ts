@@ -45,24 +45,23 @@ export function lastTwoWorkingSets(
 
 export type AverageOfLast = { weight: number; reps: number; count: number };
 
+/**
+ * Walk session history newest-first and return the mean weight & reps over
+ * the most recent up-to-N working sets of `exerciseName`. Skips abandoned
+ * sessions and any session whose id matches `excludeSessionId`.
+ *
+ * Used as a passive "your historical norm" hint. For active "what should
+ * the picker default to" use `suggestSetDefaults` instead — that one
+ * INCLUDES the current session because today's earlier sets are the most
+ * relevant signal for the next set.
+ */
 export function averageOfLastN(
   sessions: ReadonlyArray<WorkoutSession>,
   exerciseName: string,
   n = 5,
   excludeSessionId: string | null = null,
 ): AverageOfLast | null {
-  const collected: SetEntry[] = [];
-  for (const s of sessions) {
-    if (s.id === excludeSessionId) continue;
-    for (let i = s.entries.length - 1; i >= 0; i--) {
-      const e = s.entries[i];
-      if (e.exerciseName === exerciseName && isWorking(e)) {
-        collected.push(e);
-        if (collected.length >= n) break;
-      }
-    }
-    if (collected.length >= n) break;
-  }
+  const collected = collectRecentWorkingSets(sessions, exerciseName, n, excludeSessionId);
   if (collected.length === 0) return null;
   const avgWeight = collected.reduce((a, b) => a + b.weight, 0) / collected.length;
   const avgReps = collected.reduce((a, b) => a + b.reps, 0) / collected.length;
@@ -71,6 +70,62 @@ export function averageOfLastN(
     reps: Math.round(avgReps),
     count: collected.length,
   };
+}
+
+export type SuggestedSetDefaults = {
+  /** Mean weight (lb) over the last `sampleSize` working sets, rounded to 2.5lb. */
+  weight: number;
+  /** Mean reps over the last `sampleSize` working sets, rounded to nearest integer. */
+  reps: number;
+  /** How many working sets actually contributed (1..n). */
+  sampleSize: number;
+};
+
+/**
+ * Suggest reasonable defaults for the next set of `exerciseName`. Averages
+ * the most recent `n` working sets across all sessions, INCLUDING any sets
+ * already logged in the current session — fatigue and the user's intent
+ * for today are the strongest signal for what they'll lift next.
+ *
+ * Returns null when no working sets exist yet for this exercise. Callers
+ * should fall back to 0 / 0 so the picker starts at the bottom of its
+ * range rather than at a stale value.
+ */
+export function suggestSetDefaults(
+  sessions: ReadonlyArray<WorkoutSession>,
+  exerciseName: string,
+  n = 5,
+): SuggestedSetDefaults | null {
+  const collected = collectRecentWorkingSets(sessions, exerciseName, n, null);
+  if (collected.length === 0) return null;
+  const avgWeight = collected.reduce((a, b) => a + b.weight, 0) / collected.length;
+  const avgReps = collected.reduce((a, b) => a + b.reps, 0) / collected.length;
+  return {
+    weight: roundWeight(avgWeight),
+    reps: Math.round(avgReps),
+    sampleSize: collected.length,
+  };
+}
+
+function collectRecentWorkingSets(
+  sessions: ReadonlyArray<WorkoutSession>,
+  exerciseName: string,
+  limit: number,
+  excludeSessionId: string | null,
+): SetEntry[] {
+  const out: SetEntry[] = [];
+  for (const s of sessions) {
+    if (excludeSessionId && s.id === excludeSessionId) continue;
+    if (s.abandonedAt) continue;
+    for (let i = s.entries.length - 1; i >= 0; i--) {
+      const e = s.entries[i];
+      if (e.exerciseName !== exerciseName) continue;
+      if (!isWorking(e)) continue;
+      out.push(e);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
 }
 
 export function epley(weight: number, reps: number): number {

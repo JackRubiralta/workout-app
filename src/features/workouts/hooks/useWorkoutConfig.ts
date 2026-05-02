@@ -15,6 +15,12 @@ export type UseWorkoutConfig = {
   deleteDay: (dayIndex: number) => void;
   reorderDay: (from: number, to: number) => void;
   resetConfig: () => void;
+  /**
+   * Replace the entire program in one shot. Used by the workout assistant
+   * to apply AI-proposed changes atomically. Day numbers are renormalised
+   * to 1-based to match `addDay` / `deleteDay` invariants.
+   */
+  replaceConfig: (next: WorkoutConfig) => void;
 };
 
 export function useWorkoutConfig(): UseWorkoutConfig {
@@ -86,5 +92,15 @@ export function useWorkoutConfig(): UseWorkoutConfig {
 
   const resetConfig = useCallback(() => setConfig(defaultConfig()), [setConfig]);
 
-  return { config, loaded, updateDay, addDay, deleteDay, reorderDay, resetConfig };
+  const replaceConfig = useCallback(
+    (next: WorkoutConfig) => {
+      setConfig({
+        ...next,
+        days: next.days.map((d, i) => ({ ...d, day: i + 1 })),
+      });
+    },
+    [setConfig],
+  );
+
+  return { config, loaded, updateDay, addDay, deleteDay, reorderDay, resetConfig, replaceConfig };
 }

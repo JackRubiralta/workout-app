@@ -15,12 +15,15 @@ import { ExerciseHistorySheet } from '../components/ExerciseHistorySheet';
 import { SessionTopBar } from '../components/SessionTopBar';
 import { SessionStage } from '../components/SessionStage';
 import { SessionFooter } from '../components/SessionFooter';
+import { WorkoutCompleteView } from '../components/WorkoutCompleteView';
+import { Button, EmptyState } from '@/shared/components';
 import { findNextSet, isDayComplete, dayProgress, restDurationFor } from '../utils/progressUtils';
-import { lastTwoWorkingSets, averageOfLastN } from '../utils/suggestionsUtils';
+import { lastTwoWorkingSets, averageOfLastN, suggestSetDefaults } from '../utils/suggestionsUtils';
 import { resolvePrimaryAction } from '../utils/resolvePrimaryAction';
 import { exerciseTotalSets, getSetLabel } from '../constants/exerciseDefaults';
 import { fromLb, unitLabel } from '@/shared/utils/units';
 import { confirm } from '@/shared/utils/confirm';
+import type { WorkoutSession } from '../types/workoutTypes';
 
 type LogSheetState = {
   exerciseIndex: number;
@@ -30,6 +33,8 @@ type LogSheetState = {
   isWarmup: boolean;
   defaultWeight: number;
   defaultReps: number;
+  /** How many working sets were averaged to produce the defaults (0 = none). */
+  defaultsSampleSize: number;
   tracksWeight: boolean;
   tracksReps: boolean;
   trendHint: string | null;
@@ -61,6 +66,10 @@ export function ActiveSessionScreen() {
   const { isResting, secondsLeft, totalSeconds, startRest, skipRest } = useRestTimer();
   const [logSheet, setLogSheet] = useState<LogSheetState | null>(null);
   const [historyExercise, setHistoryExercise] = useState<string | null>(null);
+  // Snapshot of the session at the moment we detect completion. We need this
+  // because `completeSession()` nulls out `activeSessionId`, which would
+  // otherwise leave us with `activeSession === null` and nothing to render.
+  const [finishedSnapshot, setFinishedSnapshot] = useState<WorkoutSession | null>(null);
 
   const isDayDone = useMemo(() => isDayComplete(activeSession, day), [activeSession, day]);
   const currentPos = useMemo(
@@ -141,11 +150,20 @@ export function ActiveSessionScreen() {
   });
 
   useEffect(() => {
-    if (isDayDone && activeSession && !activeSession.completedAt) {
-      completeSession();
-      live.onEnd();
-    }
-  }, [isDayDone, activeSession, completeSession, live]);
+    if (!isDayDone || !activeSession || activeSession.completedAt || finishedSnapshot) return;
+    // Snapshot first — once `completeSession` runs the session leaves the
+    // active slot, so we render the recap from this captured copy.
+    setFinishedSnapshot({
+      ...activeSession,
+      completedAt: new Date().toISOString(),
+    });
+    completeSession();
+    live.onEnd();
+    skipRest();
+    setTimer.cancel();
+    setLogSheet(null);
+    setHistoryExercise(null);
+  }, [isDayDone, activeSession, finishedSnapshot, completeSession, live, skipRest, setTimer]);
 
   const handleStartSetTimer = useCallback(() => {
     if (!currentEx || !currentPos) return;
@@ -189,7 +207,13 @@ export function ActiveSessionScreen() {
     const tracksWeight = ex.tracksWeight !== false;
     const tracksReps = ex.tracksReps !== false;
     if (tracksWeight || tracksReps) {
-      const avg = averageOfLastN(sessions, ex.name, 5, activeSession?.id);
+      // Defaults pull from the average of the last 5 working sets of this
+      // exercise (including any already logged in the current session — see
+      // `suggestSetDefaults`). The trend chip below shows the prior two
+      // working-set pairs from previous sessions only, so the user can see
+      // both "what the picker is suggesting" and "what I actually did last
+      // time".
+      const suggested = suggestSetDefaults(sessions, ex.name, 5);
       const trendPairs = lastTwoWorkingSets(sessions, ex.name, activeSession?.id);
       const trend = trendPairs
         .map(({ entry }) => `${Math.round(fromLb(entry.weight, unitSystem) * 10) / 10}×${entry.reps}`)
@@ -200,8 +224,9 @@ export function ActiveSessionScreen() {
         exerciseName: ex.name,
         setLabel: setLbl,
         isWarmup,
-        defaultWeight: tracksWeight && avg ? avg.weight : 0,
-        defaultReps: tracksReps && avg ? avg.reps : 0,
+        defaultWeight: tracksWeight && suggested ? suggested.weight : 0,
+        defaultReps: tracksReps && suggested ? suggested.reps : 0,
+        defaultsSampleSize: suggested?.sampleSize ?? 0,
         tracksWeight,
         tracksReps,
         trendHint: trend ? `last ${trend}` : null,
@@ -271,6 +296,11 @@ export function ActiveSessionScreen() {
     router.back();
   }, [activeSession, completeSession, router, live]);
 
+  const handleFinishedDone = useCallback(() => {
+    setFinishedSnapshot(null);
+    router.back();
+  }, [router]);
+
   const handleSkipExercise = useCallback(() => {
     if (!currentEx || !day || currentPos == null) return;
     confirm({
@@ -287,8 +317,34 @@ export function ActiveSessionScreen() {
     });
   }, [currentEx, day, currentPos, skipExercise, skipRest, setTimer]);
 
+  if (day && finishedSnapshot) {
+    return (
+      <WorkoutCompleteView
+        session={finishedSnapshot}
+        day={day}
+        unitSystem={unitSystem}
+        onDone={handleFinishedDone}
+      />
+    );
+  }
+
   if (!day || !activeSession) {
-    return <SafeAreaView style={s.container} edges={['top', 'bottom']} />;
+    // Reachable when the user pauses/abandons mid-session and then navigates
+    // back to this route, or when the route is opened with a stale dayIndex.
+    // Render an explicit "no session" state instead of a blank screen.
+    return (
+      <SafeAreaView style={[s.container, s.noSession]} edges={['top', 'bottom']}>
+        <EmptyState
+          title={day ? 'No active session' : 'Workout not found'}
+          subtitle={
+            day
+              ? 'This day has no workout in progress. Start one from the day card.'
+              : 'The day this session belonged to is no longer in your program.'
+          }
+          action={<Button label="Back to Days" onPress={() => router.back()} />}
+        />
+      </SafeAreaView>
+    );
   }
 
   const undoEnabled = (activeSession.undoStack?.length ?? 0) > 0;
@@ -368,6 +424,7 @@ export function ActiveSessionScreen() {
         dayColor={day.color}
         defaultWeight={logSheet?.defaultWeight ?? 0}
         defaultReps={logSheet?.defaultReps ?? 0}
+        defaultsSampleSize={logSheet?.defaultsSampleSize ?? 0}
         tracksWeight={logSheet?.tracksWeight ?? true}
         tracksReps={logSheet?.tracksReps ?? true}
         trendHint={logSheet?.trendHint}
@@ -380,6 +437,7 @@ export function ActiveSessionScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  noSession: { padding: spacing.lg, justifyContent: 'center' },
   listScroll: { flexShrink: 1, flexGrow: 0 },
   divider: {
     height: StyleSheet.hairlineWidth,
