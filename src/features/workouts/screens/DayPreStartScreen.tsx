@@ -47,6 +47,8 @@ export function DayPreStartScreen() {
     [dayIndex, reorderExercise],
   );
 
+  const exerciseKeyExtractor = useCallback((_: unknown, i: number) => `ex-${i}`, []);
+
   const active = useMemo(() => activeSessionForDay(sessions, dayIndex), [sessions, dayIndex]);
   const progress = useMemo(
     () => (day ? dayProgress(active, day) : { done: 0, total: 0 }),
@@ -216,7 +218,7 @@ export function DayPreStartScreen() {
           data={day.exercises}
           enabled={editingList}
           itemSpacing={spacing.sm}
-          keyExtractor={(_, i) => `ex-${i}`}
+          keyExtractor={exerciseKeyExtractor}
           onReorder={handleReorderExercise}
           renderItem={({ item: ex, index: i, handle }) => {
             const total = exerciseTotalSets(ex);

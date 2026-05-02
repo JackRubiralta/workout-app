@@ -51,6 +51,8 @@ export function WorkoutListScreen() {
     setEditing(prev => !prev);
   }, []);
 
+  const dayKeyExtractor = useCallback((_: unknown, i: number) => `day-${i}`, []);
+
   const handleResetProgram = useCallback(() => {
     confirm({
       title: 'Reset program?',
@@ -85,7 +87,7 @@ export function WorkoutListScreen() {
           data={config.days}
           enabled={editing}
           itemSpacing={spacing.sm}
-          keyExtractor={(_, i) => `day-${i}`}
+          keyExtractor={dayKeyExtractor}
           onReorder={reorderDay}
           renderItem={({ item: day, index, handle }) => {
             const active = activeSessionForDay(sessions, index);

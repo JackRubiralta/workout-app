@@ -156,9 +156,11 @@ export function useWorkoutAssistant(): UseWorkoutAssistant {
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setIsThinking(false);
-    setError(null);
-    setMessages([]);
+    // Idempotent setters: returning the previous reference lets React bail
+    // out so an already-clean state doesn't trigger a re-render cycle.
+    setIsThinking(prev => (prev ? false : prev));
+    setError(prev => (prev != null ? null : prev));
+    setMessages(prev => (prev.length === 0 ? prev : []));
   }, []);
 
   return useMemo(

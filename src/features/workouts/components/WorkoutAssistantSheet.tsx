@@ -44,13 +44,20 @@ export function WorkoutAssistantSheet({ visible, onClose }: WorkoutAssistantShee
   // Reset transcript whenever the sheet is dismissed. Each open is a fresh
   // conversation — predictable for the user, and avoids leaking stale
   // proposals after they re-open the sheet.
+  //
+  // `assistant` is intentionally kept out of deps: the hook returns a fresh
+  // object every render (its useMemo deps include `messages`, which churns
+  // during a conversation), so depending on it would re-fire this effect
+  // every render and infinite-loop the reset path.
+  const assistantRef = useRef(assistant);
+  assistantRef.current = assistant;
   useEffect(() => {
     if (!visible) {
-      assistant.reset();
+      assistantRef.current.reset();
       setDraft('');
       setInputHeight(40);
     }
-  }, [visible, assistant]);
+  }, [visible]);
 
   // Auto-scroll to bottom when a new message arrives or thinking starts.
   useEffect(() => {
