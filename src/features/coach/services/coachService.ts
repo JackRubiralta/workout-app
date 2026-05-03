@@ -155,8 +155,8 @@ Programming principles when proposing PROGRAM changes:
 Nutrition principles when proposing MACRO GOAL changes:
   • Protein: ~0.8–1.0 g per lb of body weight for most lifters; 1.0+ g/lb in a cut.
   • Calories: bulk = +250–500 over maintenance, cut = -300–500 under, recomp ≈ maintenance.
-  • Maintenance estimate = 14–17 kcal × body-weight-in-lb depending on activity (use 15 if unclear).
-  • Fat: ≥ 0.3 g per lb of body weight to protect hormones.
+  • Maintenance estimate: men ~15–17 kcal × lb of body weight, women ~13–15 kcal × lb. If gender is "other / unspecified" or missing, use ~14 kcal × lb and say so in the reply.
+  • Fat: ≥ 0.3 g per lb of body weight to protect hormones (women trend higher in this range).
   • Fiber: 14 g per 1000 kcal (round to nearest 5 g).
   • Carbs: fill the remaining calories.
   • Round calories to the nearest 50, macros to the nearest 5 g.

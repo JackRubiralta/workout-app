@@ -24,11 +24,19 @@ import { colors, fonts, fontSize, layout, radius, spacing, surfaces, text } from
 import {
   Button,
   ScreenHeader,
+  SegmentedControl,
   Sheet,
   SheetHeader,
 } from '@/shared/components';
 import { useBodyWeightData, useNutritionData, useSettingsData } from '@/shared/state/store';
 import { UnitSystem, fromLb, toLb, type UnitSystemValue } from '@/shared/utils/units';
+import type { Gender } from '@/shared/types/settingsTypes';
+
+const GENDER_OPTIONS: ReadonlyArray<{ value: Gender; label: string }> = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+];
 import { useCoach } from '../hooks/useCoach';
 import { CoachComposer } from '../components/CoachComposer';
 import { CoachEmpty } from '../components/CoachEmpty';
@@ -55,17 +63,22 @@ export function CoachScreen() {
 
   const onboardingFields = {
     needsName: !profile.name,
+    needsGender: profile.gender == null,
     needsWeight: latestWeight == null,
     needsHeight: profile.heightCm == null,
   };
   const isOnboarding =
-    onboardingFields.needsName || onboardingFields.needsWeight || onboardingFields.needsHeight;
+    onboardingFields.needsName ||
+    onboardingFields.needsGender ||
+    onboardingFields.needsWeight ||
+    onboardingFields.needsHeight;
 
   const handleOnboardingSubmit = useCallback(
     (v: OnboardingValues) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      const patch: { name?: string | null; heightCm?: number | null } = {};
+      const patch: { name?: string | null; heightCm?: number | null; gender?: Gender | null } = {};
       if (onboardingFields.needsName) patch.name = v.name;
+      if (onboardingFields.needsGender) patch.gender = v.gender;
       if (onboardingFields.needsHeight) patch.heightCm = v.heightCm;
       if (Object.keys(patch).length > 0) updateProfile(patch);
       if (onboardingFields.needsWeight && v.weightLb && v.weightLb > 0) {
@@ -182,6 +195,7 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
   const { latest: latestWeight, addEntry: addWeightEntry } = useBodyWeightData();
 
   const [name, setName] = useState(profile.name ?? '');
+  const [gender, setGender] = useState<Gender | null>(profile.gender);
   const [heightCmInput, setHeightCmInput] = useState(
     profile.heightCm != null ? String(Math.round(profile.heightCm * 10) / 10) : '',
   );
@@ -192,6 +206,7 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
   useEffect(() => {
     if (!visible) return;
     setName(profile.name ?? '');
+    setGender(profile.gender);
     setHeightCmInput(
       profile.heightCm != null ? String(Math.round(profile.heightCm * 10) / 10) : '',
     );
@@ -213,6 +228,7 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
     updateProfile({
       name: trimmedName.length ? trimmedName.slice(0, 40) : null,
       heightCm,
+      gender,
     });
     const w = parseFloat(weightInput);
     if (isFinite(w) && w > 0) {
@@ -242,6 +258,14 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
             autoCapitalize="words"
             autoCorrect={false}
             selectionColor={colors.success}
+          />
+        </View>
+        <View style={profileStyles.field}>
+          <Text style={profileStyles.label}>GENDER</Text>
+          <SegmentedControl<Gender>
+            value={(gender ?? '__none__') as Gender}
+            options={GENDER_OPTIONS}
+            onChange={setGender}
           />
         </View>
         <View style={profileStyles.field}>

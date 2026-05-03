@@ -22,6 +22,7 @@ import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '@/shar
 import { Button, SegmentedControl } from '@/shared/components';
 import { SparklesIcon } from '@/shared/components/icons';
 import { unitLabel, UnitSystem, type UnitSystemValue } from '@/shared/utils/units';
+import type { Gender } from '@/shared/types/settingsTypes';
 
 const NAME_MAX = 40;
 
@@ -29,6 +30,7 @@ type HeightSystem = 'imperial' | 'metric';
 
 export type OnboardingFields = {
   needsName: boolean;
+  needsGender: boolean;
   needsWeight: boolean;
   needsHeight: boolean;
 };
@@ -36,6 +38,8 @@ export type OnboardingFields = {
 export type OnboardingValues = {
   /** Trimmed display name; empty string when not collected. */
   name: string;
+  /** Selected gender; null when not collected. */
+  gender: Gender | null;
   /** Always pounds when collected; null when not collected. */
   weightLb: number | null;
   /** Always centimeters when collected; null when not collected. */
@@ -50,6 +54,12 @@ export type CoachOnboardingProps = {
   onSubmit: (values: OnboardingValues) => void;
 };
 
+const GENDER_OPTIONS: ReadonlyArray<{ value: Gender; label: string }> = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+];
+
 export function CoachOnboarding({
   fields,
   unitSystem,
@@ -57,6 +67,7 @@ export function CoachOnboarding({
   onSubmit,
 }: CoachOnboardingProps) {
   const [name, setName] = useState(initialName ?? '');
+  const [gender, setGender] = useState<Gender | null>(null);
   const [weightInput, setWeightInput] = useState('');
   const [heightFt, setHeightFt] = useState('');
   const [heightIn, setHeightIn] = useState('');
@@ -97,6 +108,7 @@ export function CoachOnboarding({
 
   const canSubmit =
     (!fields.needsName || trimmedName.length > 0) &&
+    (!fields.needsGender || gender != null) &&
     (!fields.needsWeight || parsedWeightLb != null) &&
     (!fields.needsHeight || parsedHeightCm != null);
 
@@ -104,6 +116,7 @@ export function CoachOnboarding({
     if (!canSubmit) return;
     onSubmit({
       name: fields.needsName ? trimmedName : initialName ?? '',
+      gender: fields.needsGender ? gender : null,
       weightLb: fields.needsWeight ? parsedWeightLb : null,
       heightCm: fields.needsHeight ? parsedHeightCm : null,
     });
@@ -142,6 +155,23 @@ export function CoachOnboarding({
                 autoCorrect={false}
                 returnKeyType="next"
                 selectionColor={colors.success}
+              />
+            </Field>
+          ) : null}
+
+          {fields.needsGender ? (
+            <Field
+              label="GENDER"
+              helper="Anchors maintenance calorie and protein defaults; you can override anything later."
+            >
+              <SegmentedControl<Gender>
+                // Passing a never-matching sentinel before the user picks
+                // leaves every segment in its inactive state — the right
+                // "no selection yet" UI. The cast is safe because
+                // SegmentedControl only emits values from `options`.
+                value={(gender ?? '__none__') as Gender}
+                options={GENDER_OPTIONS}
+                onChange={setGender}
               />
             </Field>
           ) : null}
@@ -253,12 +283,15 @@ const HEIGHT_OPTIONS = [
 function introCopy(fields: OnboardingFields): string {
   const wants: string[] = [];
   if (fields.needsName) wants.push('your name');
+  if (fields.needsGender) wants.push('your gender');
   if (fields.needsWeight) wants.push('your body weight');
   if (fields.needsHeight) wants.push('your height');
   if (wants.length === 0) return 'You’re all set.';
   if (wants.length === 1) return `I just need ${wants[0]} to get started.`;
   if (wants.length === 2) return `I just need ${wants[0]} and ${wants[1]} to get started.`;
-  return `I just need ${wants[0]}, ${wants[1]}, and ${wants[2]} to get started.`;
+  const head = wants.slice(0, -1).join(', ');
+  const tail = wants[wants.length - 1];
+  return `I just need ${head}, and ${tail} to get started.`;
 }
 
 function Field({

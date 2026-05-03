@@ -2,14 +2,20 @@ import { useCallback, useMemo } from 'react';
 import { KEYS } from '@/storage/keys';
 import { usePersistedState } from '@/storage/usePersistedState';
 import { UnitSystem, type UnitSystemValue } from '@/shared/utils/units';
-import type { Settings, UserProfile } from '@/shared/types/settingsTypes';
+import type { Gender, Settings, UserProfile } from '@/shared/types/settingsTypes';
 
-const DEFAULT_PROFILE: UserProfile = Object.freeze({ name: null, heightCm: null });
+const DEFAULT_PROFILE: UserProfile = Object.freeze({
+  name: null,
+  heightCm: null,
+  gender: null,
+});
 
 const DEFAULT_SETTINGS: Settings = Object.freeze({
   unitSystem: UnitSystem.IMPERIAL,
   profile: DEFAULT_PROFILE,
 });
+
+const VALID_GENDERS: ReadonlyArray<Gender> = ['male', 'female', 'other'];
 
 function hydrateProfile(raw: unknown): UserProfile {
   const p = (raw ?? {}) as Partial<UserProfile>;
@@ -18,7 +24,11 @@ function hydrateProfile(raw: unknown): UserProfile {
     typeof p.heightCm === 'number' && isFinite(p.heightCm) && p.heightCm > 0
       ? Math.round(p.heightCm * 10) / 10
       : null;
-  return { name, heightCm };
+  const gender =
+    typeof p.gender === 'string' && (VALID_GENDERS as ReadonlyArray<string>).includes(p.gender)
+      ? (p.gender as Gender)
+      : null;
+  return { name, heightCm, gender };
 }
 
 function hydrate(stored: unknown): Settings {
@@ -62,6 +72,7 @@ export function useSettings(): UseSettings {
         const merged: UserProfile = {
           name: patch.name === undefined ? prev.profile.name : patch.name,
           heightCm: patch.heightCm === undefined ? prev.profile.heightCm : patch.heightCm,
+          gender: patch.gender === undefined ? prev.profile.gender : patch.gender,
         };
         return { ...prev, profile: hydrateProfile(merged) };
       });

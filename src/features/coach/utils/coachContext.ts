@@ -46,6 +46,10 @@ function formatWeight(lb: number, system: UnitSystemValue): string {
   return `${Math.round(lb * 10) / 10} lb`;
 }
 
+function genderLabel(g: NonNullable<UserProfile['gender']>): string {
+  return g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other / unspecified';
+}
+
 export function describeProfile(
   profile: UserProfile,
   latestWeight: BodyWeightEntry | null,
@@ -53,6 +57,7 @@ export function describeProfile(
 ): string {
   const lines: string[] = [];
   if (profile.name) lines.push(`Name: ${profile.name}`);
+  if (profile.gender) lines.push(`Gender: ${genderLabel(profile.gender)}`);
   if (profile.heightCm != null) lines.push(`Height: ${formatHeight(profile.heightCm, unitSystem)}`);
   if (latestWeight) {
     const stamp = latestWeight.recordedAt.slice(0, 10);

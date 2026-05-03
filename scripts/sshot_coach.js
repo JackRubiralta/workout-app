@@ -25,7 +25,7 @@ async function main() {
     }
     localStorage.setItem('@settings_v2', JSON.stringify({
       unitSystem: 'imperial',
-      profile: { name: 'Jack', heightCm: 178 },
+      profile: { name: 'Jack', heightCm: 178, gender: 'male' },
     }));
     localStorage.setItem('@bodyweight_log_v2', JSON.stringify({
       entries: [{ id: 'bw1', weight: 178.2, unit: 'lb', recordedAt: iso(2, 8) }],
