@@ -46,6 +46,25 @@ export function ClockIcon({ color = '#fff', size = 24 }: IconProps) {
   );
 }
 
+export function SparklesIcon({ color = '#fff', size = 24, strokeWidth = 1.7 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M11 3l1.9 5L18 10l-5.1 2L11 17l-1.9-5L4 10l5.1-2L11 3z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M18.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"
+        stroke={color}
+        strokeWidth={strokeWidth - 0.2}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // ─── Action / chrome icons ──────────────────────────────────────────────────
 
 export function ChevronLeft({ color, size = 22, strokeWidth = 2 }: IconProps) {

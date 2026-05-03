@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { colors, fonts } from '@/shared/theme';
-import { AppleIcon, ClockIcon, DumbbellIcon } from '@/shared/components/icons';
+import { AppleIcon, ClockIcon, DumbbellIcon, SparklesIcon } from '@/shared/components/icons';
 
 const TAB_ICON_SIZE = 22;
 const TAB_BAR_HEIGHT = Platform.select({ ios: 80, default: 72 });
@@ -48,6 +48,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="nutrition" options={{ title: 'Nutrition', tabBarIcon: makeIcon(AppleIcon) }} />
       <Tabs.Screen name="workout" options={{ title: 'Workout', tabBarIcon: makeIcon(DumbbellIcon) }} />
+      <Tabs.Screen name="ai" options={{ title: 'Coach', tabBarIcon: makeIcon(SparklesIcon) }} />
       <Tabs.Screen name="tracking" options={{ title: 'Tracking', tabBarIcon: makeIcon(ClockIcon) }} />
     </Tabs>
   );

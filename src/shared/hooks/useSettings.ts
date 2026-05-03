@@ -2,21 +2,43 @@ import { useCallback, useMemo } from 'react';
 import { KEYS } from '@/storage/keys';
 import { usePersistedState } from '@/storage/usePersistedState';
 import { UnitSystem, type UnitSystemValue } from '@/shared/utils/units';
-import type { Settings } from '@/shared/types/settingsTypes';
+import type { Settings, UserProfile } from '@/shared/types/settingsTypes';
+
+const DEFAULT_PROFILE: UserProfile = Object.freeze({ name: null, heightCm: null });
 
 const DEFAULT_SETTINGS: Settings = Object.freeze({
   unitSystem: UnitSystem.IMPERIAL,
+  profile: DEFAULT_PROFILE,
 });
+
+function hydrateProfile(raw: unknown): UserProfile {
+  const p = (raw ?? {}) as Partial<UserProfile>;
+  const name = typeof p.name === 'string' && p.name.trim() ? p.name.trim().slice(0, 40) : null;
+  const heightCm =
+    typeof p.heightCm === 'number' && isFinite(p.heightCm) && p.heightCm > 0
+      ? Math.round(p.heightCm * 10) / 10
+      : null;
+  return { name, heightCm };
+}
 
 function hydrate(stored: unknown): Settings {
   const s = (stored ?? {}) as Partial<Settings>;
-  return { ...DEFAULT_SETTINGS, ...s };
+  return {
+    unitSystem: s.unitSystem ?? DEFAULT_SETTINGS.unitSystem,
+    profile: hydrateProfile(s.profile),
+  };
 }
 
 export type UseSettings = {
   loaded: boolean;
   unitSystem: UnitSystemValue;
   setUnitSystem: (next: UnitSystemValue) => void;
+  profile: UserProfile;
+  /**
+   * Merge-patch the profile. Pass `null` for a field to clear it.
+   * Pass `undefined` or omit the field to leave it unchanged.
+   */
+  updateProfile: (patch: Partial<UserProfile>) => void;
 };
 
 export function useSettings(): UseSettings {
@@ -34,8 +56,27 @@ export function useSettings(): UseSettings {
     [setSettings],
   );
 
+  const updateProfile = useCallback(
+    (patch: Partial<UserProfile>) => {
+      setSettings(prev => {
+        const merged: UserProfile = {
+          name: patch.name === undefined ? prev.profile.name : patch.name,
+          heightCm: patch.heightCm === undefined ? prev.profile.heightCm : patch.heightCm,
+        };
+        return { ...prev, profile: hydrateProfile(merged) };
+      });
+    },
+    [setSettings],
+  );
+
   return useMemo(
-    () => ({ loaded, unitSystem: settings.unitSystem, setUnitSystem }),
-    [loaded, settings.unitSystem, setUnitSystem],
+    () => ({
+      loaded,
+      unitSystem: settings.unitSystem,
+      setUnitSystem,
+      profile: settings.profile,
+      updateProfile,
+    }),
+    [loaded, settings.unitSystem, settings.profile, setUnitSystem, updateProfile],
   );
 }

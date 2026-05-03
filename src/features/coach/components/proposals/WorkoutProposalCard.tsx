@@ -2,14 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, type TextStyle } from 'react-native';
 import { colors, fontSize, radius, spacing, surfaces, text } from '@/shared/theme';
 import { Button, StatusPill } from '@/shared/components';
-import { exerciseTotalSets } from '../constants/exerciseDefaults';
-import type { WorkoutConfig } from '../types/workoutTypes';
-import type { AssistantMessage } from '../types/assistantTypes';
+import { exerciseTotalSets } from '@/features/workouts/constants/exerciseDefaults';
+import type { WorkoutConfig } from '@/features/workouts/types/workoutTypes';
+import type { ProposalStatus } from '../../types/coachTypes';
 
 export type WorkoutProposalCardProps = {
   config: WorkoutConfig;
   summary: string | null;
-  status: AssistantMessage['proposalStatus'];
+  status: ProposalStatus | undefined;
   onApply: () => void;
   onDiscard: () => void;
 };
