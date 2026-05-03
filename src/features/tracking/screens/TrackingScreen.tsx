@@ -76,14 +76,7 @@ export function TrackingScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerWrap}>
-        <ScreenHeader
-          eyebrow={
-            hasSessions
-              ? `${sessions.length} WORKOUT${sessions.length !== 1 ? 'S' : ''} LOGGED`
-              : undefined
-          }
-          title="Tracking"
-        />
+        <ScreenHeader title="Tracking" />
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>

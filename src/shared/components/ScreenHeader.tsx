@@ -3,17 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, type TextStyle } from 'react-
 import { colors, spacing, text } from '@/shared/theme';
 
 export type ScreenHeaderProps = {
-  eyebrow?: string;
   title: string;
   actionLabel?: string;
   onActionPress?: () => void;
 };
 
-export function ScreenHeader({ eyebrow, title, actionLabel, onActionPress }: ScreenHeaderProps) {
+export function ScreenHeader({ title, actionLabel, onActionPress }: ScreenHeaderProps) {
   return (
     <View style={styles.row}>
       <View style={{ flex: 1 }}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
         <Text style={text.hero as TextStyle}>{title}</Text>
       </View>
       {actionLabel && onActionPress ? (
@@ -33,7 +31,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  eyebrow: { ...(text.eyebrowSmall as TextStyle), color: colors.textTertiary, marginBottom: 4 },
   actionBtn: { paddingVertical: 6, paddingHorizontal: spacing.sm },
   actionText: { ...(text.buttonSmall as TextStyle), color: colors.textSecondary, fontWeight: '600' },
 });

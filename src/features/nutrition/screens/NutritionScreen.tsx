@@ -128,7 +128,6 @@ export function NutritionScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <ScreenHeader
-          eyebrow={`${Math.round(totals.calories)} / ${goals.calories} KCAL`}
           title="Nutrition"
           actionLabel="Edit goals"
           onActionPress={() => setGoalsOpen(true)}

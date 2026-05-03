@@ -1,0 +1,44 @@
+# EAS Build ignore rules. When this file exists it REPLACES .gitignore for
+# the EAS upload, so it must mirror .gitignore. The one intentional difference
+# is that `.env` is NOT listed here, so it ships to the build worker and Expo
+# inlines `EXPO_PUBLIC_*` values into the JS bundle.
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# per-developer env overrides (never shipped to the build)
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android

@@ -120,7 +120,6 @@ export function CoachScreen() {
         >
           <View style={styles.headerWrap}>
             <ScreenHeader
-              eyebrow="AI"
               title="Coach"
               actionLabel={coach.messages.length > 0 ? 'New chat' : 'Edit profile'}
               onActionPress={

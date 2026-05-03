@@ -20,10 +20,6 @@ import { activeSessionForDay, dayProgress, isDayComplete } from '../utils/progre
 import { exerciseTotalSets } from '../constants/exerciseDefaults';
 import { confirm } from '@/shared/utils/confirm';
 
-function todayLabel(): string {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-}
-
 const UNIT_OPTIONS: ReadonlyArray<SegmentedOption<UnitSystemValue>> = [
   { value: UnitSystem.IMPERIAL, label: 'Imperial · lb' },
   { value: UnitSystem.METRIC, label: 'Metric · kg' },
@@ -69,7 +65,6 @@ export function WorkoutListScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <ScreenHeader
-          eyebrow={todayLabel().toUpperCase()}
           title="Workout"
           actionLabel={editing ? 'Done' : 'Edit'}
           onActionPress={toggleEditing}
