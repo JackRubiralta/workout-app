@@ -8,6 +8,9 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -60,6 +63,50 @@ export function CoachScreen() {
     const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     return () => clearTimeout(id);
   }, [coach.messages.length, coach.isThinking]);
+
+  // Keyboard-synced scroll. iOS reports the exact `duration` (and curve) of
+  // the system keyboard animation in the `Will*` event; we mirror that with
+  // an `Animated.Value` driven by `Animated.timing`, then pin scroll-to-end
+  // to every frame of that animation via a JS listener. Result: as the
+  // keyboard rises, the bottom-most message is glued to the bottom of the
+  // visible region — no mid-rise jitter, no post-rise jump. Android only
+  // fires `Did*` and doesn't expose duration, so we fall back to a single
+  // settled scroll there (its keyboard rise is effectively instant anyway).
+  const keyboardProgress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const stickToBottom = () => scrollRef.current?.scrollToEnd({ animated: false });
+
+    if (Platform.OS !== 'ios') {
+      const sub = Keyboard.addListener('keyboardDidShow', stickToBottom);
+      return () => sub.remove();
+    }
+
+    // iOS keyboard's true curve is private (UIViewAnimationCurve = 7); this
+    // bezier is the long-standing community match. Close enough that the
+    // scroll and the keyboard read as one motion.
+    const easing = Easing.bezier(0.17, 0.59, 0.4, 0.77);
+    const animateProgress = (toValue: 0 | 1, duration: number) =>
+      Animated.timing(keyboardProgress, {
+        toValue,
+        duration: Math.max(50, duration),
+        easing,
+        useNativeDriver: false,
+      }).start();
+
+    const showSub = Keyboard.addListener('keyboardWillShow', e =>
+      animateProgress(1, e.duration ?? 250),
+    );
+    const hideSub = Keyboard.addListener('keyboardWillHide', e =>
+      animateProgress(0, e.duration ?? 250),
+    );
+    const listenerId = keyboardProgress.addListener(stickToBottom);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      keyboardProgress.removeListener(listenerId);
+    };
+  }, [keyboardProgress]);
 
   const onboardingFields = {
     needsName: !profile.name,
@@ -116,7 +163,6 @@ export function CoachScreen() {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <View style={styles.headerWrap}>
             <ScreenHeader
@@ -141,6 +187,7 @@ export function CoachScreen() {
             style={styles.flex}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {coach.messages.length === 0 && !coach.isThinking ? (

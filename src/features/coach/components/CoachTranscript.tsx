@@ -3,12 +3,15 @@
 // Stays a pure presentation component — every action is delegated to
 // the parent so the screen owns the persistence side-effects.
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
+  Animated,
+  Easing,
   StyleSheet,
+  Text,
+  View,
   type TextStyle,
+  type ViewStyle,
 } from 'react-native';
 import { colors, radius, spacing, surfaces, text } from '@/shared/theme';
 import { PulseDots } from '@/shared/components';
@@ -76,7 +79,7 @@ function MessageRow({
   const isUser = message.role === 'user';
   const proposals = message.proposals ?? null;
   return (
-    <View style={[s.row, isUser ? s.rowUser : s.rowAssistant]}>
+    <EntryAnimated style={[s.row, isUser ? s.rowUser : s.rowAssistant]}>
       <View
         style={[
           s.bubble,
@@ -111,17 +114,44 @@ function MessageRow({
           />
         </View>
       ) : null}
-    </View>
+    </EntryAnimated>
   );
 }
 
 function ThinkingRow() {
   return (
-    <View style={[s.row, s.rowAssistant]}>
+    <EntryAnimated style={[s.row, s.rowAssistant]}>
       <View style={[s.bubble, s.bubbleAssistant, s.thinkingBubble]}>
         <PulseDots />
       </View>
-    </View>
+    </EntryAnimated>
+  );
+}
+
+// Mount-only fade + lift. The component is keyed by message id upstream,
+// so reused rows skip the animation entirely — only freshly appended turns
+// (and the thinking indicator each time it shows) play it.
+type EntryAnimatedProps = {
+  style?: ViewStyle | ViewStyle[] | (ViewStyle | false | null | undefined)[];
+  children: React.ReactNode;
+};
+
+function EntryAnimated({ style, children }: EntryAnimatedProps) {
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [progress]);
+
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [8, 0] });
+  return (
+    <Animated.View style={[style, { opacity: progress, transform: [{ translateY }] }]}>
+      {children}
+    </Animated.View>
   );
 }
 
