@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import * as Notifications from 'expo-notifications';
 import { StoreProvider } from '@/shared/state/store';
 import { endLiveActivity } from '@/features/workouts/services/liveActivityService';
@@ -37,20 +38,26 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        <StoreProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-            <Stack.Screen
-              name="active-session"
-              options={{
-                presentation: 'modal',
-                gestureEnabled: false,
-                animation: 'slide_from_bottom',
-              }}
-            />
-          </Stack>
-        </StoreProvider>
+        {/* KeyboardProvider mounts the native iOS keyboard observer that
+            powers `useKeyboardHandler` / `useReanimatedKeyboardAnimation`
+            for the chat composer. Has to live above any screen that uses
+            keyboard-controller hooks. */}
+        <KeyboardProvider>
+          <StatusBar style="light" />
+          <StoreProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+              <Stack.Screen
+                name="active-session"
+                options={{
+                  presentation: 'modal',
+                  gestureEnabled: false,
+                  animation: 'slide_from_bottom',
+                }}
+              />
+            </Stack>
+          </StoreProvider>
+        </KeyboardProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

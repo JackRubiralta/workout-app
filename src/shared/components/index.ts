@@ -30,6 +30,8 @@ export type {
 } from './NumberedListRow';
 export { ScreenHeader } from './ScreenHeader';
 export type { ScreenHeaderProps } from './ScreenHeader';
+export { KeyboardAwareSheetScroll } from './KeyboardAwareSheetScroll';
+export type { KeyboardAwareSheetScrollProps } from './KeyboardAwareSheetScroll';
 export { ScrollPicker } from './ScrollPicker';
 export type { ScrollPickerProps } from './ScrollPicker';
 export { SectionLabel } from './SectionLabel';

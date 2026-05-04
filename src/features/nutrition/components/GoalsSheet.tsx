@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, type TextStyle } from 'react-native';
+import { View, Text, StyleSheet, TextInput, type TextStyle } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing, text } from '@/shared/theme';
-import { Button, DetailSheet } from '@/shared/components';
+import { Button, DetailSheet, KeyboardAwareSheetScroll } from '@/shared/components';
 import { useKeyboardVisible } from '@/shared/hooks/useKeyboardVisible';
 import type { MacroGoals } from '../types/nutritionTypes';
 
@@ -61,14 +61,7 @@ export function GoalsSheet({ visible, goals, onSave, onClose }: GoalsSheetProps)
 
   return (
     <DetailSheet visible={visible} onClose={onClose} title="Daily Goals" footer={footer}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={s.body}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardAwareSheetScroll contentContainerStyle={s.body}>
         <Text style={s.hint}>
           Set your daily targets. The progress rings on the Nutrition tab fill toward these.
         </Text>
@@ -94,7 +87,7 @@ export function GoalsSheet({ visible, goals, onSave, onClose }: GoalsSheetProps)
         ))}
 
         <View style={{ height: spacing.md }} />
-      </ScrollView>
+      </KeyboardAwareSheetScroll>
     </DetailSheet>
   );
 }

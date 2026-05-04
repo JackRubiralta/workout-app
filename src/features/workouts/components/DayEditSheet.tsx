@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, type TextStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, type TextStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, fontSize, radius, spacing, text } from '@/shared/theme';
-import { Button, FieldLabel, Sheet, SheetHeader, SheetInput } from '@/shared/components';
+import {
+  Button,
+  FieldLabel,
+  KeyboardAwareSheetScroll,
+  Sheet,
+  SheetHeader,
+  SheetInput,
+} from '@/shared/components';
 import { ExerciseEditSheet } from './ExerciseEditSheet';
 import { defaultExercise } from '../constants/exerciseDefaults';
 import { confirm } from '@/shared/utils/confirm';
@@ -115,14 +122,7 @@ export function DayEditSheet({
           onClose={onClose}
         />
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={s.content}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets
-          showsVerticalScrollIndicator={false}
-        >
+        <KeyboardAwareSheetScroll contentContainerStyle={s.content}>
           <FieldLabel>DAY TITLE</FieldLabel>
           <SheetInput
             value={title}
@@ -196,7 +196,7 @@ export function DayEditSheet({
           </TouchableOpacity>
 
           <View style={{ height: spacing.lg }} />
-        </ScrollView>
+        </KeyboardAwareSheetScroll>
 
         {!kbVisible && (
           <View style={s.footer}>

@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, type TextStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, type TextStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, text } from '@/shared/theme';
-import { Button, FieldLabel, Sheet, SheetHeader, SheetInput, Stepper, Toggle } from '@/shared/components';
+import {
+  Button,
+  FieldLabel,
+  KeyboardAwareSheetScroll,
+  Sheet,
+  SheetHeader,
+  SheetInput,
+  Stepper,
+  Toggle,
+} from '@/shared/components';
 import { useKeyboardVisible } from '@/shared/hooks/useKeyboardVisible';
 import type { ExerciseTemplate } from '../types/workoutTypes';
 
@@ -87,14 +96,7 @@ export function ExerciseEditSheet({
   return (
     <Sheet visible={visible} onClose={onClose} flex height="92%">
       <SheetHeader eyebrow={`EXERCISE ${exIndex + 1}`} title={name || exercise.name} onClose={onClose} />
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={s.content}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardAwareSheetScroll contentContainerStyle={s.content}>
         <FieldLabel>NAME</FieldLabel>
         <SheetInput value={name} onChangeText={setName} placeholder="Exercise name" selectionColor={dayColor} />
 
@@ -182,7 +184,7 @@ export function ExerciseEditSheet({
         )}
 
         <View style={{ height: spacing.lg }} />
-      </ScrollView>
+      </KeyboardAwareSheetScroll>
       {!kbVisible && (
         <View style={s.footer}>
           <Button label="Save Exercise" onPress={handleSave} color={dayColor} style={s.saveBtn} />

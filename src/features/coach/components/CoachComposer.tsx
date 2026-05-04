@@ -4,15 +4,20 @@
 // Metric arithmetic, kept here because the composer breaks the moment any
 // of these values drift apart:
 //
-//   INPUT_VPAD * 2 + INPUT_LINE_HEIGHT === BAR_HEIGHT === MIN_INPUT_HEIGHT
+//   INPUT_VPAD * 2 + INPUT_LINE_HEIGHT === INPUT_HEIGHT === MIN_INPUT_HEIGHT
 //
 // That equality is what makes the empty-state caret + placeholder land on
 // the same baseline as a single line of typed text. Bumping the line height
 // or padding without re-balancing the others reintroduces the misalignment
 // we used to ship with.
+//
+// The send button uses BUTTON_SIZE (44) — independent of INPUT_HEIGHT — to
+// meet the iOS hit-target guideline. The row uses `alignItems: 'flex-end'`
+// so the larger button stays bottom-aligned with the single-line input.
 
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   LayoutAnimation,
   StyleSheet,
   Text,
@@ -28,10 +33,21 @@ import { ArrowUp } from '@/shared/components/icons';
 
 const INPUT_VPAD = 8;
 const INPUT_LINE_HEIGHT = 22;
-const BAR_HEIGHT = INPUT_VPAD * 2 + INPUT_LINE_HEIGHT; // 38
+const INPUT_HEIGHT = INPUT_VPAD * 2 + INPUT_LINE_HEIGHT; // 38
 
-const MIN_INPUT_HEIGHT = BAR_HEIGHT;
+const MIN_INPUT_HEIGHT = INPUT_HEIGHT;
 const MAX_INPUT_HEIGHT = MIN_INPUT_HEIGHT + INPUT_LINE_HEIGHT * 4; // ~5 visible lines
+
+// Native iOS hit-target floor. Decoupled from INPUT_HEIGHT so the input row
+// stays compact while the tap surface remains comfortable.
+const BUTTON_SIZE = 44;
+
+// Pill-input horizontal padding. Kept explicit (not derived from `spacing`)
+// because the visual "the caret starts where the placeholder starts" rhythm
+// depends on this exact value — see the metric arithmetic note above.
+const INPUT_HPAD = 14;
+
+const WRAP_VPAD = spacing.sm; // 8 — top + bottom breathing room around the row.
 
 // iOS occasionally measures the empty content box 1–2pt above the floor.
 // Treat anything within this window as "still single-line" so we don't
@@ -50,6 +66,9 @@ export type CoachComposerProps = {
   value: string;
   onChangeText: (next: string) => void;
   onSend: () => void;
+  /** Called when the user taps the trailing button while a request is in
+   *  flight. The button silently no-ops if `onCancel` isn't provided. */
+  onCancel?: () => void;
   isThinking: boolean;
   errorText?: string | null;
   placeholder?: string;
@@ -59,6 +78,7 @@ export function CoachComposer({
   value,
   onChangeText,
   onSend,
+  onCancel,
   isThinking,
   errorText,
   placeholder = 'Ask anything',
@@ -90,8 +110,14 @@ export function CoachComposer({
 
   const trimmed = value.trim();
   const canSend = trimmed.length > 0 && !isThinking;
+  const showCancel = isThinking && onCancel != null;
 
-  const handleSend = useCallback(() => {
+  const handlePressTrailing = useCallback(() => {
+    if (showCancel) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      onCancel?.();
+      return;
+    }
     if (!canSend) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setInputHeight(prev => {
@@ -100,14 +126,20 @@ export function CoachComposer({
       return null;
     });
     onSend();
-  }, [canSend, onSend]);
+  }, [canSend, onSend, onCancel, showCancel]);
+
+  const trailingDisabled = !showCancel && !canSend;
+  const trailingA11yLabel = showCancel ? 'Stop generating' : 'Send message';
 
   return (
     <View style={s.wrap}>
       {errorText ? (
-        <Text style={s.errorText} numberOfLines={2}>
-          {errorText}
-        </Text>
+        <View style={s.errorRow}>
+          <View style={s.errorDot} />
+          <Text style={s.errorText} numberOfLines={3}>
+            {errorText}
+          </Text>
+        </View>
       ) : null}
       <View style={s.row}>
         <TextInput
@@ -119,15 +151,22 @@ export function CoachComposer({
           multiline
           onContentSizeChange={handleContentSize}
           selectionColor={colors.success}
+          accessibilityLabel="Message"
         />
         <TouchableOpacity
-          onPress={handleSend}
-          disabled={!canSend}
-          style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
+          onPress={handlePressTrailing}
+          disabled={trailingDisabled}
+          style={[s.sendBtn, trailingDisabled && s.sendBtnDisabled]}
           activeOpacity={0.85}
-          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={trailingA11yLabel}
+          accessibilityState={{ disabled: trailingDisabled }}
         >
-          <ArrowUp color={canSend ? '#000' : colors.textTertiary} size={14} />
+          {showCancel ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <ArrowUp color={canSend ? '#000' : colors.textTertiary} size={14} />
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -137,17 +176,32 @@ export function CoachComposer({
 const s = StyleSheet.create({
   wrap: {
     paddingHorizontal: spacing.md,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingTop: WRAP_VPAD,
+    paddingBottom: WRAP_VPAD,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     backgroundColor: colors.surface,
-    gap: 6,
+    gap: WRAP_VPAD,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs + 2,
+    paddingHorizontal: spacing.xs,
+  },
+  errorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.danger,
+    // Centre the dot on the first line of error copy.
+    marginTop: 7,
   },
   errorText: {
-    ...(text.monoCaption as TextStyle),
+    ...(text.bodyTertiary as TextStyle),
     color: colors.danger,
-    paddingHorizontal: spacing.xs,
+    flex: 1,
+    lineHeight: 18,
   },
   row: {
     flexDirection: 'row',
@@ -158,7 +212,7 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surfaceElevated,
     borderRadius: radius.full,
-    paddingHorizontal: 14,
+    paddingHorizontal: INPUT_HPAD,
     paddingVertical: INPUT_VPAD,
     fontSize: fontSize.body,
     lineHeight: INPUT_LINE_HEIGHT,
@@ -169,8 +223,8 @@ const s = StyleSheet.create({
     minHeight: MIN_INPUT_HEIGHT,
   },
   sendBtn: {
-    width: BAR_HEIGHT,
-    height: BAR_HEIGHT,
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
     borderRadius: radius.full,
     backgroundColor: colors.text,
     alignItems: 'center',

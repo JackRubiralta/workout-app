@@ -5,14 +5,13 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts, fontSize, radius, shadow, spacing, surfaces, text } from '@/shared/theme';
-import { Button, LoadingState } from '@/shared/components';
+import { Button, KeyboardAwareSheetScroll, LoadingState } from '@/shared/components';
 import { analyzeFood } from '../../services/nutritionAiService';
 import { prepareFoodImage } from '../../utils/prepareFoodImage';
 import { ResultsView, type AnalyzeResultsState } from './ResultsView';
@@ -204,14 +203,7 @@ export function AnalyzeFoodForm({
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={s.pad}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
-      automaticallyAdjustKeyboardInsets
-      showsVerticalScrollIndicator={false}
-    >
+    <KeyboardAwareSheetScroll contentContainerStyle={s.pad}>
       <Text style={s.sectionLabel}>PHOTOS · OPTIONAL</Text>
       <View style={s.thumbRow}>
         {photos.map((p, i) => (
@@ -282,7 +274,7 @@ export function AnalyzeFoodForm({
         style={s.analyzeBtn}
       />
       {!canAnalyze ? <Text style={s.analyzeHint}>Add a photo or description to enable</Text> : null}
-    </ScrollView>
+    </KeyboardAwareSheetScroll>
   );
 }
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fonts, fontSize, macroColors, radius, spacing } from '@/shared/theme';
-import { StatusPill } from '@/shared/components';
+import { KeyboardAwareSheetScroll, StatusPill } from '@/shared/components';
 import { roundInt, roundTenths } from '@/shared/utils/format';
 import { totalsForDay } from '../../utils/nutritionMath';
 import { copy } from '@/shared/copy';
@@ -135,7 +135,7 @@ export function ResultsView({
   const confColor = conf === 'high' ? colors.success : conf === 'low' ? colors.danger : colors.warning;
 
   return (
-    <ScrollView contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <KeyboardAwareSheetScroll contentContainerStyle={s.pad}>
       <StatusPill label={`${conf.toUpperCase()} CONFIDENCE`} color={confColor} />
 
       {!!results.notes && (
@@ -215,7 +215,7 @@ export function ResultsView({
       <TouchableOpacity style={s.retakeBtn} onPress={onStartOver} activeOpacity={0.7}>
         <Text style={s.retakeText}>Start over</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </KeyboardAwareSheetScroll>
   );
 }
 

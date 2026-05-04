@@ -8,24 +8,24 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Easing,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
   type TextStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  KeyboardAvoidingView,
+  useKeyboardHandler,
+} from 'react-native-keyboard-controller';
+import { runOnJS } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, fontSize, layout, radius, spacing, surfaces, text } from '@/shared/theme';
+import { colors, fonts, fontSize, radius, spacing, surfaces, text } from '@/shared/theme';
 import {
   Button,
+  KeyboardAwareSheetScroll,
   ScreenHeader,
   SegmentedControl,
   Sheet,
@@ -51,6 +51,7 @@ export function CoachScreen() {
   const { latest: latestWeight, addEntry: addWeightEntry } = useBodyWeightData();
   const { goals } = useNutritionData();
   const coach = useCoach();
+  const insets = useSafeAreaInsets();
 
   const [draft, setDraft] = useState('');
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -64,49 +65,30 @@ export function CoachScreen() {
     return () => clearTimeout(id);
   }, [coach.messages.length, coach.isThinking]);
 
-  // Keyboard-synced scroll. iOS reports the exact `duration` (and curve) of
-  // the system keyboard animation in the `Will*` event; we mirror that with
-  // an `Animated.Value` driven by `Animated.timing`, then pin scroll-to-end
-  // to every frame of that animation via a JS listener. Result: as the
-  // keyboard rises, the bottom-most message is glued to the bottom of the
-  // visible region — no mid-rise jitter, no post-rise jump. Android only
-  // fires `Did*` and doesn't expose duration, so we fall back to a single
-  // settled scroll there (its keyboard rise is effectively instant anyway).
-  const keyboardProgress = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const stickToBottom = () => scrollRef.current?.scrollToEnd({ animated: false });
-
-    if (Platform.OS !== 'ios') {
-      const sub = Keyboard.addListener('keyboardDidShow', stickToBottom);
-      return () => sub.remove();
-    }
-
-    // iOS keyboard's true curve is private (UIViewAnimationCurve = 7); this
-    // bezier is the long-standing community match. Close enough that the
-    // scroll and the keyboard read as one motion.
-    const easing = Easing.bezier(0.17, 0.59, 0.4, 0.77);
-    const animateProgress = (toValue: 0 | 1, duration: number) =>
-      Animated.timing(keyboardProgress, {
-        toValue,
-        duration: Math.max(50, duration),
-        easing,
-        useNativeDriver: false,
-      }).start();
-
-    const showSub = Keyboard.addListener('keyboardWillShow', e =>
-      animateProgress(1, e.duration ?? 250),
-    );
-    const hideSub = Keyboard.addListener('keyboardWillHide', e =>
-      animateProgress(0, e.duration ?? 250),
-    );
-    const listenerId = keyboardProgress.addListener(stickToBottom);
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-      keyboardProgress.removeListener(listenerId);
-    };
-  }, [keyboardProgress]);
+  // Pin the latest message to the bottom of the visible region as the
+  // keyboard rises. `useKeyboardHandler` runs on the UI thread and fires
+  // `onMove` per native keyboard frame (sourced from UIKeyboard's KVO),
+  // not from a JS-side `Animated.timing` echo. We hop to JS only to call
+  // `scrollToEnd` — the actual avoidance/translation is handled natively
+  // by `KeyboardAvoidingView` from react-native-keyboard-controller, so
+  // the composer and keyboard rise as a single hardware-synced motion
+  // instead of the two-stage animation that vanilla RN KAV produced.
+  const stickToBottom = useCallback(() => {
+    scrollRef.current?.scrollToEnd({ animated: false });
+  }, []);
+  useKeyboardHandler(
+    {
+      onMove: () => {
+        'worklet';
+        runOnJS(stickToBottom)();
+      },
+      onEnd: () => {
+        'worklet';
+        runOnJS(stickToBottom)();
+      },
+    },
+    [stickToBottom],
+  );
 
   const onboardingFields = {
     needsName: !profile.name,
@@ -150,8 +132,25 @@ export function CoachScreen() {
     [coach],
   );
 
+  // Backdrop sized to cover (a) the bottom safe-area band and (b) the
+  // sliver that the iOS keyboard's rounded top corners reveal once the
+  // composer is flush with the keyboard. Painting this in `colors.surface`
+  // — the composer's own background — keeps everything below the row
+  // visually continuous with the row itself, instead of letting the
+  // darker `colors.background` peek through behind the corners.
+  const KEYBOARD_CORNER_BLEED = 12;
+  const bottomBackdropHeight = Math.max(insets.bottom, 0) + KEYBOARD_CORNER_BLEED;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Bottom-anchored surface wedge: sits under the composer + tab bar so
+          the iOS keyboard's rounded corners and the home-indicator gutter
+          read as one continuous surface, not a darker patch. */}
+      <View
+        pointerEvents="none"
+        style={[styles.bottomBackdrop, { height: bottomBackdropHeight }]}
+      />
+
       {isOnboarding ? (
         <CoachOnboarding
           fields={onboardingFields}
@@ -162,7 +161,13 @@ export function CoachScreen() {
       ) : (
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
+          // `automaticOffset` lets KC measure this view's distance from the
+          // top of the screen and subtract it from its keyboard math, so
+          // the composer rests flush on the keyboard regardless of the
+          // tab bar / status bar / header above us. Removes the need for a
+          // hand-tuned `keyboardVerticalOffset`.
+          automaticOffset
         >
           <View style={styles.headerWrap}>
             <ScreenHeader
@@ -203,13 +208,13 @@ export function CoachScreen() {
                 onDiscardGoals={coach.discardGoals}
               />
             )}
-            <View style={{ height: layout.tabBarClearance / 2 }} />
           </ScrollView>
 
           <CoachComposer
             value={draft}
             onChangeText={setDraft}
             onSend={handleSend}
+            onCancel={coach.cancel}
             isThinking={coach.isThinking}
             errorText={coach.error}
           />
@@ -290,9 +295,12 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose}>
+    // `flex` so the panel takes a deterministic height — required for the
+    // inner KeyboardAwareSheetScroll to have something to flex into when
+    // the keyboard rises and pushes the focused input into view.
+    <Sheet visible={visible} onClose={onClose} flex height="78%">
       <SheetHeader eyebrow="PROFILE" title="Edit profile" onClose={onClose} />
-      <View style={profileStyles.body}>
+      <KeyboardAwareSheetScroll contentContainerStyle={profileStyles.body}>
         <View style={profileStyles.field}>
           <Text style={profileStyles.label}>NAME</Text>
           <TextInput
@@ -345,7 +353,7 @@ function ProfileSheet({ visible, onClose, unitSystem }: ProfileSheetProps) {
         </View>
 
         <Button label="Save" onPress={handleSave} color={colors.success} style={profileStyles.cta} />
-      </View>
+      </KeyboardAwareSheetScroll>
     </Sheet>
   );
 }
@@ -359,6 +367,13 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
     paddingBottom: spacing.md,
     flexGrow: 1,
+  },
+  bottomBackdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.surface,
   },
 });
 
